@@ -1,0 +1,249 @@
+"use client";
+
+import React, { useMemo, useState, useEffect } from "react";
+import { MOCK_SERVICES } from "../mock";
+import type { BookingSelection } from "../types";
+import { computeAvailableStartTimes } from "@/lib/booking/computeAvailableStarts";
+import { buildDailySchedule } from "@/features/availability/buildDailySchedule";
+import { getMockBusy } from "@/features/availability/mockBusyByDate";
+
+import ServicePicker from "./ServicePicker";
+import DateChips from "./DateChips";
+import TimePicker from "./TimePicker";
+import BookingCta from "./BookingCta";
+import { colors } from "@/lib/design/colors";
+
+type Props = {
+  handle: string;
+};
+
+function toISODateLocal(d: Date) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function addDaysLocal(d: Date, days: number) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + days);
+  return x;
+}
+
+export default function BookingScreen({ handle }: Props) {
+  const [selection, setSelection] = useState<BookingSelection>({
+    serviceId: null,
+    dateISO: null,
+    time: null,
+  });
+
+  // ✅ 추천 UX 안내 문구
+  const [showRecommendedHint, setShowRecommendedHint] = useState(false);
+
+  const service = useMemo(
+    () => MOCK_SERVICES.find((s) => s.id === selection.serviceId) ?? null,
+    [selection.serviceId]
+  );
+
+  const canPickTime = Boolean(selection.serviceId && selection.dateISO);
+
+  // ✅ 선택된 dateISO -> Date 변환 (로컬 날짜 기준)
+  const selectedDate = useMemo(() => {
+    if (!selection.dateISO) return null;
+    // "YYYY-MM-DD" -> 로컬 00:00 Date
+    const [y, m, d] = selection.dateISO.split("-").map(Number);
+    return new Date(y, (m ?? 1) - 1, d ?? 1);
+  }, [selection.dateISO]);
+
+  // ✅ (3) 날짜에 따라 workWindows / breaks 생성
+  const daily = useMemo(() => {
+    if (!selectedDate) return { workWindows: [], breaks: [] };
+    return buildDailySchedule(selectedDate);
+  }, [selectedDate]);
+
+  const times = useMemo(() => {
+    if (!selection.serviceId || !selectedDate) return [];
+
+    const svc = MOCK_SERVICES.find((s) => s.id === selection.serviceId);
+    if (!svc) return [];
+
+    // ✅ 날짜별 영업 규칙 연결 (오늘 목표)
+    const workWindows = daily.workWindows;
+    const breaks = daily.breaks;
+
+    // busy는 아직 DB 없으니 가짜 유지 (원하면 나중에 날짜별로 바꿔도 됨)
+   onst busy = [{ start: "15:00", end: "16:00" }];
+
+    const out = computeAvailableStartTimes({
+      workWindows,
+      busy,
+      breaks,
+      durationMin: svc.durationMin,
+      bufferMin: svc.bufferMin,
+      stepMin: 15,
+    });
+
+    return out;
+  }, [selection.serviceId, selectedDate, daily.workWindows, daily.breaks]);
+
+  // ✅ (4) 서비스 선택 시: 가장 빠른 예약 가능 날짜/시간 자동 추천
+  useEffect(() => {
+    if (!selection.serviceId) return;
+
+    const svc = MOCK_SERVICES.find((s) => s.id === selection.serviceId);
+    if (!svc) return;
+
+    const today = new Date();
+    const searchDays = 21; // "오늘부터 일정 기간" (원하면 14로 낮춰도 됨)
+
+    for (let i = 0; i < searchDays; i++) {
+      const d = addDaysLocal(today, i);
+      const dailyForD = buildDailySchedule(d);
+
+      const out = computeAvailableStartTimes({
+        workWindows: dailyForD.workWindows,
+        breaks: dailyForD.breaks,
+        busy: [{ start: "15:00", end: "16:00" }],
+        durationMin: svc.durationMin,
+        bufferMin: svc.bufferMin,
+        stepMin: 15,
+      });
+
+      if (out.length > 0) {
+        const iso = toISODateLocal(d);
+        const firstTime = out[0];
+
+        setSelection((prev) => ({
+          ...prev,
+          dateISO: iso,
+          time: firstTime,
+        }));
+
+        setShowRecommendedHint(true);
+        break;
+      }
+    }
+    // serviceId 바뀔 때만 실행
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selection.serviceId]);
+
+  const reserve = () => {
+    alert(
+      [
+        "예약(가짜) 완료!",
+        `handle: @${handle}`,
+        `service: ${service?.name ?? "-"}`,
+        `date: ${selection.dateISO ?? "-"}`,
+        `time: ${selection.time ?? "-"}`,
+      ].join("\n")
+    );
+  };
+
+  return (
+    <div style={{ background: colors.background.subtle, minHeight: "100vh" }}>
+      <div className="mx-auto max-w-3xl px-4 pb-32 pt-10">
+        <header className="mb-8">
+          <div className="text-sm" style={{ color: colors.text.secondary }}>
+            @{handle}
+          </div>
+          <h1
+            className="mt-1 text-2xl font-bold tracking-tight"
+            style={{ color: colors.text.primary }}
+          >
+            예약하기
+          </h1>
+          <p className="mt-2 text-sm" style={{ color: colors.text.secondary }}>
+            서비스 → 날짜 → 시작시간 선택
+          </p>
+        </header>
+
+        <div className="space-y-8">
+          <section
+            className="rounded-2xl border p-5"
+            style={{
+              borderColor: colors.border.default,
+              background: colors.background.base,
+            }}
+          >
+            <ServicePicker
+              services={MOCK_SERVICES}
+              value={selection.serviceId}
+              onChange={(serviceId) =>
+                setSelection((prev) => ({
+                  ...prev,
+                  serviceId,
+                  // ✅ 추천 UX가 자동으로 date/time을 잡아주지만, 즉시 반영되도록 우선 초기화
+                  dateISO: null,
+                  time: null,
+                }))
+              }
+            />
+          </section>
+
+          <section
+            className="rounded-2xl border p-5"
+            style={{
+              borderColor: colors.border.default,
+              background: colors.background.base,
+            }}
+          >
+       <DateChips
+  value={selection.dateISO}
+  onChange={(dateISO) => {
+    setShowRecommendedHint(false); // ✅ 사용자가 개입했으므로 숨김
+
+    setSelection((prev) => ({
+      ...prev,
+      dateISO,
+      time: null,
+    }));
+  }}
+  days={14}
+/>
+          </section>
+
+          <section
+            className="rounded-2xl border p-5"
+            style={{
+              borderColor: colors.border.default,
+              background: colors.background.base,
+            }}
+          >
+            {showRecommendedHint && (
+              <div
+                className="mb-2 text-xs"
+                style={{ color: colors.text.secondary }}
+              >
+                현재 가장 빠른 예약 가능 시간이에요.
+              </div>
+            )}
+
+            <div
+              className="mb-2 text-sm font-medium"
+              style={{ color: colors.text.primary }}
+            >
+              가능한 시작시간
+            </div>
+
+            <TimePicker
+              times={times}
+              value={selection.time}
+              disabled={!canPickTime}
+              requiredMin={
+                service ? service.durationMin + service.bufferMin : undefined
+              }
+              onChange={(time) => setSelection((prev) => ({ ...prev, time }))}
+            />
+          </section>
+        </div>
+      </div>
+
+      <BookingCta
+        handle={handle}
+        service={service}
+        selection={selection}
+        onReserve={reserve}
+      />
+    </div>
+  );
+}
