@@ -1,3 +1,5 @@
+// features/availability/computeAvailableStartTimes.ts
+
 // ⚠️ TimeOpen Core Rule
 // This function MUST remain a pure computation engine.
 //
@@ -9,6 +11,7 @@
 //
 // All availability must always be computed on demand.
 // This is the heart of TimeOpen's model.
+//
 // Core Engine: available start times는 항상 계산값. DB/캐시/슬롯 저장 금지.
 
 import type { TimeRange } from "./weeklySchedule";
@@ -37,6 +40,11 @@ export function computeAvailableStartTimes(params: {
   stepMin: number;
 }) {
   const { workWindows, breaks, busy, durationMin, bufferMin, stepMin } = params;
+
+  // ✅ 잘못된 입력 방어: 엔진이 깨지지 않도록 안전하게 [] 반환
+  if (durationMin <= 0) return [];
+  if (bufferMin < 0) return [];
+  if (stepMin <= 0) return [];
 
   const result: string[] = [];
 
