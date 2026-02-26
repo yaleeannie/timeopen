@@ -10,6 +10,13 @@ function timeToMinutes(t: string): number {
   return hh * 60 + mm;
 }
 
+function normalizeTime(v?: string | null) {
+  if (!v) return null;
+  // "09:00" → 그대로, 혹시 이상한 값 방어
+  if (typeof v !== "string" || v.length < 4) return null;
+  return v.slice(0, 5);
+}
+
 function validateDay(day: any, label: string) {
   if (!day.open) return;
 
@@ -43,6 +50,11 @@ export async function saveAvailability(
     throw new Error("organizationId is required");
   }
 
+  // 🔥 지금 UI state 실제로 어떻게 들어오는지 확인
+  console.log("ACTION organizationId:", organizationId);
+  console.log("ACTION RAW STATE:", JSON.stringify(state, null, 2));
+
+  // validation
   for (const { key, label } of WEEKDAYS) {
     validateDay(state[key], label);
   }
@@ -51,6 +63,9 @@ export async function saveAvailability(
 
   const payload = WEEKDAYS.map(({ key, weekday }) => {
     const d = state[key];
+
+    // 🔥 각 요일 상태 로그 (문제 추적 핵심)
+    console.log("BUILD ROW:", key, d);
 
     if (!d.open) {
       return {
@@ -68,21 +83,23 @@ export async function saveAvailability(
       organization_id: organizationId,
       weekday,
       is_open: true,
-      work_start: d.work_start,
-      work_end: d.work_end,
-      break_start: d.break_start || null,
-      break_end: d.break_end || null,
+      work_start: normalizeTime(d.work_start),
+      work_end: normalizeTime(d.work_end),
+      break_start: normalizeTime(d.break_start),
+      break_end: normalizeTime(d.break_end),
     };
   });
 
-  console.log("UPSERT PAYLOAD:", payload);
+  // 🔥 실제 DB로 보내는 값 확인
+  console.log("UPSERT PAYLOAD:", JSON.stringify(payload, null, 2));
 
-const { data, error } = await supabase
-  .from("organization_availability")
-  .upsert(payload, { onConflict: "organization_id,weekday" })
-  .select();   // 🔥 이 줄 추가
+  const { data, error } = await supabase
+    .from("organization_availability")
+    .upsert(payload, { onConflict: "organization_id,weekday" })
+    .select();
 
-console.log("UPSERT RESULT:", data, error);
+  console.log("UPSERT RESULT:", data);
+  console.log("UPSERT ERROR:", error);
 
   if (error) {
     console.error("saveAvailability error:", error);

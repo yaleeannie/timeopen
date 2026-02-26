@@ -230,28 +230,38 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
     setState((prev) => ({ ...prev, [key]: { ...prev[key], ...patchObj } }));
   }
 
-  async function onSave() {
-    setMsg(null);
-    if (firstError) {
-      setMsg(firstError);
-      return;
-    }
-    setSaving(true);
-    try {
-      await saveAvailability(organizationId, state);
-      setMsg("저장되었습니다.");
-    } catch (e: any) {
-      setMsg(typeof e?.message === "string" ? e.message : "저장 실패");
-    } finally {
-      setSaving(false);
-    }
+ async function onSave() {
+  setMsg(null);
+  if (firstError) {
+    setMsg(firstError);
+    return;
   }
+
+  // 🔥 저장 직전, 실제로 어떤 값이 서버로 가는지 확인
+  console.log("SAVING ORG:", organizationId);
+  console.log("SAVING STATE:", state);
+
+  setSaving(true);
+  try {
+    await saveAvailability(organizationId, state);
+    setMsg("저장되었습니다.");
+  } catch (e: any) {
+    setMsg(typeof e?.message === "string" ? e.message : "저장 실패");
+  } finally {
+    setSaving(false);
+  }
+}
 
   return (
     <div className="space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Availability Settings</h1>
         <p className="text-sm font-medium text-gray-700">요일별 영업시간과 브레이크 시간을 설정하세요.</p>
+
+        <p className="text-xs text-red-500">
+        DEBUG organizationId: {organizationId}
+        </p>
+
 
         {/* ✅ 디버깅용: 지금 settings가 어떤 org에 저장하는지 보여줌 */}
         <p className="text-xs text-gray-500">organizationId: {organizationId}</p>

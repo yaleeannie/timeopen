@@ -38,7 +38,7 @@ function minToHhmm(v: number) {
 
 const toHHMM = (t: any) => (typeof t === "string" ? t.slice(0, 5) : "");
 
-// 🔥 DB rows → WeeklySchedule 변환 함수 (null 안전)
+// DB rows → WeeklySchedule 변환 (null 안전)
 function convertRowsToWeeklySchedule(rows: any[]): WeeklySchedule {
   const schedule: WeeklySchedule = {
     0: { closed: true },
@@ -94,7 +94,7 @@ export default function BookingScreen({ handle }: Props) {
   const [busy, setBusy] = useState<TimeRange[]>([]);
   const [isAutoRecommended, setIsAutoRecommended] = useState(false);
 
-  // ✅ 조직 조회
+  // ✅ 조직 조회 (handle → organizationId)
   useEffect(() => {
     let cancelled = false;
 
@@ -120,7 +120,7 @@ export default function BookingScreen({ handle }: Props) {
     };
   }, [handle]);
 
-  // ✅ 서버 API 통해 availability 가져오기 → WeeklySchedule 세팅
+  // ✅ availability 조회 → WeeklySchedule 세팅
   useEffect(() => {
     if (!organizationId) return;
 
@@ -139,6 +139,10 @@ export default function BookingScreen({ handle }: Props) {
       }
 
       const json = await res.json();
+      console.log("WEEKLY RAW:", json.data);
+      console.log("WEEKLY RAW[0] keys:", Object.keys(json.data?.[0] ?? {}));
+      console.log("WEEKLY RAW[0]:", json.data?.[0]);
+
       if (!json?.data) {
         console.error("fetchAvailability: no data");
         return;
@@ -173,34 +177,33 @@ export default function BookingScreen({ handle }: Props) {
     return MOCK_SERVICES.find((s) => s.id === serviceId) ?? null;
   }, [serviceId]);
 
-  // ✅ exception rule for the selected date
-const [exception, setException] = useState<any | null>(null);
+  // ✅ exception rule for selected date (있을 때만 override)
+  const [exception, setException] = useState<any | null>(null);
 
-useEffect(() => {
-  if (!organizationId || !dateISO || !weeklySchedule) return;
+  useEffect(() => {
+    if (!organizationId || !dateISO) return;
 
-  let cancelled = false;
+    let cancelled = false;
 
-  (async () => {
-    const ex = await fetchExceptionForDate({ organizationId, dateISO });
-    if (!cancelled) setException(ex);
-  })();
+    (async () => {
+      const ex = await fetchExceptionForDate({ organizationId, dateISO });
+      if (!cancelled) setException(ex);
+    })();
 
-  return () => {
-    cancelled = true;
-  };
-}, [organizationId, dateISO]);
+    return () => {
+      cancelled = true;
+    };
+  }, [organizationId, dateISO]);
 
-// ✅ dateISO + weeklySchedule + exception → dailySchedule
-const dailySchedule = useMemo(() => {
-  if (!dateISO || !weeklySchedule) return null;
+  // ✅ dateISO + weeklySchedule + exception → dailySchedule
+  const dailySchedule = useMemo(() => {
+    if (!dateISO || !weeklySchedule) return null;
 
-  const [y, m, d] = dateISO.split("-").map(Number);
-  const localDate = new Date(y, m - 1, d);
+    const [y, m, d] = dateISO.split("-").map(Number);
+    const localDate = new Date(y, m - 1, d);
 
-  return buildDailySchedule(localDate, weeklySchedule, exception);
-}, [dateISO, weeklySchedule, exception]);
-
+    return buildDailySchedule(localDate, weeklySchedule, exception);
+  }, [dateISO, weeklySchedule, exception]);
 
   // ✅ 날짜 바뀌면 busy 재조회
   useEffect(() => {
@@ -273,10 +276,7 @@ const dailySchedule = useMemo(() => {
   async function onCancelLatest() {
     if (!organizationId || !dateISO) return;
 
-    const latest = await fetchLatestConfirmedReservation({
-      organizationId,
-      dateISO,
-    });
+    const latest = await fetchLatestConfirmedReservation({ organizationId, dateISO });
 
     if (!latest?.id) {
       alert("취소할 예약 없음");
