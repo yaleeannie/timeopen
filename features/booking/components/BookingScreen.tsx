@@ -9,6 +9,7 @@ import BookingCta from "./BookingCta";
 
 import { MOCK_SERVICES } from "@/features/booking/mock";
 import { buildDailySchedule } from "@/features/availability/buildDailySchedule";
+import { fetchExceptionForDate } from "@/features/availability/fetchExceptionForDate";
 import { computeAvailableStartTimes } from "@/features/availability/computeAvailableStartTimes";
 import type { TimeRange, WeeklySchedule } from "@/features/availability/weeklySchedule";
 
@@ -172,15 +173,34 @@ export default function BookingScreen({ handle }: Props) {
     return MOCK_SERVICES.find((s) => s.id === serviceId) ?? null;
   }, [serviceId]);
 
-  // ✅ dateISO + weeklySchedule → dailySchedule
-  const dailySchedule = useMemo(() => {
-    if (!dateISO || !weeklySchedule) return null;
+  // ✅ exception rule for the selected date
+const [exception, setException] = useState<any | null>(null);
 
-    const [y, m, d] = dateISO.split("-").map(Number);
-    const localDate = new Date(y, m - 1, d);
+useEffect(() => {
+  if (!organizationId || !dateISO || !weeklySchedule) return;
 
-    return buildDailySchedule(localDate, weeklySchedule);
-  }, [dateISO, weeklySchedule]);
+  let cancelled = false;
+
+  (async () => {
+    const ex = await fetchExceptionForDate({ organizationId, dateISO });
+    if (!cancelled) setException(ex);
+  })();
+
+  return () => {
+    cancelled = true;
+  };
+}, [organizationId, dateISO]);
+
+// ✅ dateISO + weeklySchedule + exception → dailySchedule
+const dailySchedule = useMemo(() => {
+  if (!dateISO || !weeklySchedule) return null;
+
+  const [y, m, d] = dateISO.split("-").map(Number);
+  const localDate = new Date(y, m - 1, d);
+
+  return buildDailySchedule(localDate, weeklySchedule, exception);
+}, [dateISO, weeklySchedule, exception]);
+
 
   // ✅ 날짜 바뀌면 busy 재조회
   useEffect(() => {

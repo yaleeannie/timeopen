@@ -1,3 +1,16 @@
+// ⚠️ TimeOpen Core Rule
+// This function MUST remain a pure computation engine.
+//
+// DO NOT:
+// - store computed start times in DB
+// - cache results
+// - move logic into UI
+// - introduce slot tables
+//
+// All availability must always be computed on demand.
+// This is the heart of TimeOpen's model.
+// Core Engine: available start times는 항상 계산값. DB/캐시/슬롯 저장 금지.
+
 import type { TimeRange } from "./weeklySchedule";
 
 function hhmmToMin(v: string) {
