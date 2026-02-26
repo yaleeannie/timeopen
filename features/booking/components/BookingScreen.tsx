@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import ServicePicker from "./ServicePicker";
 import DateChips from "./DateChips";
@@ -14,16 +14,10 @@ import { computeAvailableStartTimes } from "@/features/availability/computeAvail
 import type { TimeRange, WeeklySchedule } from "@/features/availability/weeklySchedule";
 
 import { fetchBusyFromDb } from "@/features/availability/fetchBusyFromDb";
-
 import { saveReservation } from "@/features/booking/saveReservation";
-import { cancelReservation } from "@/features/booking/cancelReservation";
-import { fetchLatestConfirmedReservation } from "@/features/booking/fetchLatestConfirmedReservation";
-
 import { fetchOrganizationByHandle } from "@/features/organizations/fetchOrganizationByHandle";
 
-type Props = {
-  handle: string;
-};
+type Props = { handle: string };
 
 function hhmmToMin(v: string) {
   const [h, m] = v.split(":").map(Number);
@@ -38,7 +32,7 @@ function minToHhmm(v: number) {
 
 const toHHMM = (t: any) => (typeof t === "string" ? t.slice(0, 5) : "");
 
-// DB rows → WeeklySchedule 변환 (null 안전)
+/* Weekly 변환 */
 function convertRowsToWeeklySchedule(rows: any[]): WeeklySchedule {
   const schedule: WeeklySchedule = {
     0: { closed: true },
@@ -51,30 +45,20 @@ function convertRowsToWeeklySchedule(rows: any[]): WeeklySchedule {
   };
 
   for (const row of rows ?? []) {
-    const weekdayNum = Number(row.weekday);
-    if (!(weekdayNum >= 0 && weekdayNum <= 6)) continue;
-    const weekday = weekdayNum as keyof WeeklySchedule;
+    const weekday = Number(row.weekday) as keyof WeeklySchedule;
 
     if (!row.is_open) {
       schedule[weekday] = { closed: true };
       continue;
     }
 
-    const ws = toHHMM(row.work_start);
-    const we = toHHMM(row.work_end);
-
-    if (!ws || !we || !(ws < we)) {
-      schedule[weekday] = { closed: true };
-      continue;
-    }
-
-    const bs = toHHMM(row.break_start);
-    const be = toHHMM(row.break_end);
-
     schedule[weekday] = {
       closed: false,
-      workWindows: [{ start: ws, end: we }],
-      breaks: bs && be && bs < be ? [{ start: bs, end: be }] : [],
+      workWindows: [{ start: toHHMM(row.work_start), end: toHHMM(row.work_end) }],
+      breaks:
+        row.break_start && row.break_end
+          ? [{ start: toHHMM(row.break_start), end: toHHMM(row.break_end) }]
+          : [],
     };
   }
 
@@ -82,49 +66,41 @@ function convertRowsToWeeklySchedule(rows: any[]): WeeklySchedule {
 }
 
 export default function BookingScreen({ handle }: Props) {
-  const [serviceId, setServiceId] = useState<string | null>(null);
-  const [dateISO, setDateISO] = useState<string | null>(null);
-  const [time, setTime] = useState<string | null>(null);
-
   const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const [orgNotFound, setOrgNotFound] = useState(false);
-
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule | null>(null);
 
-  const [busy, setBusy] = useState<TimeRange[]>([]);
-  const [isAutoRecommended, setIsAutoRecommended] = useState(false);
+  const [dateISO, setDateISO] = useState<string | null>(null);
+  const [serviceId, setServiceId] = useState<string | null>(null);
+  const [time, setTime] = useState<string | null>(null);
 
-  // ✅ 조직 조회 (handle → organizationId)
+  const [busy, setBusy] = useState<TimeRange[] | null>(null);
+  const [exception, setException] = useState<any | undefined>(undefined);
+
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [hasComputed, setHasComputed] = useState(false);
+
+  const readyKeyRef = useRef<string | null>(null);
+
+  /* 기본 날짜 */
   useEffect(() => {
-    let cancelled = false;
+    if (dateISO) return;
+    const d = new Date();
+    setDateISO(
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+    );
+  }, [dateISO]);
 
-    setOrgNotFound(false);
-    setOrganizationId(null);
-    setWeeklySchedule(null);
-
+  /* org */
+  useEffect(() => {
     (async () => {
       const org = await fetchOrganizationByHandle(handle);
-      if (cancelled) return;
-
-      if (!org) {
-        setOrgNotFound(true);
-        return;
-      }
-
-      setOrganizationId(org.id);
-      console.log("BOOKING ORG ID:", org.id);
+      setOrganizationId(org?.id ?? null);
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [handle]);
 
-  // ✅ availability 조회 → WeeklySchedule 세팅
+  /* weekly */
   useEffect(() => {
     if (!organizationId) return;
-
-    let cancelled = false;
 
     (async () => {
       const res = await fetch("/api/fetchAvailability", {
@@ -133,183 +109,117 @@ export default function BookingScreen({ handle }: Props) {
         body: JSON.stringify({ organizationId }),
       });
 
-      if (!res.ok) {
-        console.error("fetchAvailability failed:", res.status);
-        return;
-      }
-
       const json = await res.json();
-      console.log("WEEKLY RAW:", json.data);
-      console.log("WEEKLY RAW[0] keys:", Object.keys(json.data?.[0] ?? {}));
-      console.log("WEEKLY RAW[0]:", json.data?.[0]);
-
-      if (!json?.data) {
-        console.error("fetchAvailability: no data");
-        return;
-      }
-
-      const weekly = convertRowsToWeeklySchedule(json.data);
-      if (!cancelled) setWeeklySchedule(weekly);
+      setWeeklySchedule(convertRowsToWeeklySchedule(json.data));
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [organizationId]);
 
-  // ✅ 기본 날짜 = 오늘 (로컬 기준)
+  /* 날짜 변경시 완전 초기화 */
   useEffect(() => {
-    if (dateISO) return;
+    setBusy(null);
+    setException(undefined);
+    setHasComputed(false);
+    setTime(null);
+  }, [organizationId, dateISO, serviceId]);
 
-    const today = new Date();
-    const localISO =
-      today.getFullYear() +
-      "-" +
-      String(today.getMonth() + 1).padStart(2, "0") +
-      "-" +
-      String(today.getDate()).padStart(2, "0");
-
-    setDateISO(localISO);
-  }, [dateISO]);
-
-  const service = useMemo(() => {
-    if (!serviceId) return null;
-    return MOCK_SERVICES.find((s) => s.id === serviceId) ?? null;
-  }, [serviceId]);
-
-  // ✅ exception rule for selected date (있을 때만 override)
-  const [exception, setException] = useState<any | null>(null);
-
+  /* exception */
   useEffect(() => {
     if (!organizationId || !dateISO) return;
-
-    let cancelled = false;
 
     (async () => {
       const ex = await fetchExceptionForDate({ organizationId, dateISO });
-      if (!cancelled) setException(ex);
+      setException(ex ?? null);
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [organizationId, dateISO]);
 
-  // ✅ dateISO + weeklySchedule + exception → dailySchedule
-  const dailySchedule = useMemo(() => {
-    if (!dateISO || !weeklySchedule) return null;
-
-    const [y, m, d] = dateISO.split("-").map(Number);
-    const localDate = new Date(y, m - 1, d);
-
-    return buildDailySchedule(localDate, weeklySchedule, exception);
-  }, [dateISO, weeklySchedule, exception]);
-
-  // ✅ 날짜 바뀌면 busy 재조회
+  /* busy */
   useEffect(() => {
     if (!organizationId || !dateISO) return;
 
-    let cancelled = false;
-
     (async () => {
       const rows = await fetchBusyFromDb({ organizationId, dateISO });
-      if (!cancelled) setBusy(rows);
+      setBusy(rows ?? []);
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [organizationId, dateISO]);
 
-  const availableTimes = useMemo(() => {
-    if (!service || !dailySchedule) return [];
+  const service = useMemo(
+    () => MOCK_SERVICES.find((s) => s.id === serviceId) ?? null,
+    [serviceId]
+  );
 
-    return computeAvailableStartTimes({
-      workWindows: dailySchedule.workWindows,
-      breaks: dailySchedule.breaks,
+  /* 🔥 compute는 busy + exception 둘 다 준비된 후 1회만 */
+  useEffect(() => {
+    if (!service || !weeklySchedule || !dateISO) return;
+    if (busy === null) return;
+    if (exception === undefined) return;
+
+    const key = `${organizationId}_${dateISO}_${serviceId}`;
+
+    if (readyKeyRef.current === key) return;
+
+    const [y, m, d] = dateISO.split("-").map(Number);
+    const daily = buildDailySchedule(
+      new Date(y, m - 1, d),
+      weeklySchedule,
+      exception
+    );
+
+        const now = new Date();
+    const todayISO =
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+    let notBefore: string | undefined = undefined;
+
+    // ✅ 선택된 날짜가 "오늘"이면 now 이후만 허용
+    if (dateISO === todayISO) {
+      notBefore =
+        `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    }
+
+    const result = computeAvailableStartTimes({
+      workWindows: daily.workWindows,
+      breaks: daily.breaks,
       busy,
       durationMin: service.durationMin,
       bufferMin: service.bufferMin,
       stepMin: 15,
+      notBefore, // ✅ 추가
     });
-  }, [service, dailySchedule, busy]);
 
-  // ✅ 서비스/날짜/가능시간 변경 시 첫 시간 자동 선택
-  useEffect(() => {
-    if (!serviceId || !dateISO || availableTimes.length === 0) {
-      setTime(null);
-      setIsAutoRecommended(false);
-      return;
-    }
-
-    setTime(availableTimes[0]);
-    setIsAutoRecommended(true);
-  }, [dateISO, serviceId, availableTimes]);
-
-  function onPickTime(t: string) {
-    setTime(t);
-    setIsAutoRecommended(false);
-  }
+    setAvailableTimes(result);
+    setHasComputed(true);
+    readyKeyRef.current = key;
+  }, [service, weeklySchedule, dateISO, busy, exception, serviceId, organizationId]);
 
   async function onReserve() {
     if (!organizationId || !service || !dateISO || !time) return;
 
-    const start = time;
     const end = minToHhmm(hhmmToMin(time) + service.durationMin);
 
     await saveReservation({
       organizationId,
       serviceId: service.id,
       dateISO,
-      start,
+      start: time,
       end,
       durationMin: service.durationMin,
       bufferMin: service.bufferMin,
     });
 
+    setBusy(null);
     const rows = await fetchBusyFromDb({ organizationId, dateISO });
-    setBusy(rows);
-
-    alert("예약 완료");
+    setBusy(rows ?? []);
   }
-
-  async function onCancelLatest() {
-    if (!organizationId || !dateISO) return;
-
-    const latest = await fetchLatestConfirmedReservation({ organizationId, dateISO });
-
-    if (!latest?.id) {
-      alert("취소할 예약 없음");
-      return;
-    }
-
-    await cancelReservation(latest.id);
-
-    const rows = await fetchBusyFromDb({ organizationId, dateISO });
-    setBusy(rows);
-
-    alert("최근 예약 취소 완료");
-  }
-
-  if (orgNotFound) return <div>존재하지 않는 페이지</div>;
-  if (!organizationId) return <div>로딩중...</div>;
-  if (!weeklySchedule) return <div>로딩중...</div>;
 
   return (
     <div className="space-y-8">
       <ServicePicker services={MOCK_SERVICES} value={serviceId} onChange={setServiceId} />
-
       <DateChips value={dateISO} onChange={setDateISO} />
+      <TimePicker times={availableTimes} value={time} onChange={setTime} />
 
-      {isAutoRecommended && time && (
-        <div className="text-sm text-neutral-500">현재 가장 빠른 예약 가능 시간이에요!</div>
+      {hasComputed && service && availableTimes.length === 0 && (
+        <div style={{ fontSize: 12, color: "#666" }}>가능한 시간이 없어요.</div>
       )}
-
-      <TimePicker times={availableTimes} value={time} onChange={onPickTime} />
-
-      <button onClick={onCancelLatest} className="border px-3 py-2 text-sm">
-        (테스트) 최근 예약 취소
-      </button>
 
       <BookingCta handle={handle} selection={{ serviceId, dateISO, time }} onReserve={onReserve} />
     </div>

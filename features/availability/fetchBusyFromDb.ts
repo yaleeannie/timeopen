@@ -17,6 +17,40 @@ function minToHhmm(v: number) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
+/* 🔥 겹치는 시간 병합 */
+function mergeRanges(ranges: TimeRange[]): TimeRange[] {
+  if (ranges.length === 0) return [];
+
+  const sorted = [...ranges].sort((a, b) =>
+    a.start.localeCompare(b.start)
+  );
+
+  const merged: TimeRange[] = [];
+  let current = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const next = sorted[i];
+
+    const currentEnd = hhmmToMin(current.end);
+    const nextStart = hhmmToMin(next.start);
+    const nextEnd = hhmmToMin(next.end);
+
+    if (nextStart <= currentEnd) {
+      // 겹치거나 붙어있음 → 확장
+      current = {
+        start: current.start,
+        end: minToHhmm(Math.max(currentEnd, nextEnd)),
+      };
+    } else {
+      merged.push(current);
+      current = next;
+    }
+  }
+
+  merged.push(current);
+  return merged;
+}
+
 export async function fetchBusyFromDb({
   organizationId,
   dateISO,
@@ -26,19 +60,25 @@ export async function fetchBusyFromDb({
     .select("start_time, end_time, buffer_min")
     .eq("organization_id", organizationId)
     .eq("date", dateISO)
-    .eq("status", "confirmed"); // ✅ confirmed만 busy로 계산
+    .eq("status", "confirmed")
+    .order("start_time", { ascending: true });
 
   if (error) {
     console.error(error);
     return [];
   }
 
-  // ✅ busy는 "예약 시간 + 예약의 buffer"까지 막히도록 확장해서 반환
-  return (data ?? []).map((r: any) => {
-    const endWithBuffer = minToHhmm(hhmmToMin(r.end_time) + (r.buffer_min ?? 0));
+  const expanded = (data ?? []).map((r: any) => {
+    const endWithBuffer = minToHhmm(
+      hhmmToMin(r.end_time) + (r.buffer_min ?? 0)
+    );
+
     return {
       start: r.start_time,
       end: endWithBuffer,
     };
   });
+
+  // 🔥 여기서 병합
+  return mergeRanges(expanded);
 }

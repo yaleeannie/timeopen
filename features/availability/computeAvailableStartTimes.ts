@@ -10,8 +10,6 @@
 // - introduce slot tables
 //
 // All availability must always be computed on demand.
-// This is the heart of TimeOpen's model.
-//
 // Core Engine: available start times는 항상 계산값. DB/캐시/슬롯 저장 금지.
 
 import type { TimeRange } from "./weeklySchedule";
@@ -38,13 +36,10 @@ export function computeAvailableStartTimes(params: {
   durationMin: number;
   bufferMin: number;
   stepMin: number;
+  /** 선택: 오늘이면 now 이후만 허용 (HH:MM) */
+  notBefore?: string;
 }) {
-  const { workWindows, breaks, busy, durationMin, bufferMin, stepMin } = params;
-
-  // ✅ 잘못된 입력 방어: 엔진이 깨지지 않도록 안전하게 [] 반환
-  if (durationMin <= 0) return [];
-  if (bufferMin < 0) return [];
-  if (stepMin <= 0) return [];
+  const { workWindows, breaks, busy, durationMin, bufferMin, stepMin, notBefore } = params;
 
   const result: string[] = [];
 
@@ -53,16 +48,19 @@ export function computeAvailableStartTimes(params: {
     end: hhmmToMin(r.end),
   }));
 
+  const notBeforeMin = notBefore ? hhmmToMin(notBefore) : null;
+
   for (const window of workWindows) {
     const start = hhmmToMin(window.start);
     const end = hhmmToMin(window.end);
 
     for (let t = start; t + durationMin <= end; t += stepMin) {
+      // ✅ 오늘이면 now 이후만 (UI 필터 금지 → 엔진에서 처리)
+      if (notBeforeMin !== null && t < notBeforeMin) continue;
+
       const bookingEnd = t + durationMin + bufferMin;
 
-      const conflict = blocked.some((b) =>
-        overlaps(t, bookingEnd, b.start, b.end)
-      );
+      const conflict = blocked.some((b) => overlaps(t, bookingEnd, b.start, b.end));
 
       if (!conflict) {
         result.push(minToHhmm(t));
