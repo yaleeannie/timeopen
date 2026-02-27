@@ -16,7 +16,7 @@ export default async function AvailabilitySettingsPage({ searchParams }: Props) 
     </main>
   );
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
 
   // ✅ 1) 로그인 필수
   const {

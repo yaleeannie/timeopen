@@ -59,7 +59,7 @@ export async function saveAvailability(
     validateDay(state[key], label);
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
 
   const payload = WEEKDAYS.map(({ key, weekday }) => {
     const d = state[key];

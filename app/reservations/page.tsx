@@ -30,8 +30,8 @@ export default async function ReservationsPage(props: { searchParams?: SearchPar
   const resolved = props.searchParams ? await props.searchParams : undefined;
   const handle = pickHandle(resolved)?.trim().toLowerCase() ?? null;
 
-  const supabase = await createSupabaseServerClient();
-  
+  const supabase = createSupabaseServerClient();
+
   // ✅ 1) 로그인 필수 (owner 전용)
   const {
     data: { user },
