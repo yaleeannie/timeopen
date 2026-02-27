@@ -2,8 +2,8 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
-export function createSupabaseServerClient() {
-  const cookieStore = cookies(); // ✅ await 금지 (Promise 아님)
+export async function createSupabaseServerClient() {
+  const cookieStore = await cookies(); // ✅ 여기 반드시 await
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -18,13 +18,12 @@ export function createSupabaseServerClient() {
         return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
-        // ✅ Server Component에서는 set이 막힐 수 있어서 try/catch 유지
         try {
           for (const { name, value, options } of cookiesToSet) {
             cookieStore.set(name, value, options);
           }
         } catch {
-          // ignore
+          // Server Component에서는 set이 막힐 수 있어서 무시
         }
       },
     },

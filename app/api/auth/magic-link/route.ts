@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   // ✅ redirect는 고정 OK (프로덕션 기준)
   // 로컬에서도 쓰고 싶으면 아래처럼 분기해도 됨:

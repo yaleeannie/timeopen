@@ -6,7 +6,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const next = url.searchParams.get("next") ?? "/owner";
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   // (A) PKCE code flow (Google OAuth 등)
   const code = url.searchParams.get("code");

@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: [], error: "Missing handle" }, { status: 400 });
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
 
   const { data, error } = await supabase.rpc("get_availability_rows_by_handle", {
     p_handle: handle,
