@@ -1,29 +1,60 @@
 // app/owner/page.tsx
 // TimeOpen Seller Hub (NOT a dashboard)
 // Just a link collection page.
-// This page exists only to verify that Settings / Booking use the SAME organization.
+// ✅ 최소 수정: 로그인/로그아웃 버튼 + 로그인 상태 표시만 추가
 
+import Link from "next/link";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchOrganizationByHandle } from "@/features/organizations/fetchOrganizationByHandle";
 
+export const dynamic = "force-dynamic";
+
 export default async function OwnerPage() {
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // ✅ 로그아웃 (서버 액션)
+  async function signOut() {
+    "use server";
+    const supabase = await createSupabaseServerClient();
+    await supabase.auth.signOut();
+  }
+
   // ✅ demo handle이 어떤 organization에 매핑되는지 "읽기 전용 확인"
   const org = await fetchOrganizationByHandle("demo");
 
   if (!org) {
-    return (
-      <div style={{ padding: 20 }}>
-        organization not found for handle=demo
-      </div>
-    );
+    return <div style={{ padding: 20 }}>organization not found for handle=demo</div>;
   }
 
-  // 고객 예약 링크는 환경(로컬/배포)에 따라 origin이 달라질 수 있어서,
-  // 클라이언트에서 window.location.origin을 사용해 완전한 URL로 복사한다.
   const handle = org.handle; // "demo"
 
   return (
     <div style={{ padding: 20, fontSize: 16 }}>
-      <h2>TimeOpen 판매자 페이지</h2>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <h2 style={{ margin: 0 }}>TimeOpen 판매자 페이지</h2>
+
+        {/* ✅ 로그인/로그아웃 버튼 (최소 UI) */}
+        {user ? (
+          <form action={signOut}>
+            <button type="submit" style={{ fontSize: 13, padding: "6px 10px" }}>
+              로그아웃
+            </button>
+          </form>
+        ) : (
+          <Link href="/login" style={{ fontSize: 13, padding: "6px 10px", border: "1px solid #ddd", borderRadius: 8 }}>
+            로그인
+          </Link>
+        )}
+      </div>
+
+      {/* ✅ 로그인 상태 표시 (최소 텍스트) */}
+      <div style={{ marginTop: 10, fontSize: 13, color: "#666" }}>
+        {user ? <div>로그인됨: {user.email ?? user.id}</div> : <div>로그인이 필요합니다.</div>}
+      </div>
 
       {/* 🔒 정합성 확인용 (절대 수정 기능 아님, 그냥 표시만) */}
       <div style={{ marginTop: 10, fontSize: 13, color: "#666" }}>
@@ -48,22 +79,14 @@ export default async function OwnerPage() {
             /u/{handle}
           </code>
 
-          <button
-            id="copy-booking-link"
-            type="button"
-            style={{ fontSize: 13, padding: "4px 8px" }}
-          >
+          <button id="copy-booking-link" type="button" style={{ fontSize: 13, padding: "4px 8px" }}>
             복사
           </button>
 
-          <span
-            id="copy-status"
-            style={{ fontSize: 12, color: "#666" }}
-            aria-live="polite"
-          />
+          <span id="copy-status" style={{ fontSize: 12, color: "#666" }} aria-live="polite" />
         </div>
 
-        {/* Server Component를 유지하기 위해 onClick 대신 아주 작은 script로만 처리 */}
+        {/* Server Component 유지: onClick 대신 script */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -81,7 +104,6 @@ export default async function OwnerPage() {
       if (status) status.textContent = "복사됨";
       setTimeout(function () { if (status) status.textContent = ""; }, 1200);
     } catch (e) {
-      // clipboard가 막힌 환경(HTTP/권한) 대비: 최소한의 fallback 안내
       if (status) status.textContent = "복사 실패(권한)";
       setTimeout(function () { if (status) status.textContent = ""; }, 1500);
     }
