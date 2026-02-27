@@ -2,57 +2,59 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-function normalizeEmail(email: string) {
-  return email.trim().toLowerCase();
+function normalizeEmail(v: string) {
+  return v.trim().toLowerCase();
+}
+
+function parseOwnerEmails(env?: string | null) {
+  return (env ?? "")
+    .split(",")
+    .map((s) => normalizeEmail(s))
+    .filter(Boolean);
 }
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  const emailRaw = body?.email;
+  const { email } = await req.json();
 
-  if (!emailRaw || typeof emailRaw !== "string") {
+  if (!email || typeof email !== "string") {
     return NextResponse.json({ error: "email required" }, { status: 400 });
   }
 
-  const email = normalizeEmail(emailRaw);
+  // ✅ A안 핵심: 허용된 owner 이메일만 로그인 메일 발송
+  const owners = parseOwnerEmails(process.env.OWNER_EMAILS);
+  const e = normalizeEmail(email);
 
-  // ✅ A안 핵심: owner allowlist (원하는 방식으로 바꿔도 됨)
-  // 가장 간단하게: 환경변수에 owner 이메일 넣기
-  // 예: OWNER_EMAILS="yaleeannie@gmail.com,other@domain.com"
-  const allow = (process.env.OWNER_EMAILS ?? "")
-    .split(",")
-    .map((x) => x.trim().toLowerCase())
-    .filter(Boolean);
-
-  if (allow.length > 0 && !allow.includes(email)) {
-    // 보안상 "없는 계정" 느낌으로 응답해도 되지만, 운영 편하게 명확히 막자
+  if (owners.length === 0) {
     return NextResponse.json(
-      { error: "허용되지 않은 이메일입니다. owner 이메일만 로그인 가능해요." },
+      { error: "OWNER_EMAILS not set on server" },
+      { status: 500 }
+    );
+  }
+
+  if (!owners.includes(e)) {
+    return NextResponse.json(
+      { error: "허용되지 않은 이메일입니다. (owner 전용)" },
       { status: 403 }
     );
   }
 
   const supabase = await createSupabaseServerClient();
 
-  // ✅ redirect는 고정 OK (프로덕션 기준)
-  // 로컬에서도 쓰고 싶으면 아래처럼 분기해도 됨:
-  // const origin = process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://timeopen.vercel.app";
-  const redirectTo = "https://timeopen.vercel.app/auth/callback?next=/owner";
+  // ✅ 배포/로컬 모두 커버 (가능하면 NEXT_PUBLIC_SITE_URL도 추가해도 됨)
+  const origin =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "") ||
+    "https://timeopen.vercel.app";
+
+  const redirectTo = `${origin}/auth/callback?next=/owner`;
 
   const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: redirectTo,
-    },
+    email: e,
+    options: { emailRedirectTo: redirectTo },
   });
 
   if (error) {
-    // rate limit / 설정오류 / 기타 에러를 그대로 전달
-    // (서버 내부 메시지 노출이 싫으면 error.message를 일반화해도 됨)
-    return NextResponse.json(
-      { error: error.message },
-      { status: error.status ?? 400 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 429 });
   }
 
   return NextResponse.json({ ok: true });
