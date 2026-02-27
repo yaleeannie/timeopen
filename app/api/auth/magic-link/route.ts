@@ -11,22 +11,17 @@ export async function POST(req: Request) {
 
   const supabase = await createSupabaseServerClient();
 
-  // 배포/로컬 모두 대응
-  const origin =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "") ||
-    "https://timeopen.vercel.app";
-
-  // ✅ 매직링크가 눌리면 무조건 여기(/auth/callback)로 들어오게
-  const emailRedirectTo = `${origin.replace(/^http:\/\//, "https://")}/auth/callback?next=/owner`;
+  // ✅ 절대 URL 하드코딩 (이게 핵심)
+  const redirectTo = "https://timeopen.vercel.app/auth/callback?next=/owner";
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo },
+    options: {
+      emailRedirectTo: redirectTo,
+    },
   });
 
   if (error) {
-    // Supabase가 rate limit 걸면 보통 여기로 들어옴
     return NextResponse.json({ error: error.message }, { status: 429 });
   }
 
