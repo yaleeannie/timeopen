@@ -42,7 +42,8 @@ export default function DateChips({ value, onChange, days = 14 }: Props) {
     });
   }, [today, days]);
 
-  const selectedISO = value ?? items[0]?.iso ?? null;
+  // ✅ value가 null이면 "선택 없음"
+  const selectedISO = value;
 
   return (
     <div className="space-y-2">
@@ -69,7 +70,7 @@ export default function DateChips({ value, onChange, days = 14 }: Props) {
         <div className="mt-3 -mx-3 px-3 overflow-x-auto">
           <div className="flex gap-2">
             {items.map((it) => {
-              const active = it.iso === selectedISO;
+              const active = selectedISO != null && it.iso === selectedISO;
 
               return (
                 <button

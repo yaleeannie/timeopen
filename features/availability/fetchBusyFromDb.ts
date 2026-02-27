@@ -69,15 +69,17 @@ export async function fetchBusyFromDb({
   }
 
   const expanded = (data ?? []).map((r: any) => {
-    const endWithBuffer = minToHhmm(
-      hhmmToMin(r.end_time) + (r.buffer_min ?? 0)
-    );
+  const buffer = Number(r.buffer_min ?? 0) || 0;
 
-    return {
-      start: r.start_time,
-      end: endWithBuffer,
-    };
-  });
+  const endWithBuffer = minToHhmm(
+    hhmmToMin(String(r.end_time).slice(0, 5)) + buffer
+  );
+
+  return {
+    start: String(r.start_time).slice(0, 5),
+    end: endWithBuffer,
+  };
+});
 
   // 🔥 여기서 병합
   return mergeRanges(expanded);

@@ -1,27 +1,27 @@
 // features/booking/saveReservation.ts
-
 import { supabase } from "@/lib/supabase/client";
 
 type Params = {
-  organizationId: string;
+  // ✅ 더 이상 orgId 신뢰하지 않음. handle로만 예약 생성.
+  handle: string;
+
   serviceId: string;
-  dateISO: string;
+  dateISO: string; // YYYY-MM-DD
   start: string; // "HH:MM"
-  end: string;   // "HH:MM" (start + duration)
+  end: string; // "HH:MM"
   durationMin: number;
   bufferMin: number;
+
+  // ✅ (권장) 최소 정보. 아직 UI 없으면 일단 optional로 두고,
+  // 나중에 BookingScreen에서 입력 받도록 바꾸면 됨.
+  name?: string;
+  contact?: string;
 };
 
-function hhmmToMin(v: string) {
-  const [h, m] = v.split(":").map(Number);
-  return h * 60 + m;
-}
-
-function overlaps(aStart: number, aEnd: number, bStart: number, bEnd: number) {
-  return aStart < bEnd && bStart < aEnd;
-}
-
 export async function saveReservation(params: Params) {
+  const handle = (params.handle ?? "").trim().toLowerCase();
+  if (!handle) throw new Error("예약 실패: handle이 없습니다.");
+
   // ✅ 입력 방어
   if (params.durationMin <= 0) {
     throw new Error("예약 실패: durationMin은 0보다 커야 합니다.");
@@ -30,38 +30,22 @@ export async function saveReservation(params: Params) {
     throw new Error("예약 실패: bufferMin은 0 이상이어야 합니다.");
   }
 
-  const newStart = hhmmToMin(params.start);
-  const newEndWithBuffer = hhmmToMin(params.end) + params.bufferMin;
-
-  // ✅ 저장 직전, DB에서 다시 한 번 충돌 검사 (마지막 안전장치)
-  const { data: existing, error: fetchErr } = await supabase
-    .from("reservations")
-    .select("start_time,end_time,buffer_min,status")
-    .eq("organization_id", params.organizationId)
-    .eq("date", params.dateISO)
-    .eq("status", "confirmed");
-
-  if (fetchErr) throw fetchErr;
-
-  for (const r of existing ?? []) {
-    const s = hhmmToMin(String(r.start_time).slice(0, 5));
-    const e = hhmmToMin(String(r.end_time).slice(0, 5)) + (r.buffer_min ?? 0);
-
-    if (overlaps(newStart, newEndWithBuffer, s, e)) {
-      throw new Error("예약 충돌: 기존 예약과 시간이 겹칩니다.");
-    }
-  }
-
-  const { error } = await supabase.from("reservations").insert({
-    organization_id: params.organizationId,
-    service_id: params.serviceId,
-    date: params.dateISO,
-    start_time: params.start,
-    end_time: params.end,
-    duration_min: params.durationMin,
-    buffer_min: params.bufferMin,
-    status: "confirmed",
+  // ✅ RLS/권한 모델상 reservations 직접 select/insert 금지
+  // ✅ 반드시 DB 함수(RPC)로만 생성
+  const { error } = await supabase.rpc("create_reservation_by_handle", {
+    p_handle: handle,
+    p_service_id: params.serviceId,
+    p_date: params.dateISO,
+    p_start_time: params.start,
+    p_end_time: params.end,
+    p_duration_min: params.durationMin,
+    p_buffer_min: params.bufferMin,
+    p_name: (params.name ?? "").trim(),
+    p_contact: (params.contact ?? "").trim(),
   });
 
-  if (error) throw error;
+  if (error) {
+    // DB에서 충돌/검증 에러를 message로 내려주면 그대로 사용자에게 보여주기 좋음
+    throw new Error(error.message);
+  }
 }

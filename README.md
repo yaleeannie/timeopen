@@ -109,3 +109,35 @@ TimeOpen은 “캘린더/미팅 스케줄러”가 아니라
 
 문제가 없으면 **더 이상 수정하지 않는다.**
 이 시점부터 TimeOpen은 “개발”이 아니라 “검증” 단계다.
+
+## Demo Data Rule (중요)
+
+- handle=demo 는 반드시 하나의 organization에만 매핑되어야 한다.
+- Availability / Booking / Reservation 모든 동작은 이 동일 organization 기준으로 수행된다.
+
+## Demo Flow (How TimeOpen is Used)
+
+### Owner (사업자)
+1. /owner 접속
+2. 영업시간 설정 (Weekly Availability)
+3. 고객에게 예약 링크 전달
+4. /reservations 에서 예약 확인
+
+### Customer (고객)
+1. 예약 링크 접속
+2. 서비스 선택
+3. 날짜 선택
+4. 가능한 시간 선택
+5. 예약 완료
+
+## Product Principles
+
+TimeOpen은 다음만 저장한다:
+
+- Weekly 영업시간 규칙
+- 특정 날짜 예외(Exception)
+- 예약(Reservation)
+
+TimeOpen은 가능한 시간(Start Time)을 저장하지 않는다.
+
+모든 가능한 시간은 요청 시점에 계산된다.

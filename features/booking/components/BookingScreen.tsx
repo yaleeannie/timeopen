@@ -23,16 +23,13 @@ function hhmmToMin(v: string) {
   const [h, m] = v.split(":").map(Number);
   return h * 60 + m;
 }
-
 function minToHhmm(v: number) {
   const h = Math.floor(v / 60);
   const m = v % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
-
 const toHHMM = (t: any) => (typeof t === "string" ? t.slice(0, 5) : "");
 
-/* Weekly 변환 */
 function convertRowsToWeeklySchedule(rows: any[]): WeeklySchedule {
   const schedule: WeeklySchedule = {
     0: { closed: true },
@@ -65,6 +62,10 @@ function convertRowsToWeeklySchedule(rows: any[]): WeeklySchedule {
   return schedule;
 }
 
+function formatISODate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function BookingScreen({ handle }: Props) {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule | null>(null);
@@ -73,24 +74,56 @@ export default function BookingScreen({ handle }: Props) {
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [time, setTime] = useState<string | null>(null);
 
-  const [busy, setBusy] = useState<TimeRange[] | null>(null);
-  const [exception, setException] = useState<any | undefined>(undefined);
-
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
-  const [hasComputed, setHasComputed] = useState(false);
 
-  const readyKeyRef = useRef<string | null>(null);
+  const [showEarliestHint, setShowEarliestHint] = useState(false);
+  const earliestHintKeyRef = useRef<string | null>(null);
 
-  /* 기본 날짜 */
-  useEffect(() => {
-    if (dateISO) return;
-    const d = new Date();
-    setDateISO(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-    );
-  }, [dateISO]);
+  const userPickedTimeRef = useRef(false);
+  const computedKeyRef = useRef<string | null>(null);
+  const reqIdRef = useRef(0);
 
-  /* org */
+  // ✅ "현재 화면이 빈 상태(가능한 시간 없음)인지" 표시는
+  // 최신 계산 결과가 반영될 때만 바뀌게끔 별도 상태로 들고 간다.
+  const [noTimesForCurrent, setNoTimesForCurrent] = useState<boolean>(false);
+
+  // ✅ CTA 깜빡임 방지용: 마지막으로 유효했던 selection을 유지한다.
+  const lastStableSelectionRef = useRef<{ dateISO: string | null; serviceId: string | null; time: string | null }>({
+    dateISO: null,
+    serviceId: null,
+    time: null,
+  });
+
+  const service = useMemo(
+    () => MOCK_SERVICES.find((s) => s.id === serviceId) ?? null,
+    [serviceId]
+  );
+
+  const currentKey = useMemo(() => {
+    if (!organizationId || !dateISO || !serviceId) return null;
+    return `${organizationId}_${dateISO}_${serviceId}`;
+  }, [organizationId, dateISO, serviceId]);
+
+  const isTimesReadyForCurrent = currentKey != null && computedKeyRef.current === currentKey;
+
+  const shouldShowEarliestHint =
+    showEarliestHint &&
+    currentKey != null &&
+    earliestHintKeyRef.current === currentKey &&
+    isTimesReadyForCurrent &&
+    time != null &&
+    availableTimes[0] === time;
+
+  // ✅ CTA에 내려줄 selection은 "현재 계산이 완료된 경우에만" 갱신
+  // (계산 중에는 마지막 안정 상태를 그대로 유지 → 버튼 깜빡임 제거)
+  const ctaSelection = useMemo(() => {
+    if (isTimesReadyForCurrent) {
+      lastStableSelectionRef.current = { dateISO, serviceId, time };
+      return { dateISO, serviceId, time };
+    }
+    return lastStableSelectionRef.current;
+  }, [isTimesReadyForCurrent, dateISO, serviceId, time]);
+
   useEffect(() => {
     (async () => {
       const org = await fetchOrganizationByHandle(handle);
@@ -98,7 +131,6 @@ export default function BookingScreen({ handle }: Props) {
     })();
   }, [handle]);
 
-  /* weekly */
   useEffect(() => {
     if (!organizationId) return;
 
@@ -114,114 +146,175 @@ export default function BookingScreen({ handle }: Props) {
     })();
   }, [organizationId]);
 
-  /* 날짜 변경시 완전 초기화 */
-  useEffect(() => {
-    setBusy(null);
-    setException(undefined);
-    setHasComputed(false);
-    setTime(null);
-  }, [organizationId, dateISO, serviceId]);
+  async function recomputeTimes(nextDateISO: string | null, nextServiceId: string | null) {
+    if (!organizationId || !weeklySchedule) return;
+    if (!nextDateISO || !nextServiceId) return;
 
-  /* exception */
-  useEffect(() => {
-    if (!organizationId || !dateISO) return;
+    const nextService = MOCK_SERVICES.find((s) => s.id === nextServiceId) ?? null;
+    if (!nextService) return;
 
-    (async () => {
-      const ex = await fetchExceptionForDate({ organizationId, dateISO });
-      setException(ex ?? null);
-    })();
-  }, [organizationId, dateISO]);
+    const myReq = ++reqIdRef.current;
+    const key = `${organizationId}_${nextDateISO}_${nextServiceId}`;
 
-  /* busy */
-  useEffect(() => {
-    if (!organizationId || !dateISO) return;
+    const [ex, busy] = await Promise.all([
+      fetchExceptionForDate({ organizationId, dateISO: nextDateISO }),
+      fetchBusyFromDb({ organizationId, dateISO: nextDateISO }),
+    ]);
 
-    (async () => {
-      const rows = await fetchBusyFromDb({ organizationId, dateISO });
-      setBusy(rows ?? []);
-    })();
-  }, [organizationId, dateISO]);
+    if (reqIdRef.current !== myReq) return;
 
-  const service = useMemo(
-    () => MOCK_SERVICES.find((s) => s.id === serviceId) ?? null,
-    [serviceId]
-  );
+    const [y, m, d] = nextDateISO.split("-").map(Number);
+    const daily = buildDailySchedule(new Date(y, m - 1, d), weeklySchedule, ex ?? null);
 
-  /* 🔥 compute는 busy + exception 둘 다 준비된 후 1회만 */
-  useEffect(() => {
-    if (!service || !weeklySchedule || !dateISO) return;
-    if (busy === null) return;
-    if (exception === undefined) return;
-
-    const key = `${organizationId}_${dateISO}_${serviceId}`;
-
-    if (readyKeyRef.current === key) return;
-
-    const [y, m, d] = dateISO.split("-").map(Number);
-    const daily = buildDailySchedule(
-      new Date(y, m - 1, d),
-      weeklySchedule,
-      exception
-    );
-
-        const now = new Date();
-    const todayISO =
-      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-
+    const now = new Date();
+    const todayISO = formatISODate(now);
     let notBefore: string | undefined = undefined;
-
-    // ✅ 선택된 날짜가 "오늘"이면 now 이후만 허용
-    if (dateISO === todayISO) {
-      notBefore =
-        `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    if (nextDateISO === todayISO) {
+      notBefore = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     }
 
     const result = computeAvailableStartTimes({
       workWindows: daily.workWindows,
       breaks: daily.breaks,
-      busy,
-      durationMin: service.durationMin,
-      bufferMin: service.bufferMin,
+      busy: busy ?? [],
+      durationMin: nextService.durationMin,
+      bufferMin: nextService.bufferMin,
       stepMin: 15,
-      notBefore, // ✅ 추가
+      notBefore,
     });
 
+    if (reqIdRef.current !== myReq) return;
+
     setAvailableTimes(result);
-    setHasComputed(true);
-    readyKeyRef.current = key;
-  }, [service, weeklySchedule, dateISO, busy, exception, serviceId, organizationId]);
+    computedKeyRef.current = key;
+
+    // ✅ "가능한 시간이 없어요" 표시는 결과가 확정된 순간에만 갱신
+    setNoTimesForCurrent(result.length === 0);
+
+    const first = result[0] ?? null;
+
+    if (!userPickedTimeRef.current) {
+      setTime(first);
+      setShowEarliestHint(first != null);
+      earliestHintKeyRef.current = key;
+    } else {
+      const stillValid = time != null && result.includes(time);
+      if (!stillValid) {
+        userPickedTimeRef.current = false;
+        setTime(first);
+        setShowEarliestHint(first != null);
+        earliestHintKeyRef.current = key;
+      } else {
+        setShowEarliestHint(false);
+        earliestHintKeyRef.current = null;
+      }
+    }
+  }
 
   async function onReserve() {
-    if (!organizationId || !service || !dateISO || !time) return;
+    if (!organizationId || !service || !dateISO || !serviceId || !time) return;
+    if (!isTimesReadyForCurrent) return;
+
+    if (!availableTimes.includes(time)) {
+      alert("선택한 시간은 현재 예약할 수 없어요. 다시 선택해 주세요.");
+      return;
+    }
 
     const end = minToHhmm(hhmmToMin(time) + service.durationMin);
 
-    await saveReservation({
-      organizationId,
+    try {
+      await saveReservation({
+      handle,
       serviceId: service.id,
       dateISO,
       start: time,
       end,
       durationMin: service.durationMin,
       bufferMin: service.bufferMin,
-    });
+      name: "guest",      // ✅ 임시
+      contact: "instagram", // ✅ 임시
+      });
+    } catch (e: any) {
+      alert(e?.message ?? "예약 처리 중 오류가 발생했습니다.");
+      return;
+    }
 
-    setBusy(null);
-    const rows = await fetchBusyFromDb({ organizationId, dateISO });
-    setBusy(rows ?? []);
+    alert("예약이 완료되었습니다!");
+
+    setTime(null);
+    userPickedTimeRef.current = false;
+    setShowEarliestHint(false);
+    earliestHintKeyRef.current = null;
+
+    await recomputeTimes(dateISO, serviceId);
   }
+
+  const hintSlotHeight = 18;
 
   return (
     <div className="space-y-8">
-      <ServicePicker services={MOCK_SERVICES} value={serviceId} onChange={setServiceId} />
-      <DateChips value={dateISO} onChange={setDateISO} />
-      <TimePicker times={availableTimes} value={time} onChange={setTime} />
+      <ServicePicker
+        services={MOCK_SERVICES}
+        value={serviceId}
+        onChange={(next) => {
+          userPickedTimeRef.current = false;
+          setTime(null);
+          setServiceId(next);
+          void recomputeTimes(dateISO, next);
+        }}
+      />
 
-      {hasComputed && service && availableTimes.length === 0 && (
-        <div style={{ fontSize: 12, color: "#666" }}>가능한 시간이 없어요.</div>
-      )}
+      <div className="space-y-4">
+        <DateChips
+          value={dateISO}
+          onChange={(next) => {
+            userPickedTimeRef.current = false;
+            setTime(null);
+            setDateISO(next);
+            void recomputeTimes(next, serviceId);
+          }}
+        />
 
-      <BookingCta handle={handle} selection={{ serviceId, dateISO, time }} onReserve={onReserve} />
+        <div className="space-y-3">
+          <div
+            style={{
+              height: hintSlotHeight,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <div
+              className="text-xs"
+              style={{
+                color: "#666",
+                opacity: shouldShowEarliestHint ? 1 : 0,
+                transition: "opacity 160ms ease",
+                pointerEvents: "none",
+              }}
+            >
+              현재 예약 가능한 가장 빠른 시간이에요!
+            </div>
+          </div>
+
+          <TimePicker
+            times={availableTimes}
+            value={time}
+            onChange={(t) => {
+              if (!isTimesReadyForCurrent) return;
+
+              userPickedTimeRef.current = true;
+              setTime(t);
+
+              setShowEarliestHint(false);
+              earliestHintKeyRef.current = null;
+            }}
+          />
+        </div>
+      </div>
+
+      {/* ✅ 2) CTA 깜빡임 제거:
+          selection을 계산 완료 시점에만 갱신 → 버튼이 0.1초 비활성화됐다가 켜지는 현상 방지 */}
+      <BookingCta handle={handle} selection={ctaSelection} onReserve={onReserve} />
     </div>
   );
 }
