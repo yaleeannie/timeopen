@@ -88,6 +88,11 @@ export default async function AvailabilitySettingsPage({ searchParams }: Props) 
     organizationId = mem.organization_id;
   }
 
+  // ✅ TS 에러 해결 포인트: 여기서 null이면 return으로 막기
+  if (!organizationId) {
+    return <Shell>조직 정보를 불러오지 못했어요.</Shell>;
+  }
+
   return (
     <Shell>
       <AvailabilitySettingsClient organizationId={organizationId} />
