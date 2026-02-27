@@ -138,7 +138,7 @@ export default function BookingScreen({ handle }: Props) {
       const res = await fetch("/api/fetchAvailability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId }),
+        body: JSON.stringify({ handle })
       });
 
       const json = await res.json();
@@ -157,8 +157,8 @@ export default function BookingScreen({ handle }: Props) {
     const key = `${organizationId}_${nextDateISO}_${nextServiceId}`;
 
     const [ex, busy] = await Promise.all([
-      fetchExceptionForDate({ organizationId, dateISO: nextDateISO }),
-      fetchBusyFromDb({ organizationId, dateISO: nextDateISO }),
+      fetchExceptionForDate({ handle, dateISO: nextDateISO })
+      fetchBusyFromDb({ handle, dateISO: nextDateISO })
     ]);
 
     if (reqIdRef.current !== myReq) return;

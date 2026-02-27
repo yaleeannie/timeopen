@@ -1,15 +1,14 @@
-export async function fetchExceptionForDate(params: {
-  organizationId: string;
-  dateISO: string;
-}) {
-  const res = await fetch("/api/fetchException", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
+// features/availability/fetchExceptionForDate.ts
+import { supabase } from "@/lib/supabase/client";
+
+export async function fetchExceptionForDate(params: { handle: string; dateISO: string }) {
+  const { data, error } = await supabase.rpc("get_exception_by_handle_date", {
+    p_handle: params.handle,
+    p_date: params.dateISO,
   });
 
-  if (!res.ok) return null;
+  if (error) throw error;
 
-  const json = await res.json();
-  return json?.data ?? null;
+  // RPC가 jsonb 1개(or null)을 주도록 했으니까 그대로 반환
+  return data ?? null;
 }
