@@ -1,4 +1,4 @@
-// middleware.ts
+// middleware.ts (ROOT에 있어야 함)
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // 세션 감지/갱신 + 쿠키 반영 트리거
+  // ⭐ 이 줄이 로그인 세션을 실제 쿠키로 저장시킴
   await supabase.auth.getUser();
 
   return response;
