@@ -1,62 +1,36 @@
-// app/owner/page.tsx
-// TimeOpen Seller Hub (NOT a dashboard)
-// Just a link collection page.
-// ✅ 최소 수정: 로그인/로그아웃 버튼 + 로그인 상태 표시만 추가
-
-import Link from "next/link";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchOrganizationByHandle } from "@/features/organizations/fetchOrganizationByHandle";
-
-export const dynamic = "force-dynamic";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import LoginPanel from "./LoginPanel";
 
 export default async function OwnerPage() {
-  const supabase = await createSupabaseServerClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // ✅ 로그아웃 (서버 액션)
-  async function signOut() {
-    "use server";
-    const supabase = await createSupabaseServerClient();
-    await supabase.auth.signOut();
-  }
-
-  // ✅ demo handle이 어떤 organization에 매핑되는지 "읽기 전용 확인"
   const org = await fetchOrganizationByHandle("demo");
 
   if (!org) {
     return <div style={{ padding: 20 }}>organization not found for handle=demo</div>;
   }
 
-  const handle = org.handle; // "demo"
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const handle = org.handle;
 
   return (
     <div style={{ padding: 20, fontSize: 16 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <h2 style={{ margin: 0 }}>TimeOpen 판매자 페이지</h2>
+      <h2>TimeOpen 판매자 페이지</h2>
 
-        {/* ✅ 로그인/로그아웃 버튼 (최소 UI) */}
-        {user ? (
-          <form action={signOut}>
-            <button type="submit" style={{ fontSize: 13, padding: "6px 10px" }}>
-              로그아웃
-            </button>
-          </form>
-        ) : (
-          <Link href="/login" style={{ fontSize: 13, padding: "6px 10px", border: "1px solid #ddd", borderRadius: 8 }}>
-            로그인
-          </Link>
-        )}
-      </div>
+      {!user ? (
+        <>
+          <div style={{ marginTop: 10, color: "#666" }}>로그인이 필요합니다.</div>
+          <LoginPanel />
+        </>
+      ) : (
+        <div style={{ marginTop: 10, color: "#666" }}>
+          로그인됨: <b>{user.email}</b>
+        </div>
+      )}
 
-      {/* ✅ 로그인 상태 표시 (최소 텍스트) */}
-      <div style={{ marginTop: 10, fontSize: 13, color: "#666" }}>
-        {user ? <div>로그인됨: {user.email ?? user.id}</div> : <div>로그인이 필요합니다.</div>}
-      </div>
-
-      {/* 🔒 정합성 확인용 (절대 수정 기능 아님, 그냥 표시만) */}
       <div style={{ marginTop: 10, fontSize: 13, color: "#666" }}>
         <div>organizationId: {org.id}</div>
         <div>handle: {org.handle}</div>
@@ -72,8 +46,6 @@ export default async function OwnerPage() {
 
       <div style={{ marginTop: 16 }}>
         <div style={{ marginBottom: 6 }}>고객 예약 링크:</div>
-
-        {/* 링크는 그대로 보이되, "복사" 버튼만 제공 (UI 확장 금지) */}
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <code id="booking-link-text" data-handle={handle}>
             /u/{handle}
@@ -86,7 +58,6 @@ export default async function OwnerPage() {
           <span id="copy-status" style={{ fontSize: 12, color: "#666" }} aria-live="polite" />
         </div>
 
-        {/* Server Component 유지: onClick 대신 script */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
