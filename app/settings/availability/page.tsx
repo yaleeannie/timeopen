@@ -1,14 +1,13 @@
 // app/settings/availability/page.tsx
 import AvailabilitySettingsClient from "./AvailabilitySettingsClient";
-import { createSupabaseServerClient } from "../../../lib/supabase/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type Props = {
-  searchParams: Promise<{ handle?: string }>;
+  searchParams?: { handle?: string };
 };
 
 export default async function AvailabilitySettingsPage({ searchParams }: Props) {
-  const params = await searchParams;
-  const handle = (params?.handle ?? "").trim().toLowerCase();
+  const handle = String(searchParams?.handle ?? "").trim().toLowerCase();
 
   const Shell = ({ children }: { children: React.ReactNode }) => (
     <main className="min-h-screen bg-white">
@@ -27,7 +26,7 @@ export default async function AvailabilitySettingsPage({ searchParams }: Props) 
   if (userErr || !user) {
     return (
       <Shell>
-        <div style={{ fontWeight: 600, marginBottom: 8 }}>로그인이 필요합니다.</div>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>로그인이 필요합니다.</div>
         <div style={{ color: "#666" }}>owner만 영업시간을 설정할 수 있어요.</div>
       </Shell>
     );
@@ -37,7 +36,6 @@ export default async function AvailabilitySettingsPage({ searchParams }: Props) 
   let organizationId: string | null = null;
 
   if (handle) {
-    // handle -> org
     const { data: org, error: orgErr } = await supabase
       .from("organizations")
       .select("id")
@@ -48,7 +46,7 @@ export default async function AvailabilitySettingsPage({ searchParams }: Props) 
       return <Shell>존재하지 않는 handle: {handle}</Shell>;
     }
 
-    // ✅ 3) membership 검증 (handle을 신뢰하지 않음)
+    // ✅ owner 검증
     const { data: m, error: mErr } = await supabase
       .from("organization_members")
       .select("role")
@@ -60,7 +58,7 @@ export default async function AvailabilitySettingsPage({ searchParams }: Props) 
     if (mErr || !m) {
       return (
         <Shell>
-          <div style={{ fontWeight: 600, marginBottom: 8 }}>접근 권한이 없습니다.</div>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>접근 권한이 없습니다.</div>
           <div style={{ color: "#666" }}>해당 organization의 owner가 아니에요.</div>
         </Shell>
       );
@@ -80,7 +78,7 @@ export default async function AvailabilitySettingsPage({ searchParams }: Props) 
     if (memErr || !mem?.organization_id) {
       return (
         <Shell>
-          <div>owner로 연결된 organization이 없습니다.</div>
+          <div style={{ fontWeight: 700 }}>owner로 연결된 organization이 없습니다.</div>
         </Shell>
       );
     }
@@ -88,7 +86,6 @@ export default async function AvailabilitySettingsPage({ searchParams }: Props) 
     organizationId = mem.organization_id;
   }
 
-  // ✅ TS 에러 해결 포인트: 여기서 null이면 return으로 막기
   if (!organizationId) {
     return <Shell>조직 정보를 불러오지 못했어요.</Shell>;
   }

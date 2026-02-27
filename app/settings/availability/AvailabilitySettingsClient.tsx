@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { saveAvailability } from "./actions";
-import { fetchAvailabilityFromDb } from "../../../features/availability/fetchAvailabilityFromDb";
-import { weeklyScheduleToFormState } from "../../../features/availability/weeklyScheduleToFormState";
-import { WEEKDAYS, type AvailabilityFormState, type WeekdayKey } from "../../../features/availability/types";
+import { fetchAvailabilityFromDb } from "@/features/availability/fetchAvailabilityFromDb";
+import { weeklyScheduleToFormState } from "@/features/availability/weeklyScheduleToFormState";
+import { WEEKDAYS, type AvailabilityFormState, type WeekdayKey } from "@/features/availability/types";
 
 /* ------------------ 기본 상태 ------------------ */
-
 function defaultState(): AvailabilityFormState {
   return {
     mon: { open: false, work_start: "09:00", work_end: "18:00", break_start: "", break_end: "" },
@@ -21,7 +19,6 @@ function defaultState(): AvailabilityFormState {
 }
 
 /* ------------------ validation ------------------ */
-
 function timeToMinutes(t: string): number {
   const [hh, mm] = t.split(":").map((x) => Number(x));
   return hh * 60 + mm;
@@ -47,7 +44,6 @@ function validateDay(day: AvailabilityFormState[WeekdayKey], label: string): str
 }
 
 /* ------------------ time list (10분 단위) ------------------ */
-
 function pad2(n: number) {
   return String(n).padStart(2, "0");
 }
@@ -65,7 +61,6 @@ function buildTimes(stepMinutes: number) {
 const TIMES_10 = buildTimes(10);
 
 /* ------------------ click outside ------------------ */
-
 function useOnClickOutside<T extends HTMLElement>(handler: () => void) {
   const ref = useRef<T | null>(null);
   useEffect(() => {
@@ -82,7 +77,6 @@ function useOnClickOutside<T extends HTMLElement>(handler: () => void) {
 }
 
 /* ------------------ icons ------------------ */
-
 function ClockIcon({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
@@ -98,8 +92,7 @@ function ClockIcon({ className = "" }: { className?: string }) {
   );
 }
 
-/* ------------------ TimePicker (커스텀) ------------------ */
-
+/* ------------------ TimePicker ------------------ */
 function TimePicker({
   value,
   onChange,
@@ -196,7 +189,6 @@ function TimePicker({
 }
 
 /* ------------------ main ------------------ */
-
 export default function AvailabilitySettingsClient({ organizationId }: { organizationId: string }) {
   const [state, setState] = useState<AvailabilityFormState>(defaultState());
   const [saving, setSaving] = useState(false);
@@ -230,40 +222,41 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
     setState((prev) => ({ ...prev, [key]: { ...prev[key], ...patchObj } }));
   }
 
- async function onSave() {
-  setMsg(null);
-  if (firstError) {
-    setMsg(firstError);
-    return;
-  }
+  async function onSave() {
+    setMsg(null);
+    if (firstError) {
+      setMsg(firstError);
+      return;
+    }
 
-  // 🔥 저장 직전, 실제로 어떤 값이 서버로 가는지 확인
-  console.log("SAVING ORG:", organizationId);
-  console.log("SAVING STATE:", state);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings/availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ organizationId, state }),
+      });
+      const json = await res.json().catch(() => ({}));
 
-  setSaving(true);
-  try {
-    await saveAvailability(organizationId, state);
-    setMsg("저장되었습니다.");
-  } catch (e: any) {
-    setMsg(typeof e?.message === "string" ? e.message : "저장 실패");
-  } finally {
-    setSaving(false);
+      if (!res.ok) {
+        setMsg(json?.error ?? `저장 실패 (HTTP ${res.status})`);
+        return;
+      }
+
+      setMsg("저장되었습니다.");
+    } catch (e) {
+      console.error(e);
+      setMsg("네트워크 오류. 잠시 후 다시 시도해줘.");
+    } finally {
+      setSaving(false);
+    }
   }
-}
 
   return (
     <div className="space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Availability Settings</h1>
         <p className="text-sm font-medium text-gray-700">요일별 영업시간과 브레이크 시간을 설정하세요.</p>
-
-        <p className="text-xs text-red-500">
-        DEBUG organizationId: {organizationId}
-        </p>
-
-
-        {/* ✅ 디버깅용: 지금 settings가 어떤 org에 저장하는지 보여줌 */}
         <p className="text-xs text-gray-500">organizationId: {organizationId}</p>
       </div>
 
