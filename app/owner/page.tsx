@@ -1,31 +1,39 @@
 // app/owner/page.tsx
-// TimeOpen Seller Hub (NOT a dashboard)
-// Just a link collection page.
-
-import OwnerAuthClient from "./OwnerAuthClient";
 import { fetchOrganizationByHandle } from "@/features/organizations/fetchOrganizationByHandle";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import OwnerAuthBox from "./OwnerAuthBox";
 
 export default async function OwnerPage() {
-  // ✅ demo handle이 어떤 organization에 매핑되는지 "읽기 전용 확인"
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // demo handle read-only check
   const org = await fetchOrganizationByHandle("demo");
 
   if (!org) {
     return <div style={{ padding: 20 }}>organization not found for handle=demo</div>;
   }
 
-  const handle = org.handle; // "demo"
+  const handle = org.handle;
 
   return (
     <div style={{ padding: 20, fontSize: 16 }}>
       <h2>TimeOpen 판매자 페이지</h2>
 
-      {/* ✅ 로그인 UI (API 호출 방식) */}
-      <OwnerAuthClient />
+      {/* ✅ 로그인 UI (상태에 따라 버튼 다르게 노출) */}
+      <div style={{ marginTop: 12, marginBottom: 14 }}>
+        <OwnerAuthBox isAuthed={!!user} emailPrefill={user?.email ?? ""} />
+      </div>
 
       {/* 🔒 정합성 확인용 */}
-      <div style={{ marginTop: 14, fontSize: 13, color: "#666" }}>
+      <div style={{ marginTop: 10, fontSize: 13, color: "#666" }}>
         <div>organizationId: {org.id}</div>
         <div>handle: {org.handle}</div>
+        <div style={{ marginTop: 6 }}>
+          auth: {user ? `logged-in (${user.email ?? "no-email"})` : "not logged-in"}
+        </div>
       </div>
 
       <div style={{ marginTop: 20 }}>
@@ -44,11 +52,7 @@ export default async function OwnerPage() {
             /u/{handle}
           </code>
 
-          <button
-            id="copy-booking-link"
-            type="button"
-            style={{ fontSize: 13, padding: "4px 8px" }}
-          >
+          <button id="copy-booking-link" type="button" style={{ fontSize: 13, padding: "4px 8px" }}>
             복사
           </button>
 
