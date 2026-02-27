@@ -15,6 +15,7 @@ export async function GET(req: Request) {
 
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
+  // 실패 시에도 UX는 owner로 보내되 표시만
   if (error) {
     return NextResponse.redirect(new URL(`/owner?auth=fail`, url.origin));
   }
