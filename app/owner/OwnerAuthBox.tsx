@@ -13,14 +13,16 @@ export default function OwnerAuthBox() {
 
   const [cooldownLeft, setCooldownLeft] = useState(0);
 
-  // 로그인 상태 가져오기
   async function refreshMe() {
-    const res = await fetch("/api/auth/me", { method: "GET" });
-    const json = await res.json();
-    setUserEmail(json?.user?.email ?? null);
+    try {
+      const res = await fetch("/api/auth/me", { method: "GET" });
+      const json = await res.json().catch(() => ({}));
+      setUserEmail(json?.user?.email ?? null);
+    } catch {
+      setUserEmail(null);
+    }
   }
 
-  // 쿨다운 타이머
   useEffect(() => {
     refreshMe();
 
@@ -54,10 +56,9 @@ export default function OwnerAuthBox() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: e }),
       });
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        // rate limit이면 여기로 떨어짐
         setMsg(json?.error ?? "메일 전송 실패");
         return;
       }
@@ -73,7 +74,9 @@ export default function OwnerAuthBox() {
 
   async function logout() {
     setMsg("");
-    await fetch("/api/auth/logout", { method: "POST" });
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {}
     await refreshMe();
     setMsg("로그아웃 완료");
   }
@@ -83,51 +86,40 @@ export default function OwnerAuthBox() {
       style={{
         marginTop: 16,
         padding: 14,
-        border: "1px solid #eee",
+        border: "1px solid #e5e5e5",
         borderRadius: 12,
-        background: "#fafafa",
+        background: "#ffffff", // ✅ 카드 자체 흰 배경 고정
+        color: "#111111",      // ✅ 기본 글씨색 진하게
       }}
     >
-      <div style={{ fontSize: 13, color: "#666", marginBottom: 8 }}>
+      <div style={{ fontSize: 13, color: "#111", marginBottom: 10, fontWeight: 600 }}>
         owner 기능은 로그인 후 사용 가능해요.
       </div>
 
       {userEmail ? (
-        <div
-            style={{
-            display: "flex",
-            gap: 10,
-            alignItems: "center",
-            flexWrap: "wrap",
-            }}
-        >
-            <div
-            style={{
-                fontSize: 14,
-                color: "#111",          // ✅ 글씨 진하게
-                fontWeight: 500,
-            }}
-            >
-            로그인됨: <b>{userEmail}</b>
-            </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ fontSize: 14, color: "#111", fontWeight: 600 }}>
+            로그인됨: <span style={{ fontWeight: 800 }}>{userEmail}</span>
+          </div>
 
-            <button
+          <button
             type="button"
             onClick={logout}
             style={{
-                fontSize: 13,
-                padding: "8px 12px",
-                borderRadius: 10,
-                border: "1px solid #ddd",
-                background: "#fff",
-                color: "#111",          // ✅ 버튼 글씨도 진하게
-                cursor: "pointer",
+              fontSize: 13,
+              padding: "10px 12px",
+              borderRadius: 10,
+              border: "1px solid #111",
+              background: "#111",
+              color: "#fff",
+              cursor: "pointer",
+              fontWeight: 700,
             }}
-            >
+          >
             로그아웃
-            </button>
+          </button>
         </div>
-        ) : (
+      ) : (
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <input
             value={email}
@@ -137,10 +129,14 @@ export default function OwnerAuthBox() {
               minWidth: 260,
               padding: "10px 12px",
               borderRadius: 12,
-              border: "1px solid #ddd",
+              border: "1px solid #cfcfcf",
               fontSize: 14,
+              background: "#fff",  // ✅ 입력창 흰 배경
+              color: "#111",       // ✅ 입력 글씨 진하게
+              outline: "none",
             }}
           />
+
           <button
             type="button"
             onClick={sendMagicLink}
@@ -149,23 +145,35 @@ export default function OwnerAuthBox() {
               fontSize: 13,
               padding: "10px 12px",
               borderRadius: 12,
-              border: "1px solid #ddd",
-              opacity: canSend ? 1 : 0.6,
+              border: "1px solid #111",
+              background: "#111",
+              color: "#fff",
+              opacity: canSend ? 1 : 0.55,
               cursor: canSend ? "pointer" : "not-allowed",
               whiteSpace: "nowrap",
+              fontWeight: 800,
             }}
           >
-            {sending ? "보내는 중..." : cooldownLeft > 0 ? `잠시만 (${Math.ceil(cooldownLeft / 1000)}s)` : "로그인 메일 보내기"}
+            {sending
+              ? "보내는 중..."
+              : cooldownLeft > 0
+              ? `잠시만 (${Math.ceil(cooldownLeft / 1000)}s)`
+              : "로그인 메일 보내기"}
           </button>
         </div>
       )}
 
-      {msg && <div style={{ marginTop: 10, fontSize: 13, color: "#444" }}>{msg}</div>}
-      {!userEmail && (
-        <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
-          • 메일에서 링크를 누르면 자동으로 로그인되고 <code>/owner</code>로 돌아와야 해.
+      {msg ? (
+        <div style={{ marginTop: 10, fontSize: 13, color: "#111", fontWeight: 600 }}>
+          {msg}
         </div>
-      )}
+      ) : null}
+
+      {!userEmail ? (
+        <div style={{ marginTop: 10, fontSize: 12, color: "#111" }}>
+          • 메일에서 링크를 누르면 자동으로 로그인되고 <code style={{ color: "#111" }}>/owner</code>로 돌아와야 해.
+        </div>
+      ) : null}
     </div>
   );
 }
