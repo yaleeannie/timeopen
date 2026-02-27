@@ -93,19 +93,41 @@ export default function OwnerAuthBox() {
       </div>
 
       {userEmail ? (
-        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <div style={{ fontSize: 14 }}>
+        <div
+            style={{
+            display: "flex",
+            gap: 10,
+            alignItems: "center",
+            flexWrap: "wrap",
+            }}
+        >
+            <div
+            style={{
+                fontSize: 14,
+                color: "#111",          // ✅ 글씨 진하게
+                fontWeight: 500,
+            }}
+            >
             로그인됨: <b>{userEmail}</b>
-          </div>
-          <button
+            </div>
+
+            <button
             type="button"
             onClick={logout}
-            style={{ fontSize: 13, padding: "8px 12px", borderRadius: 10 }}
-          >
+            style={{
+                fontSize: 13,
+                padding: "8px 12px",
+                borderRadius: 10,
+                border: "1px solid #ddd",
+                background: "#fff",
+                color: "#111",          // ✅ 버튼 글씨도 진하게
+                cursor: "pointer",
+            }}
+            >
             로그아웃
-          </button>
+            </button>
         </div>
-      ) : (
+        ) : (
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <input
             value={email}
