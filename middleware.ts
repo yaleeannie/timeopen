@@ -1,12 +1,10 @@
-// middleware.ts
+// middleware.ts  (⚠️ 루트에 있어야 함)
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+    request: { headers: request.headers },
   });
 
   const supabase = createServerClient(
@@ -26,7 +24,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // ✅ 이 호출이 “세션 감지/갱신 + 쿠키 반영”을 트리거함
+  // 🔥 이 줄이 로그인 세션을 실제로 살아있게 만드는 핵심
   await supabase.auth.getUser();
 
   return response;
