@@ -157,8 +157,8 @@ export default function BookingScreen({ handle }: Props) {
     const key = `${organizationId}_${nextDateISO}_${nextServiceId}`;
 
     const [ex, busy] = await Promise.all([
-      fetchExceptionForDate({ handle, dateISO: nextDateISO })
-      fetchBusyFromDb({ handle, dateISO: nextDateISO })
+    fetchExceptionForDate({ handle, dateISO: nextDateISO }),
+    fetchBusyFromDb({ handle, dateISO: nextDateISO }),
     ]);
 
     if (reqIdRef.current !== myReq) return;
