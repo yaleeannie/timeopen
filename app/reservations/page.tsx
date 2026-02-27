@@ -110,13 +110,12 @@ export default async function ReservationsPage(props: { searchParams?: SearchPar
     orgHandle = org?.handle ?? null;
   }
 
-  // ✅ 4) reservations 조회 (RLS로 자동 스코프 제한됨)
-  const { data: rows, error: resErr } = await supabase
+    // ✅ 4) reservations 조회 (RLS로 자동 스코프 제한됨)
+    const { data: rows, error: resErr } = await supabase
     .from("reservations")
-    .select("date,start_time,end_time,status,service_id,name,contact")
+    .select("organization_id,date,start_time,end_time,start_at,end_at,status,service_id,name,contact")
     .eq("organization_id", orgId!)
-    .order("date", { ascending: true })
-    .order("start_time", { ascending: true });
+    .order("start_at", { ascending: true });
 
   if (resErr) {
     return (

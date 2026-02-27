@@ -1,51 +1,49 @@
 // features/booking/saveReservation.ts
-import { supabase } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client"; // 프로젝트에 맞게 경로만 확인
 
 type Params = {
-  // ✅ 더 이상 orgId 신뢰하지 않음. handle로만 예약 생성.
-  handle: string;
-
-  serviceId: string;
-  dateISO: string; // YYYY-MM-DD
-  start: string; // "HH:MM"
-  end: string; // "HH:MM"
-  durationMin: number;
-  bufferMin: number;
-
-  // ✅ (권장) 최소 정보. 아직 UI 없으면 일단 optional로 두고,
-  // 나중에 BookingScreen에서 입력 받도록 바꾸면 됨.
-  name?: string;
-  contact?: string;
+  organizationId: string;
+  date: string;       // "2026-02-26"
+  start: string;      // "14:15"
+  end: string;        // "14:45"
+  serviceId?: string;
 };
 
+function toIsoUtc(date: string, hhmm: string) {
+  // ⚠️ 지금 DB에 찍힌 게 +00 이라서(UTC) 우선 UTC로 저장되게 구성
+  // 나중에 KST 기준으로 바꾸고 싶으면 여기만 바꾸면 됨.
+  return new Date(`${date}T${hhmm}:00.000Z`).toISOString();
+}
+
 export async function saveReservation(params: Params) {
-  const handle = (params.handle ?? "").trim().toLowerCase();
-  if (!handle) throw new Error("예약 실패: handle이 없습니다.");
+  const supabase = createSupabaseBrowserClient();
 
-  // ✅ 입력 방어
-  if (params.durationMin <= 0) {
-    throw new Error("예약 실패: durationMin은 0보다 커야 합니다.");
-  }
-  if (params.bufferMin < 0) {
-    throw new Error("예약 실패: bufferMin은 0 이상이어야 합니다.");
-  }
+  const start_at = toIsoUtc(params.date, params.start);
+  const end_at = toIsoUtc(params.date, params.end);
 
-  // ✅ RLS/권한 모델상 reservations 직접 select/insert 금지
-  // ✅ 반드시 DB 함수(RPC)로만 생성
-  const { error } = await supabase.rpc("create_reservation_by_handle", {
-    p_handle: handle,
-    p_service_id: params.serviceId,
-    p_date: params.dateISO,
-    p_start_time: params.start,
-    p_end_time: params.end,
-    p_duration_min: params.durationMin,
-    p_buffer_min: params.bufferMin,
-    p_name: (params.name ?? "").trim(),
-    p_contact: (params.contact ?? "").trim(),
-  });
+  const { data, error } = await supabase
+    .from("reservations")
+    .insert({
+      organization_id: params.organizationId,
+      date: params.date,
+      start_time: params.start, // 기존 UI/표시용 유지
+      end_time: params.end,     // 기존 UI/표시용 유지
+      start_at,
+      end_at,
+      status: "confirmed",
+      service_id: params.serviceId ?? null,
+    })
+    .select()
+    .single();
 
   if (error) {
-    // DB에서 충돌/검증 에러를 message로 내려주면 그대로 사용자에게 보여주기 좋음
-    throw new Error(error.message);
+    // ✅ DB에서 겹침 제약이 터지면 사용자에게 친절히
+    const msg = (error as any)?.message ?? "";
+    if (msg.includes("reservations_no_overlap")) {
+      throw new Error("예약 충돌: 기존 예약과 시간이 겹칩니다.");
+    }
+    throw new Error(`예약 저장 실패: ${msg}`);
   }
+
+  return data;
 }

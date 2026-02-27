@@ -11,9 +11,9 @@ import { MOCK_SERVICES } from "@/features/booking/mock";
 import { buildDailySchedule } from "@/features/availability/buildDailySchedule";
 import { fetchExceptionForDate } from "@/features/availability/fetchExceptionForDate";
 import { computeAvailableStartTimes } from "@/features/availability/computeAvailableStartTimes";
-import type { TimeRange, WeeklySchedule } from "@/features/availability/weeklySchedule";
+import type { WeeklySchedule } from "@/features/availability/weeklySchedule";
 
-import { fetchBusyFromDb } from "@/features/availability/fetchBusyFromDb";
+import { fetchBusyFromDb } from "@/features/availability/fetchBusyFromDb"; // ✅ busyToMinutes 제거(안씀)
 import { saveReservation } from "@/features/booking/saveReservation";
 import { fetchOrganizationByHandle } from "@/features/organizations/fetchOrganizationByHandle";
 
@@ -83,11 +83,8 @@ export default function BookingScreen({ handle }: Props) {
   const computedKeyRef = useRef<string | null>(null);
   const reqIdRef = useRef(0);
 
-  // ✅ "현재 화면이 빈 상태(가능한 시간 없음)인지" 표시는
-  // 최신 계산 결과가 반영될 때만 바뀌게끔 별도 상태로 들고 간다.
   const [noTimesForCurrent, setNoTimesForCurrent] = useState<boolean>(false);
 
-  // ✅ CTA 깜빡임 방지용: 마지막으로 유효했던 selection을 유지한다.
   const lastStableSelectionRef = useRef<{ dateISO: string | null; serviceId: string | null; time: string | null }>({
     dateISO: null,
     serviceId: null,
@@ -114,8 +111,6 @@ export default function BookingScreen({ handle }: Props) {
     time != null &&
     availableTimes[0] === time;
 
-  // ✅ CTA에 내려줄 selection은 "현재 계산이 완료된 경우에만" 갱신
-  // (계산 중에는 마지막 안정 상태를 그대로 유지 → 버튼 깜빡임 제거)
   const ctaSelection = useMemo(() => {
     if (isTimesReadyForCurrent) {
       lastStableSelectionRef.current = { dateISO, serviceId, time };
@@ -138,13 +133,13 @@ export default function BookingScreen({ handle }: Props) {
       const res = await fetch("/api/fetchAvailability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ handle })
+        body: JSON.stringify({ handle }),
       });
 
       const json = await res.json();
       setWeeklySchedule(convertRowsToWeeklySchedule(json.data));
     })();
-  }, [organizationId]);
+  }, [organizationId, handle]); // ✅ handle도 deps에 넣는게 안전
 
   async function recomputeTimes(nextDateISO: string | null, nextServiceId: string | null) {
     if (!organizationId || !weeklySchedule) return;
@@ -156,9 +151,9 @@ export default function BookingScreen({ handle }: Props) {
     const myReq = ++reqIdRef.current;
     const key = `${organizationId}_${nextDateISO}_${nextServiceId}`;
 
-    const [ex, busy] = await Promise.all([
-    fetchExceptionForDate({ handle, dateISO: nextDateISO }),
-    fetchBusyFromDb({ handle, dateISO: nextDateISO }),
+    const [ex, busyRes] = await Promise.all([
+      fetchExceptionForDate({ handle, dateISO: nextDateISO }),
+      fetchBusyFromDb({ handle, dateISO: nextDateISO }),
     ]);
 
     if (reqIdRef.current !== myReq) return;
@@ -173,10 +168,13 @@ export default function BookingScreen({ handle }: Props) {
       notBefore = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     }
 
+    // ✅✅✅ 핵심 수정: busyRes는 객체니까 busyRes.busy 만 넘겨야 함
+    const busy = busyRes?.busy ?? [];
+
     const result = computeAvailableStartTimes({
       workWindows: daily.workWindows,
       breaks: daily.breaks,
-      busy: busy ?? [],
+      busy, // ✅ 여기!
       durationMin: nextService.durationMin,
       bufferMin: nextService.bufferMin,
       stepMin: 15,
@@ -187,8 +185,6 @@ export default function BookingScreen({ handle }: Props) {
 
     setAvailableTimes(result);
     computedKeyRef.current = key;
-
-    // ✅ "가능한 시간이 없어요" 표시는 결과가 확정된 순간에만 갱신
     setNoTimesForCurrent(result.length === 0);
 
     const first = result[0] ?? null;
@@ -224,15 +220,15 @@ export default function BookingScreen({ handle }: Props) {
 
     try {
       await saveReservation({
-      handle,
-      serviceId: service.id,
-      dateISO,
-      start: time,
-      end,
-      durationMin: service.durationMin,
-      bufferMin: service.bufferMin,
-      name: "guest",      // ✅ 임시
-      contact: "instagram", // ✅ 임시
+        handle,
+        serviceId: service.id,
+        dateISO,
+        start: time,
+        end,
+        durationMin: service.durationMin,
+        bufferMin: service.bufferMin,
+        name: "guest",
+        contact: "instagram",
       });
     } catch (e: any) {
       alert(e?.message ?? "예약 처리 중 오류가 발생했습니다.");
@@ -276,13 +272,7 @@ export default function BookingScreen({ handle }: Props) {
         />
 
         <div className="space-y-3">
-          <div
-            style={{
-              height: hintSlotHeight,
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
+          <div style={{ height: hintSlotHeight, display: "flex", alignItems: "center" }}>
             <div
               className="text-xs"
               style={{
@@ -310,10 +300,14 @@ export default function BookingScreen({ handle }: Props) {
             }}
           />
         </div>
+
+        {noTimesForCurrent && (
+          <div className="text-sm" style={{ color: "#666" }}>
+            선택한 날짜에는 가능한 시간이 없어요.
+          </div>
+        )}
       </div>
 
-      {/* ✅ 2) CTA 깜빡임 제거:
-          selection을 계산 완료 시점에만 갱신 → 버튼이 0.1초 비활성화됐다가 켜지는 현상 방지 */}
       <BookingCta handle={handle} selection={ctaSelection} onReserve={onReserve} />
     </div>
   );
