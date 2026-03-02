@@ -3,36 +3,28 @@
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const COOLDOWN_MS = 60_000; // 60초
+const COOLDOWN_MS = 60_000;
 const STORAGE_KEY = "timeopen_magiclink_last_sent_at";
 
 export default function OwnerAuthBox() {
   const [email, setEmail] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const [msg, setMsg] = useState<string>("");
-
+  const [msg, setMsg] = useState("");
   const [cooldownLeft, setCooldownLeft] = useState(0);
 
   async function refreshMe() {
-    try {
-      const res = await fetch("/api/auth/me", { method: "GET" });
-      const json = await res.json().catch(() => ({}));
-      setUserEmail(json?.user?.email ?? null);
-    } catch {
-      setUserEmail(null);
-    }
+    const res = await fetch("/api/auth/me");
+    const json = await res.json().catch(() => ({}));
+    setUserEmail(json?.user?.email ?? null);
   }
 
   useEffect(() => {
     refreshMe();
-
     const tick = () => {
       const last = Number(localStorage.getItem(STORAGE_KEY) ?? "0");
-      const left = Math.max(0, COOLDOWN_MS - (Date.now() - last));
-      setCooldownLeft(left);
+      setCooldownLeft(Math.max(0, COOLDOWN_MS - (Date.now() - last)));
     };
-
     tick();
     const id = setInterval(tick, 500);
     return () => clearInterval(id);
@@ -40,29 +32,38 @@ export default function OwnerAuthBox() {
 
   const canSend = useMemo(() => !sending && cooldownLeft === 0, [sending, cooldownLeft]);
 
-  // ✅ A안: 서버 API로 메일 발송(OWNER_EMAILS 검사 포함)
   async function sendMagicLink() {
     const e = email.trim().toLowerCase();
-    if (!e) {
-      setMsg("이메일을 입력해줘.");
-      return;
-    }
+    if (!e) return setMsg("이메일을 입력해줘.");
     if (!canSend) return;
 
     setSending(true);
     setMsg("");
 
     try {
-      const res = await fetch("/api/auth/magic-link", {
+      // 1) 서버에서 OWNER_EMAILS 체크만
+      const gate = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: e }),
       });
+      const gateJson = await gate.json().catch(() => ({}));
+      if (!gate.ok) {
+        setMsg(gateJson?.error ?? "허용되지 않은 이메일");
+        return;
+      }
 
-      const json = await res.json().catch(() => ({}));
+      // 2) ✅ 브라우저에서 signIn 시작 → PKCE 저장됨
+      const supabase = createSupabaseBrowserClient();
+      const redirectTo = `${window.location.origin}/auth/callback?next=/owner`;
 
-      if (!res.ok) {
-        setMsg(json?.error ?? `메일 전송 실패 (HTTP ${res.status})`);
+      const { error } = await supabase.auth.signInWithOtp({
+        email: e,
+        options: { emailRedirectTo: redirectTo },
+      });
+
+      if (error) {
+        setMsg(error.message);
         return;
       }
 
@@ -77,50 +78,26 @@ export default function OwnerAuthBox() {
 
   async function logout() {
     setMsg("");
-    try {
-      // ✅ 어떤 방식이든 확실히 로그아웃: 브라우저 signOut + 서버 쿠키 정리 API 둘 다
-      const supabase = createSupabaseBrowserClient();
-      await supabase.auth.signOut().catch(() => {});
-      await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-    } catch {}
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     await refreshMe();
     setMsg("로그아웃 완료");
   }
 
   return (
-    <div
-      style={{
-        marginTop: 16,
-        padding: 14,
-        border: "1px solid #e5e5e5",
-        borderRadius: 12,
-        background: "#ffffff",
-        color: "#111111",
-      }}
-    >
-      <div style={{ fontSize: 13, color: "#111", marginBottom: 10, fontWeight: 600 }}>
+    <div style={{ marginTop: 16, padding: 14, border: "1px solid #e5e5e5", borderRadius: 12, background: "#fff" }}>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: "#111" }}>
         owner 기능은 로그인 후 사용 가능해요.
       </div>
 
       {userEmail ? (
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <div style={{ fontSize: 14, color: "#111", fontWeight: 600 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>
             로그인됨: <span style={{ fontWeight: 800 }}>{userEmail}</span>
           </div>
-
           <button
             type="button"
             onClick={logout}
-            style={{
-              fontSize: 13,
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "1px solid #111",
-              background: "#111",
-              color: "#fff",
-              cursor: "pointer",
-              fontWeight: 700,
-            }}
+            style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #111", background: "#111", color: "#fff" }}
           >
             로그아웃
           </button>
@@ -131,54 +108,27 @@ export default function OwnerAuthBox() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="owner 이메일 입력"
-            style={{
-              minWidth: 260,
-              padding: "10px 12px",
-              borderRadius: 12,
-              border: "1px solid #cfcfcf",
-              fontSize: 14,
-              background: "#fff",
-              color: "#111",
-              outline: "none",
-            }}
+            style={{ minWidth: 260, padding: "10px 12px", borderRadius: 12, border: "1px solid #cfcfcf", color: "#111" }}
           />
-
           <button
             type="button"
             onClick={sendMagicLink}
             disabled={!canSend}
             style={{
-              fontSize: 13,
               padding: "10px 12px",
               borderRadius: 12,
               border: "1px solid #111",
               background: "#111",
               color: "#fff",
               opacity: canSend ? 1 : 0.55,
-              cursor: canSend ? "pointer" : "not-allowed",
-              whiteSpace: "nowrap",
-              fontWeight: 800,
             }}
           >
-            {sending
-              ? "보내는 중..."
-              : cooldownLeft > 0
-              ? `잠시만 (${Math.ceil(cooldownLeft / 1000)}s)`
-              : "로그인 메일 보내기"}
+            {sending ? "보내는 중..." : cooldownLeft > 0 ? `잠시만 (${Math.ceil(cooldownLeft / 1000)}s)` : "로그인 메일 보내기"}
           </button>
         </div>
       )}
 
-      {msg ? (
-        <div style={{ marginTop: 10, fontSize: 13, color: "#111", fontWeight: 600 }}>{msg}</div>
-      ) : null}
-
-      {!userEmail ? (
-        <div style={{ marginTop: 10, fontSize: 12, color: "#111" }}>
-          • 메일에서 링크를 누르면 자동으로 로그인되고{" "}
-          <code style={{ color: "#111" }}>/owner</code>로 돌아와야 해.
-        </div>
-      ) : null}
+      {msg ? <div style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: "#111" }}>{msg}</div> : null}
     </div>
   );
 }
