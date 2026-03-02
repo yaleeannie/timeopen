@@ -1,4 +1,5 @@
 // app/settings/availability/page.tsx
+import type { ReactNode } from "react";
 import AvailabilitySettingsClient from "./AvailabilitySettingsClient";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -14,7 +15,7 @@ function pickHandle(sp?: SearchParams) {
 export default async function AvailabilitySettingsPage(props: { searchParams?: SearchParams }) {
   const handle = pickHandle(props.searchParams).trim().toLowerCase();
 
-  const Shell = ({ children }: { children: React.ReactNode }) => (
+  const Shell = ({ children }: { children: ReactNode }) => (
     <main className="min-h-screen bg-white text-gray-900">
       <div className="mx-auto w-full max-w-3xl px-4 py-10">{children}</div>
     </main>
@@ -22,7 +23,6 @@ export default async function AvailabilitySettingsPage(props: { searchParams?: S
 
   const supabase = await createSupabaseServerClient();
 
-  // ✅ 1) 로그인 필수
   const {
     data: { user },
     error: userErr,
@@ -37,7 +37,6 @@ export default async function AvailabilitySettingsPage(props: { searchParams?: S
     );
   }
 
-  // ✅ 2) org 선택
   let organizationId: string | null = null;
 
   if (handle) {
@@ -51,7 +50,6 @@ export default async function AvailabilitySettingsPage(props: { searchParams?: S
       return <Shell>존재하지 않는 handle: {handle}</Shell>;
     }
 
-    // ✅ owner 검증
     const { data: m, error: mErr } = await supabase
       .from("organization_members")
       .select("role")
@@ -71,7 +69,6 @@ export default async function AvailabilitySettingsPage(props: { searchParams?: S
 
     organizationId = org.id;
   } else {
-    // handle 없으면: 내가 owner인 첫 org
     const { data: mem, error: memErr } = await supabase
       .from("organization_members")
       .select("organization_id")
