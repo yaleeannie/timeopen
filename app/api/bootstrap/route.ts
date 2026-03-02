@@ -17,10 +17,14 @@ export async function POST() {
   const { data, error } = await supabase.rpc("bootstrap_owner");
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  // data는 보통 [{ organization_id, handle }] 형태
   const row = Array.isArray(data) ? data[0] : data;
-  return NextResponse.json({ data: row ?? null });
+
+  if (!row?.organization_id || !row?.handle) {
+    return NextResponse.json({ error: "bootstrap_owner returned empty" }, { status: 400 });
+  }
+
+  return NextResponse.json({ ok: true, data: row });
 }

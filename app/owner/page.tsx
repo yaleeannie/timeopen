@@ -1,4 +1,6 @@
 // app/owner/page.tsx
+export const dynamic = "force-dynamic";
+
 import OwnerAuthBox from "./OwnerAuthBox";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -19,8 +21,7 @@ export default async function OwnerPage() {
     );
   }
 
-  // 로그인 후: bootstrap 호출 (서버에서 rpc 직접 호출해도 되지만,
-  // 지금은 네가 만든 API로 호출하지 않고 바로 rpc 호출해도 OK)
+  // 로그인 후: bootstrap 호출 (멱등)
   const { data, error } = await supabase.rpc("bootstrap_owner");
 
   const row = Array.isArray(data) ? data[0] : data;
@@ -43,10 +44,8 @@ export default async function OwnerPage() {
     <div style={{ padding: 20, fontSize: 16 }}>
       <h2>TimeOpen 판매자 페이지</h2>
 
-      {/* 로그인 UI */}
       <OwnerAuthBox />
 
-      {/* 정합성 표시 */}
       <div style={{ marginTop: 14, fontSize: 13, color: "#111" }}>
         <div>organizationId: {orgId}</div>
         <div>handle: {handle}</div>
