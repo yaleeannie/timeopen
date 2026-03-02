@@ -6,8 +6,8 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
-  const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   async function onLogin() {
     const e = email.trim().toLowerCase();
@@ -28,7 +28,16 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setMsg(error.message);
+        // 흔한 케이스들 UX 개선
+        const m = (error.message || "").toLowerCase();
+
+        if (m.includes("invalid login credentials")) {
+          setMsg("이메일 또는 비밀번호가 맞지 않아요. 비밀번호를 잊었으면 재설정을 눌러줘.");
+        } else if (m.includes("email not confirmed")) {
+          setMsg("이메일 인증이 아직 안 됐어요. 메일함에서 인증 링크를 먼저 눌러줘.");
+        } else {
+          setMsg(error.message);
+        }
         return;
       }
 
@@ -55,7 +64,7 @@ export default function LoginPage() {
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 8 }}>TimeOpen</div>
         <div style={{ fontSize: 14, color: "#555", marginBottom: 18 }}>
-          이메일 + 비밀번호로 로그인해요.
+          판매자 로그인
         </div>
 
         <div
@@ -138,7 +147,7 @@ export default function LoginPage() {
             </div>
           ) : null}
 
-          <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8, fontSize: 13 }}>
+          <div style={{ marginTop: 14, fontSize: 13, display: "flex", gap: 12, flexWrap: "wrap" }}>
             <a href="/forgot-password" style={{ textDecoration: "underline", fontWeight: 800, color: "#111" }}>
               비밀번호를 잊었어요
             </a>

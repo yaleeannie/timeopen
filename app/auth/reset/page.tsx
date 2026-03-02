@@ -3,30 +3,34 @@
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export default function ResetPasswordPage() {
+export default function AuthResetPage() {
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string>("");
   const [ready, setReady] = useState(false);
 
+  // reset 링크로 들어오면 Supabase가 세션을 붙여주는 경우가 많아서
+  // 페이지 진입 시점에 "세션 존재"만 확인해두면 UX가 안정적입니다.
   useEffect(() => {
-    // ✅ /auth/callback에서 exchangeCodeForSession 하고 넘어오면
-    // 여기서는 이미 세션이 있어야 함(없으면 링크 흐름이 잘못된 것)
     (async () => {
-      const supabase = createSupabaseBrowserClient();
-      const { data } = await supabase.auth.getSession();
-      setReady(!!data.session);
-    })().catch(() => setReady(false));
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { data } = await supabase.auth.getSession();
+        setReady(!!data.session);
+      } catch {
+        setReady(false);
+      }
+    })();
   }, []);
 
-  async function onUpdate() {
+  async function onSetPassword() {
     if (!pw || pw.length < 6) {
-      setMsg("비밀번호는 6자 이상으로 입력해줘.");
+      setMsg("비밀번호를 6자 이상으로 입력해주세요.");
       return;
     }
     if (pw !== pw2) {
-      setMsg("비밀번호가 서로 달라.");
+      setMsg("비밀번호가 서로 다릅니다.");
       return;
     }
 
@@ -36,18 +40,21 @@ export default function ResetPasswordPage() {
     try {
       const supabase = createSupabaseBrowserClient();
 
-      const { error } = await supabase.auth.updateUser({
-        password: pw,
-      });
+      // ✅ reset 링크로 들어온 상태(세션 있음)에서 비밀번호 갱신
+      const { error } = await supabase.auth.updateUser({ password: pw });
 
       if (error) {
         setMsg(error.message);
         return;
       }
 
-      window.location.href = "/login";
+      setMsg("비밀번호가 변경되었습니다. 이제 로그인해주세요.");
+      // 원하시면 바로 /login으로 보내도 됩니다.
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 700);
     } catch {
-      setMsg("네트워크 오류. 잠시 후 다시 시도해줘.");
+      setMsg("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }
@@ -68,7 +75,7 @@ export default function ResetPasswordPage() {
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 8 }}>TimeOpen</div>
         <div style={{ fontSize: 14, color: "#555", marginBottom: 18 }}>
-          새 비밀번호를 설정해요.
+          새 비밀번호를 설정해주세요.
         </div>
 
         <div
@@ -80,14 +87,17 @@ export default function ResetPasswordPage() {
             background: "#fff",
           }}
         >
-          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 12 }}>새 비밀번호 설정</div>
+          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 12 }}>비밀번호 재설정</div>
 
           {!ready ? (
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#b00020", lineHeight: 1.6 }}>
-              세션이 없어요. 재설정 링크를 다시 요청해줘.
-              <div style={{ marginTop: 10 }}>
-                <a href="/forgot-password" style={{ textDecoration: "underline", fontWeight: 900, color: "#111" }}>
-                  재설정 메일 다시 받기
+            <div style={{ fontSize: 13, color: "#555", fontWeight: 700, lineHeight: 1.6 }}>
+              재설정 링크가 만료되었거나 올바르지 않을 수 있습니다.
+              <div style={{ marginTop: 8 }}>
+                <a
+                  href="/forgot-password"
+                  style={{ textDecoration: "underline", fontWeight: 900, color: "#111" }}
+                >
+                  비밀번호 재설정 메일 다시 받기
                 </a>
               </div>
             </div>
@@ -99,7 +109,7 @@ export default function ResetPasswordPage() {
               <input
                 value={pw}
                 onChange={(e) => setPw(e.target.value)}
-                placeholder="6자 이상"
+                placeholder="새 비밀번호 (6자 이상)"
                 type="password"
                 autoComplete="new-password"
                 style={{
@@ -121,7 +131,7 @@ export default function ResetPasswordPage() {
               <input
                 value={pw2}
                 onChange={(e) => setPw2(e.target.value)}
-                placeholder="한 번 더 입력"
+                placeholder="새 비밀번호 확인"
                 type="password"
                 autoComplete="new-password"
                 style={{
@@ -139,7 +149,7 @@ export default function ResetPasswordPage() {
 
               <button
                 type="button"
-                onClick={onUpdate}
+                onClick={onSetPassword}
                 disabled={loading}
                 style={{
                   width: "100%",
@@ -153,11 +163,11 @@ export default function ResetPasswordPage() {
                   opacity: loading ? 0.7 : 1,
                 }}
               >
-                {loading ? "처리 중..." : "비밀번호 변경"}
+                {loading ? "처리 중..." : "비밀번호 변경하기"}
               </button>
 
               {msg ? (
-                <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: "#b00020" }}>
+                <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: msg.includes("변경") ? "#111" : "#b00020" }}>
                   {msg}
                 </div>
               ) : null}

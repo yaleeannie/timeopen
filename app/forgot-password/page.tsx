@@ -22,8 +22,8 @@ export default function ForgotPasswordPage() {
     try {
       const supabase = createSupabaseBrowserClient();
 
-      // ✅ reset 링크도 /auth/callback에서 세션 교환 → /auth/reset 로 이동
-      const redirectTo = `${window.location.origin}/auth/callback?next=/auth/reset`;
+      // ✅ reset 링크가 열릴 페이지 (다음 단계에서 /auth/reset 만들 예정)
+      const redirectTo = `${window.location.origin}/auth/reset`;
 
       const { error } = await supabase.auth.resetPasswordForEmail(e, {
         redirectTo,
@@ -57,7 +57,7 @@ export default function ForgotPasswordPage() {
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 8 }}>TimeOpen</div>
         <div style={{ fontSize: 14, color: "#555", marginBottom: 18 }}>
-          비밀번호 재설정 메일을 보내줄게.
+          비밀번호 재설정 메일을 보내드릴게요.
         </div>
 
         <div
@@ -73,9 +73,9 @@ export default function ForgotPasswordPage() {
 
           {sent ? (
             <div style={{ fontSize: 14, fontWeight: 800, color: "#111", lineHeight: 1.6 }}>
-              재설정 메일을 보냈어.
+              재설정 메일을 보냈습니다.
               <div style={{ marginTop: 8, fontSize: 13, color: "#555", fontWeight: 700 }}>
-                메일의 링크를 누르면 새 비밀번호를 설정할 수 있어.
+                메일에서 링크를 눌러 새 비밀번호를 설정해줘.
               </div>
 
               <div style={{ marginTop: 14 }}>
@@ -86,9 +86,7 @@ export default function ForgotPasswordPage() {
             </div>
           ) : (
             <>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 800, marginBottom: 6 }}>
-                이메일
-              </label>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 800, marginBottom: 6 }}>이메일</label>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -128,9 +126,7 @@ export default function ForgotPasswordPage() {
               </button>
 
               {msg ? (
-                <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: "#b00020" }}>
-                  {msg}
-                </div>
+                <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: "#b00020" }}>{msg}</div>
               ) : null}
 
               <div style={{ marginTop: 14, fontSize: 13 }}>

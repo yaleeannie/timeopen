@@ -23,8 +23,6 @@ export default function SignupPage() {
     try {
       const supabase = createSupabaseBrowserClient();
 
-      // ✅ 회원가입: 이메일 확인 메일 발송됨(Confirm email 켜져있을 때)
-      // 확인 링크가 열리면 /auth/callback에서 세션 교환 후 /owner로 이동
       const redirectTo = `${window.location.origin}/auth/callback?next=/owner`;
 
       const { error } = await supabase.auth.signUp({
@@ -36,6 +34,15 @@ export default function SignupPage() {
       });
 
       if (error) {
+        const m = (error.message || "").toLowerCase();
+
+        // ✅ 이미 가입된 메일일 때(프로젝트/설정에 따라 문구가 다를 수 있음)
+        if (m.includes("already") || m.includes("registered") || m.includes("exists")) {
+          setMsg("이미 가입된 이메일일 수 있어요. 로그인하거나 비밀번호를 재설정해줘.");
+          setSent(true); // sent 화면으로 보내서 UX 통일
+          return;
+        }
+
         setMsg(error.message);
         return;
       }
@@ -62,9 +69,7 @@ export default function SignupPage() {
     >
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 8 }}>TimeOpen</div>
-        <div style={{ fontSize: 14, color: "#555", marginBottom: 18 }}>
-          처음 1회만 이메일 인증해요.
-        </div>
+        <div style={{ fontSize: 14, color: "#555", marginBottom: 18 }}>처음 1회만 이메일 인증해요.</div>
 
         <div
           style={{
@@ -79,22 +84,30 @@ export default function SignupPage() {
 
           {sent ? (
             <div style={{ fontSize: 14, fontWeight: 800, color: "#111", lineHeight: 1.6 }}>
-              가입 확인 메일을 보냈어.
+              가입 확인 메일을 보냈습니다.
               <div style={{ marginTop: 8, fontSize: 13, color: "#555", fontWeight: 700 }}>
-                메일에서 링크를 누르면 자동 로그인되고 <b>/owner</b>로 이동해.
+                메일이 안 오면 이미 가입된 이메일일 수 있어요. 아래에서 로그인하거나 비밀번호 재설정을 해주세요.
               </div>
 
-              <div style={{ marginTop: 14 }}>
+              {msg ? (
+                <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: "#b00020" }}>{msg}</div>
+              ) : null}
+
+              <div style={{ marginTop: 14, display: "flex", gap: 12, flexWrap: "wrap" }}>
                 <a href="/login" style={{ textDecoration: "underline", fontWeight: 800, color: "#111" }}>
-                  이미 계정 있어요 → 로그인
+                  로그인
+                </a>
+                <a
+                  href="/forgot-password"
+                  style={{ textDecoration: "underline", fontWeight: 800, color: "#111" }}
+                >
+                  비밀번호 재설정
                 </a>
               </div>
             </div>
           ) : (
             <>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 800, marginBottom: 6 }}>
-                이메일
-              </label>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 800, marginBottom: 6 }}>이메일</label>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -156,9 +169,7 @@ export default function SignupPage() {
               </button>
 
               {msg ? (
-                <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: "#b00020" }}>
-                  {msg}
-                </div>
+                <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: "#b00020" }}>{msg}</div>
               ) : null}
 
               <div style={{ marginTop: 14, fontSize: 13 }}>
