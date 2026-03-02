@@ -28,7 +28,7 @@ export default async function OwnerPage() {
   // 3) bootstrap 결과에서 handle/orgId 뽑기
   const row = Array.isArray(boot) ? boot[0] : boot;
   const orgId = row?.organization_id ?? null;
-  const handle = row?.handle ?? null;
+  const handle = row?.out_handle ?? null;
 
   return (
     <div style={{ padding: 20 }}>
