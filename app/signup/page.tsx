@@ -11,49 +11,51 @@ export default function SignupPage() {
   const [sent, setSent] = useState(false);
 
   async function onSignup() {
-    const e = email.trim().toLowerCase();
-    if (!e || !pw) {
-      setMsg("이메일/비밀번호를 입력해줘.");
-      return;
-    }
+  const e = email.trim().toLowerCase();
+  if (!e || !pw) {
+    setMsg("이메일/비밀번호를 입력해 주세요.");
+    return;
+  }
 
-    setLoading(true);
-    setMsg("");
+  setLoading(true);
+  setMsg("");
 
-    try {
-      const supabase = createSupabaseBrowserClient();
+  try {
+    const supabase = createSupabaseBrowserClient();
+    const redirectTo = `${window.location.origin}/auth/callback?next=/owner`;
 
-      const redirectTo = `${window.location.origin}/auth/callback?next=/owner`;
+    const { error } = await supabase.auth.signUp({
+      email: e,
+      password: pw,
+      options: { emailRedirectTo: redirectTo },
+    });
 
-      const { error } = await supabase.auth.signUp({
-        email: e,
-        password: pw,
-        options: {
-          emailRedirectTo: redirectTo,
-        },
-      });
+    if (error) {
+      const m = (error.message || "").toLowerCase();
 
-      if (error) {
-        const m = (error.message || "").toLowerCase();
-
-        // ✅ 이미 가입된 메일일 때(프로젝트/설정에 따라 문구가 다를 수 있음)
-        if (m.includes("already") || m.includes("registered") || m.includes("exists")) {
-          setMsg("이미 가입된 이메일일 수 있어요. 로그인하거나 비밀번호를 재설정해줘.");
-          setSent(true); // sent 화면으로 보내서 UX 통일
-          return;
-        }
-
-        setMsg(error.message);
+      // ✅ 이미 가입된 이메일 케이스(표현이 조금씩 다를 수 있어서 넓게 잡음)
+      if (
+        m.includes("already") ||
+        m.includes("registered") ||
+        m.includes("user already") ||
+        m.includes("exists")
+      ) {
+        setMsg("이미 가입된 이메일입니다. 로그인하거나 비밀번호 재설정을 진행해 주세요.");
+        setSent(true); // 아래 안내 UI 재사용
         return;
       }
 
-      setSent(true);
-    } catch {
-      setMsg("네트워크 오류. 잠시 후 다시 시도해줘.");
-    } finally {
-      setLoading(false);
+      setMsg(error.message);
+      return;
     }
+
+    setSent(true);
+  } catch {
+    setMsg("네트워크 오류입니다. 잠시 후 다시 시도해 주세요.");
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <main
