@@ -1,45 +1,44 @@
 // app/auth/callback/route.ts
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-export async function GET(req: Request) {
-  const url = new URL(req.url);
+export async function GET(request: NextRequest) {
+  const url = request.nextUrl;
+  const code = url.searchParams.get("code");
   const next = url.searchParams.get("next") ?? "/owner";
 
-  const supabase = await createSupabaseServerClient();
+  // redirect 응답을 먼저 만들어두고, 여기에 쿠키를 실어보낸다(중요)
+  const response = NextResponse.redirect(new URL(next, url.origin));
 
-  // (A) PKCE code flow (Google OAuth 등)
-  const code = url.searchParams.get("code");
-  if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) return NextResponse.redirect(new URL(`/owner?auth=fail`, url.origin));
-    return NextResponse.redirect(new URL(next, url.origin));
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+
+  // code가 없으면 그냥 next로 보냄
+  if (!code) return response;
+
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+  // 실패 이유를 URL에 실어서 바로 보이게(디버깅 편하게)
+  if (error) {
+    const fail = new URL("/owner", url.origin);
+    fail.searchParams.set("auth", "fail");
+    fail.searchParams.set("reason", error.message);
+    return NextResponse.redirect(fail);
   }
 
-  // (B) verify link flow (Email signup/magic link)
-  // supabase /auth/v1/verify -> redirect_to 로 올 때 token/type이 같이 오거나 token_hash로 옴
-  const token =
-    url.searchParams.get("token") ??
-    url.searchParams.get("token_hash") ??
-    "";
-
-  const type = (url.searchParams.get("type") ?? "magiclink") as
-    | "magiclink"
-    | "signup"
-    | "recovery"
-    | "invite"
-    | "email_change";
-
-  if (token) {
-    const { error } = await supabase.auth.verifyOtp({
-      type,
-      token_hash: token,
-    });
-
-    if (error) return NextResponse.redirect(new URL(`/owner?auth=fail`, url.origin));
-    return NextResponse.redirect(new URL(next, url.origin));
-  }
-
-  // (C) 아무 것도 없으면 owner로
-  return NextResponse.redirect(new URL("/owner", url.origin));
+  return response;
 }

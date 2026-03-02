@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "") ||
     "https://timeopen.vercel.app";
 
-  const redirectTo = `${origin}/auth/callback?next=/owner`;
+  const redirectTo = "https://timeopen.vercel.app/auth/callback?next=/owner";
 
   const { error } = await supabase.auth.signInWithOtp({
     email: e,
