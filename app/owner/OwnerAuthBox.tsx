@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const COOLDOWN_MS = 60_000; // 60초
 const STORAGE_KEY = "timeopen_magiclink_last_sent_at";
@@ -51,20 +52,26 @@ export default function OwnerAuthBox() {
     setMsg("");
 
     try {
-      const res = await fetch("/api/auth/magic-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: e }),
-      });
-      const json = await res.json().catch(() => ({}));
+      const supabase = createSupabaseBrowserClient();
 
-      if (!res.ok) {
-        setMsg(json?.error ?? "메일 전송 실패");
+      // ⭐️ PKCE 쿠키 저장을 위해 "브라우저에서" 시작해야 함
+      const redirectTo = `${window.location.origin}/auth/callback?next=/owner`;
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email: e,
+        options: { emailRedirectTo: redirectTo },
+      });
+
+      if (error) {
+        setMsg(error.message);
         return;
       }
 
       localStorage.setItem(STORAGE_KEY, String(Date.now()));
       setMsg("메일 보냈어! 메일함에서 링크를 누르면 자동으로 로그인돼.");
+
+      // ✅ UX 안정성: 상태 동기화 한 번
+      await refreshMe();
     } catch {
       setMsg("네트워크 오류. 잠시 후 다시 시도해줘.");
     } finally {
@@ -75,7 +82,8 @@ export default function OwnerAuthBox() {
   async function logout() {
     setMsg("");
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut(); // ✅ 브라우저 로그인 흐름과 통일
     } catch {}
     await refreshMe();
     setMsg("로그아웃 완료");
@@ -88,8 +96,8 @@ export default function OwnerAuthBox() {
         padding: 14,
         border: "1px solid #e5e5e5",
         borderRadius: 12,
-        background: "#ffffff", // ✅ 카드 자체 흰 배경 고정
-        color: "#111111",      // ✅ 기본 글씨색 진하게
+        background: "#ffffff",
+        color: "#111111",
       }}
     >
       <div style={{ fontSize: 13, color: "#111", marginBottom: 10, fontWeight: 600 }}>
@@ -131,8 +139,8 @@ export default function OwnerAuthBox() {
               borderRadius: 12,
               border: "1px solid #cfcfcf",
               fontSize: 14,
-              background: "#fff",  // ✅ 입력창 흰 배경
-              color: "#111",       // ✅ 입력 글씨 진하게
+              background: "#fff",
+              color: "#111",
               outline: "none",
             }}
           />
@@ -171,7 +179,8 @@ export default function OwnerAuthBox() {
 
       {!userEmail ? (
         <div style={{ marginTop: 10, fontSize: 12, color: "#111" }}>
-          • 메일에서 링크를 누르면 자동으로 로그인되고 <code style={{ color: "#111" }}>/owner</code>로 돌아와야 해.
+          • 메일에서 링크를 누르면 자동으로 로그인되고{" "}
+          <code style={{ color: "#111" }}>/owner</code>로 돌아와야 해.
         </div>
       ) : null}
     </div>
