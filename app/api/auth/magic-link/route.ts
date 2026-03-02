@@ -30,6 +30,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "허용되지 않은 이메일입니다. (owner 전용)" }, { status: 403 });
   }
 
-  // ✅ 여기서는 “허용됨”만 반환 (메일 발송은 브라우저에서)
+  // ✅ 여기서는 발송하지 않고, 브라우저에서 signInWithOtp 하도록 ok만 준다
   return NextResponse.json({ ok: true });
 }

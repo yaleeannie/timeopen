@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const COOLDOWN_MS = 60_000;
+const COOLDOWN_MS = 60_000; // 60초
 const STORAGE_KEY = "timeopen_magiclink_last_sent_at";
 
 export default function OwnerAuthBox() {
@@ -14,17 +14,23 @@ export default function OwnerAuthBox() {
   const [cooldownLeft, setCooldownLeft] = useState(0);
 
   async function refreshMe() {
-    const res = await fetch("/api/auth/me");
-    const json = await res.json().catch(() => ({}));
-    setUserEmail(json?.user?.email ?? null);
+    try {
+      const res = await fetch("/api/auth/me", { method: "GET" });
+      const json = await res.json().catch(() => ({}));
+      setUserEmail(json?.user?.email ?? null);
+    } catch {
+      setUserEmail(null);
+    }
   }
 
   useEffect(() => {
     refreshMe();
+
     const tick = () => {
       const last = Number(localStorage.getItem(STORAGE_KEY) ?? "0");
       setCooldownLeft(Math.max(0, COOLDOWN_MS - (Date.now() - last)));
     };
+
     tick();
     const id = setInterval(tick, 500);
     return () => clearInterval(id);
@@ -34,14 +40,17 @@ export default function OwnerAuthBox() {
 
   async function sendMagicLink() {
     const e = email.trim().toLowerCase();
-    if (!e) return setMsg("이메일을 입력해줘.");
+    if (!e) {
+      setMsg("이메일을 입력해줘.");
+      return;
+    }
     if (!canSend) return;
 
     setSending(true);
     setMsg("");
 
     try {
-      // 1) 서버에서 OWNER_EMAILS 체크만
+      // 1) 서버에서 OWNER_EMAILS gate 통과
       const gate = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -49,13 +58,15 @@ export default function OwnerAuthBox() {
       });
       const gateJson = await gate.json().catch(() => ({}));
       if (!gate.ok) {
-        setMsg(gateJson?.error ?? "허용되지 않은 이메일");
+        setMsg(gateJson?.error ?? "메일 전송 실패");
         return;
       }
 
-      // 2) ✅ 브라우저에서 signIn 시작 → PKCE 저장됨
+      // 2) 실제 발송은 브라우저 supabase로 (PKCE 안정)
       const supabase = createSupabaseBrowserClient();
-      const redirectTo = `${window.location.origin}/auth/callback?next=/owner`;
+
+      // ✅ 배포 URL 고정 (흔들림 제거)
+      const redirectTo = "https://timeopen.vercel.app/auth/callback?next=/owner";
 
       const { error } = await supabase.auth.signInWithOtp({
         email: e,
@@ -78,13 +89,24 @@ export default function OwnerAuthBox() {
 
   async function logout() {
     setMsg("");
-    await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {}
     await refreshMe();
     setMsg("로그아웃 완료");
   }
 
   return (
-    <div style={{ marginTop: 16, padding: 14, border: "1px solid #e5e5e5", borderRadius: 12, background: "#fff" }}>
+    <div
+      style={{
+        marginTop: 16,
+        padding: 14,
+        border: "1px solid #e5e5e5",
+        borderRadius: 12,
+        background: "#fff",
+        color: "#111",
+      }}
+    >
       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: "#111" }}>
         owner 기능은 로그인 후 사용 가능해요.
       </div>
@@ -97,7 +119,15 @@ export default function OwnerAuthBox() {
           <button
             type="button"
             onClick={logout}
-            style={{ padding: "10px 12px", borderRadius: 10, border: "1px solid #111", background: "#111", color: "#fff" }}
+            style={{
+              padding: "10px 12px",
+              borderRadius: 10,
+              border: "1px solid #111",
+              background: "#111",
+              color: "#fff",
+              cursor: "pointer",
+              fontWeight: 700,
+            }}
           >
             로그아웃
           </button>
@@ -108,7 +138,14 @@ export default function OwnerAuthBox() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="owner 이메일 입력"
-            style={{ minWidth: 260, padding: "10px 12px", borderRadius: 12, border: "1px solid #cfcfcf", color: "#111" }}
+            style={{
+              minWidth: 260,
+              padding: "10px 12px",
+              borderRadius: 12,
+              border: "1px solid #cfcfcf",
+              background: "#fff",
+              color: "#111",
+            }}
           />
           <button
             type="button"
@@ -121,9 +158,16 @@ export default function OwnerAuthBox() {
               background: "#111",
               color: "#fff",
               opacity: canSend ? 1 : 0.55,
+              cursor: canSend ? "pointer" : "not-allowed",
+              fontWeight: 800,
+              whiteSpace: "nowrap",
             }}
           >
-            {sending ? "보내는 중..." : cooldownLeft > 0 ? `잠시만 (${Math.ceil(cooldownLeft / 1000)}s)` : "로그인 메일 보내기"}
+            {sending
+              ? "보내는 중..."
+              : cooldownLeft > 0
+              ? `잠시만 (${Math.ceil(cooldownLeft / 1000)}s)`
+              : "로그인 메일 보내기"}
           </button>
         </div>
       )}
