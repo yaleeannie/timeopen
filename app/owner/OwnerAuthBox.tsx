@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const COOLDOWN_MS = 60_000;
+const COOLDOWN_MS = 60_000; // 60초
 const STORAGE_KEY = "timeopen_magiclink_last_sent_at";
 
 export default function OwnerAuthBox() {
@@ -14,9 +14,13 @@ export default function OwnerAuthBox() {
   const [cooldownLeft, setCooldownLeft] = useState(0);
 
   async function refreshMe() {
-    const res = await fetch("/api/auth/me");
-    const json = await res.json().catch(() => ({}));
-    setUserEmail(json?.user?.email ?? null);
+    try {
+      const res = await fetch("/api/auth/me");
+      const json = await res.json().catch(() => ({}));
+      setUserEmail(json?.user?.email ?? null);
+    } catch {
+      setUserEmail(null);
+    }
   }
 
   useEffect(() => {
@@ -34,16 +38,21 @@ export default function OwnerAuthBox() {
 
   const canSend = useMemo(() => !sending && cooldownLeft === 0, [sending, cooldownLeft]);
 
+  // ✅ 서버는 "허용 이메일(OWNER_EMAILS)인지"만 검사
+  // ✅ 실제 signInWithOtp는 브라우저에서 수행 (PKCE 안정)
   async function sendMagicLink() {
     const e = email.trim().toLowerCase();
-    if (!e) return setMsg("이메일을 입력해줘.");
+    if (!e) {
+      setMsg("이메일을 입력해줘.");
+      return;
+    }
     if (!canSend) return;
 
     setSending(true);
     setMsg("");
 
     try {
-      // 1️⃣ owner 허용 여부만 서버에서 검사
+      // 1) gate
       const gate = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,51 +61,124 @@ export default function OwnerAuthBox() {
 
       const gateJson = await gate.json().catch(() => ({}));
       if (!gate.ok) {
-        setMsg(gateJson?.error ?? "허용되지 않은 이메일");
+        setMsg(gateJson?.error ?? "메일 전송 실패");
         return;
       }
 
-      // 2️⃣ 실제 로그인 시작은 반드시 브라우저에서
+      // 2) 실제 OTP 발송(브라우저)
       const supabase = createSupabaseBrowserClient();
+
+      // ✅ 이 값이 Supabase Redirect URLs에 반드시 포함돼 있어야 함
+      const redirectTo = `${window.location.origin}/auth/callback?next=/owner`;
 
       const { error } = await supabase.auth.signInWithOtp({
         email: e,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/owner`,
-        },
+        options: { emailRedirectTo: redirectTo },
       });
 
-      if (error) return setMsg(error.message);
+      if (error) {
+        setMsg(error.message);
+        return;
+      }
 
       localStorage.setItem(STORAGE_KEY, String(Date.now()));
-      setMsg("메일을 보냈어! 메일에서 링크를 눌러줘.");
+      setMsg("메일 보냈어! 메일함에서 링크를 누르면 자동으로 로그인돼.");
     } catch {
-      setMsg("네트워크 오류");
+      setMsg("네트워크 오류. 잠시 후 다시 시도해줘.");
     } finally {
       setSending(false);
     }
   }
 
   async function logout() {
-    const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signOut();
+    setMsg("");
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut().catch(() => {});
+      await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    } catch {}
     await refreshMe();
+    setMsg("로그아웃 완료");
   }
 
   return (
-    <div style={{ padding: 16, border: "1px solid #ddd", borderRadius: 12 }}>
+    <div
+      style={{
+        marginTop: 16,
+        padding: 14,
+        border: "1px solid #e5e5e5",
+        borderRadius: 12,
+        background: "#fff",
+        color: "#111",
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>owner 기능은 로그인 후 사용 가능해요.</div>
+
       {userEmail ? (
-        <>
-          <div>로그인됨: {userEmail}</div>
-          <button onClick={logout}>로그아웃</button>
-        </>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ fontSize: 14, fontWeight: 700 }}>
+            로그인됨: <span style={{ fontWeight: 900 }}>{userEmail}</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={logout}
+            style={{
+              padding: "10px 12px",
+              borderRadius: 10,
+              border: "1px solid #111",
+              background: "#111",
+              color: "#fff",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            로그아웃
+          </button>
+        </div>
       ) : (
-        <>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} />
-          <button onClick={sendMagicLink}>로그인 메일 보내기</button>
-        </>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <input
+            value={email}
+            onChange={(e2) => setEmail(e2.target.value)}
+            placeholder="owner 이메일 입력"
+            style={{
+              minWidth: 260,
+              padding: "10px 12px",
+              borderRadius: 12,
+              border: "1px solid #cfcfcf",
+              background: "#fff",
+              color: "#111",
+              outline: "none",
+            }}
+          />
+
+          <button
+            type="button"
+            onClick={sendMagicLink}
+            disabled={!canSend}
+            style={{
+              padding: "10px 12px",
+              borderRadius: 12,
+              border: "1px solid #111",
+              background: "#111",
+              color: "#fff",
+              opacity: canSend ? 1 : 0.55,
+              cursor: canSend ? "pointer" : "not-allowed",
+              fontWeight: 900,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {sending
+              ? "보내는 중..."
+              : cooldownLeft > 0
+              ? `잠시만 (${Math.ceil(cooldownLeft / 1000)}s)`
+              : "로그인 메일 보내기"}
+          </button>
+        </div>
       )}
-      <div>{msg}</div>
+
+      {msg ? <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700 }}>{msg}</div> : null}
     </div>
   );
 }
