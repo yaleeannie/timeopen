@@ -69,7 +69,7 @@ export default function OwnerAuthBox() {
       const supabase = createSupabaseBrowserClient();
 
       // ✅ 이 값이 Supabase Redirect URLs에 반드시 포함돼 있어야 함
-      const redirectTo = "https://timeopen.vercel.app/auth/callback?next=/owner";
+      const redirectTo = `${window.location.origin}/auth/callback`;
 
       const { error } = await supabase.auth.signInWithOtp({
         email: e,
