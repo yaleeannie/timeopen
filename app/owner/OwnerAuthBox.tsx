@@ -1,23 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const COOLDOWN_MS = 60_000; // 60초
-const STORAGE_KEY = "timeopen_magiclink_last_sent_at";
-
 export default function OwnerAuthBox() {
-  const [email, setEmail] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
-  const [msg, setMsg] = useState("");
-  const [cooldownLeft, setCooldownLeft] = useState(0);
 
   async function refreshMe() {
     try {
-      const res = await fetch("/api/auth/me");
-      const json = await res.json().catch(() => ({}));
-      setUserEmail(json?.user?.email ?? null);
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getUser();
+      setUserEmail(data.user?.email ?? null);
     } catch {
       setUserEmail(null);
     }
@@ -25,80 +18,12 @@ export default function OwnerAuthBox() {
 
   useEffect(() => {
     refreshMe();
-
-    const tick = () => {
-      const last = Number(localStorage.getItem(STORAGE_KEY) ?? "0");
-      setCooldownLeft(Math.max(0, COOLDOWN_MS - (Date.now() - last)));
-    };
-
-    tick();
-    const id = setInterval(tick, 500);
-    return () => clearInterval(id);
   }, []);
 
-  const canSend = useMemo(() => !sending && cooldownLeft === 0, [sending, cooldownLeft]);
-
-  // ✅ 서버는 "허용 이메일(OWNER_EMAILS)인지"만 검사
-  // ✅ 실제 signInWithOtp는 브라우저에서 수행 (PKCE 안정)
-  async function sendMagicLink() {
-    const e = email.trim().toLowerCase();
-    if (!e) {
-      setMsg("이메일을 입력해줘.");
-      return;
-    }
-    if (!canSend) return;
-
-    setSending(true);
-    setMsg("");
-
-    try {
-      // 1) gate
-      const gate = await fetch("/api/auth/magic-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: e }),
-      });
-
-      const gateJson = await gate.json().catch(() => ({}));
-      if (!gate.ok) {
-        setMsg(gateJson?.error ?? "메일 전송 실패");
-        return;
-      }
-
-      // 2) 실제 OTP 발송(브라우저)
-      const supabase = createSupabaseBrowserClient();
-
-      // ✅ 이 값이 Supabase Redirect URLs에 반드시 포함돼 있어야 함
-      const redirectTo = `${window.location.origin}/auth/callback`;
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email: e,
-        options: { emailRedirectTo: redirectTo },
-      });
-
-      if (error) {
-        setMsg(error.message);
-        return;
-      }
-
-      localStorage.setItem(STORAGE_KEY, String(Date.now()));
-      setMsg("메일 보냈어! 메일함에서 링크를 누르면 자동으로 로그인돼.");
-    } catch {
-      setMsg("네트워크 오류. 잠시 후 다시 시도해줘.");
-    } finally {
-      setSending(false);
-    }
-  }
-
   async function logout() {
-    setMsg("");
-    try {
-      const supabase = createSupabaseBrowserClient();
-      await supabase.auth.signOut().catch(() => {});
-      await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-    } catch {}
-    await refreshMe();
-    setMsg("로그아웃 완료");
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut().catch(() => {});
+    window.location.reload();
   }
 
   return (
@@ -112,7 +37,9 @@ export default function OwnerAuthBox() {
         color: "#111",
       }}
     >
-      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>owner 기능은 로그인 후 사용 가능해요.</div>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
+        owner 기능은 로그인 후 사용 가능해요.
+      </div>
 
       {userEmail ? (
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -138,47 +65,39 @@ export default function OwnerAuthBox() {
         </div>
       ) : (
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <input
-            value={email}
-            onChange={(e2) => setEmail(e2.target.value)}
-            placeholder="owner 이메일 입력"
+          <a
+            href="/login"
             style={{
-              minWidth: 260,
-              padding: "10px 12px",
-              borderRadius: 12,
-              border: "1px solid #cfcfcf",
-              background: "#fff",
-              color: "#111",
-              outline: "none",
-            }}
-          />
-
-          <button
-            type="button"
-            onClick={sendMagicLink}
-            disabled={!canSend}
-            style={{
+              display: "inline-block",
               padding: "10px 12px",
               borderRadius: 12,
               border: "1px solid #111",
               background: "#111",
               color: "#fff",
-              opacity: canSend ? 1 : 0.55,
-              cursor: canSend ? "pointer" : "not-allowed",
               fontWeight: 900,
-              whiteSpace: "nowrap",
+              textDecoration: "none",
             }}
           >
-            {sending
-              ? "보내는 중..."
-              : cooldownLeft > 0
-              ? `잠시만 (${Math.ceil(cooldownLeft / 1000)}s)`
-              : "로그인 메일 보내기"}
-          </button>
+            로그인하기
+          </a>
+
+          <a
+            href="/signup"
+            style={{
+              display: "inline-block",
+              padding: "10px 12px",
+              borderRadius: 12,
+              border: "1px solid #cfcfcf",
+              background: "#fff",
+              color: "#111",
+              fontWeight: 800,
+              textDecoration: "none",
+            }}
+          >
+            회원가입
+          </a>
         </div>
       )}
-
-      {msg ? <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700 }}>{msg}</div> : null}
     </div>
   );
 }
