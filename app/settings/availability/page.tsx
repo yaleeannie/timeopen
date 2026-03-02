@@ -2,15 +2,20 @@
 import AvailabilitySettingsClient from "./AvailabilitySettingsClient";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-type Props = {
-  searchParams?: { handle?: string };
-};
+type SearchParams = Record<string, string | string[] | undefined>;
 
-export default async function AvailabilitySettingsPage({ searchParams }: Props) {
-  const handle = String(searchParams?.handle ?? "").trim().toLowerCase();
+function pickHandle(sp?: SearchParams) {
+  const raw = sp?.handle;
+  if (!raw) return "";
+  if (Array.isArray(raw)) return String(raw[0] ?? "");
+  return String(raw);
+}
+
+export default async function AvailabilitySettingsPage(props: { searchParams?: SearchParams }) {
+  const handle = pickHandle(props.searchParams).trim().toLowerCase();
 
   const Shell = ({ children }: { children: React.ReactNode }) => (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white text-gray-900">
       <div className="mx-auto w-full max-w-3xl px-4 py-10">{children}</div>
     </main>
   );
@@ -27,7 +32,7 @@ export default async function AvailabilitySettingsPage({ searchParams }: Props) 
     return (
       <Shell>
         <div style={{ fontWeight: 700, marginBottom: 8 }}>로그인이 필요합니다.</div>
-        <div style={{ color: "#666" }}>owner만 영업시간을 설정할 수 있어요.</div>
+        <div style={{ color: "#444" }}>owner만 영업시간을 설정할 수 있어요.</div>
       </Shell>
     );
   }
@@ -59,7 +64,7 @@ export default async function AvailabilitySettingsPage({ searchParams }: Props) 
       return (
         <Shell>
           <div style={{ fontWeight: 700, marginBottom: 8 }}>접근 권한이 없습니다.</div>
-          <div style={{ color: "#666" }}>해당 organization의 owner가 아니에요.</div>
+          <div style={{ color: "#444" }}>해당 organization의 owner가 아니에요.</div>
         </Shell>
       );
     }

@@ -40,6 +40,7 @@ export default function OwnerAuthBox() {
 
   const canSend = useMemo(() => !sending && cooldownLeft === 0, [sending, cooldownLeft]);
 
+  // ✅ A안: 서버 API로 메일 발송(OWNER_EMAILS 검사 포함)
   async function sendMagicLink() {
     const e = email.trim().toLowerCase();
     if (!e) {
@@ -52,26 +53,21 @@ export default function OwnerAuthBox() {
     setMsg("");
 
     try {
-      const supabase = createSupabaseBrowserClient();
-
-      // ⭐️ PKCE 쿠키 저장을 위해 "브라우저에서" 시작해야 함
-      const redirectTo = `${window.location.origin}/auth/callback?next=/owner`;
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email: e,
-        options: { emailRedirectTo: redirectTo },
+      const res = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: e }),
       });
 
-      if (error) {
-        setMsg(error.message);
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setMsg(json?.error ?? `메일 전송 실패 (HTTP ${res.status})`);
         return;
       }
 
       localStorage.setItem(STORAGE_KEY, String(Date.now()));
       setMsg("메일 보냈어! 메일함에서 링크를 누르면 자동으로 로그인돼.");
-
-      // ✅ UX 안정성: 상태 동기화 한 번
-      await refreshMe();
     } catch {
       setMsg("네트워크 오류. 잠시 후 다시 시도해줘.");
     } finally {
@@ -82,8 +78,10 @@ export default function OwnerAuthBox() {
   async function logout() {
     setMsg("");
     try {
+      // ✅ 어떤 방식이든 확실히 로그아웃: 브라우저 signOut + 서버 쿠키 정리 API 둘 다
       const supabase = createSupabaseBrowserClient();
-      await supabase.auth.signOut(); // ✅ 브라우저 로그인 흐름과 통일
+      await supabase.auth.signOut().catch(() => {});
+      await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     } catch {}
     await refreshMe();
     setMsg("로그아웃 완료");
@@ -172,9 +170,7 @@ export default function OwnerAuthBox() {
       )}
 
       {msg ? (
-        <div style={{ marginTop: 10, fontSize: 13, color: "#111", fontWeight: 600 }}>
-          {msg}
-        </div>
+        <div style={{ marginTop: 10, fontSize: 13, color: "#111", fontWeight: 600 }}>{msg}</div>
       ) : null}
 
       {!userEmail ? (
