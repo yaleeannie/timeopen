@@ -1,100 +1,113 @@
-// app/owner/page.tsx
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import LogoutButton from "./LogoutButton";
+import ProfileEditor from "./ProfileEditor";
 
 export default async function OwnerPage() {
-  const supabase = await createSupabaseServerClient();
-
-  // 1️⃣ 로그인 확인
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, organizationId, handle, error } = await getOwnerContext();
 
   if (!user) {
     redirect("/login");
   }
 
-  // 2️⃣ bootstrap 실행 (organization + handle 자동 생성 / 멱등)
-  const { data, error } = await supabase.rpc("bootstrap_owner");
+  if (error) {
+    return (
+      <main style={{ padding: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 900 }}>TimeOpen 판매자 대시보드</h1>
+        <div style={{ marginTop: 12, color: "#b00020", fontWeight: 800 }}>
+          owner 정보를 불러오지 못했습니다: {error}
+        </div>
+      </main>
+    );
+  }
 
-  const row = Array.isArray(data) ? data[0] : data;
-  const handle = row?.handle ?? null;
-  const orgId = row?.organization_id ?? null;
+  if (!organizationId) {
+    return (
+      <main style={{ padding: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 900 }}>TimeOpen 판매자 대시보드</h1>
+        <div style={{ marginTop: 12, color: "#b00020", fontWeight: 800 }}>
+          organizationId를 찾을 수 없습니다.
+        </div>
+      </main>
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data: orgRow, error: orgErr } = await supabase
+    .from("organizations")
+    .select("handle, location_text, notice_text")
+    .eq("id", organizationId)
+    .maybeSingle();
+
+  if (orgErr) {
+    return (
+      <main style={{ padding: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 900 }}>TimeOpen 판매자 대시보드</h1>
+        <div style={{ marginTop: 12, color: "#b00020", fontWeight: 800 }}>
+          organizations 조회 오류: {orgErr.message}
+        </div>
+      </main>
+    );
+  }
+
+  const locationText = (orgRow?.location_text as string | null) ?? "";
+  const noticeText = (orgRow?.notice_text as string | null) ?? "";
+  const finalHandle = (orgRow?.handle as string | null) ?? handle;
+
+  const canLink = !!finalHandle && finalHandle !== "null";
 
   return (
-    <main style={{ padding: 40, maxWidth: 720 }}>
-      {/* 상단 */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ fontSize: 28, fontWeight: 900 }}>TimeOpen 판매자 대시보드</h1>
+    <main style={{ padding: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 900 }}>TimeOpen 판매자 대시보드</h1>
         <LogoutButton />
       </div>
 
-      {/* 계정 정보 */}
-      <div style={{ marginTop: 20, fontSize: 14 }}>
+      <div style={{ marginTop: 12, fontSize: 13, color: "#444" }}>
         <div>로그인됨: {user.email}</div>
-        <div>organizationId: {orgId ?? "-"}</div>
-        <div>handle: {handle ?? "-"}</div>
+        <div>handle: {finalHandle ?? "-"}</div>
       </div>
 
-      {/* ❌ bootstrap 실패 시 */}
-      {error || !handle ? (
-        <div
-          style={{
-            marginTop: 24,
-            padding: 16,
-            borderRadius: 12,
-            border: "1px solid #ffd5d5",
-            background: "#fff5f5",
-            color: "#b00020",
-            fontWeight: 800,
-          }}
-        >
-          handle 생성에 실패했습니다. bootstrap 오류입니다.
-          {error ? <div style={{ marginTop: 8 }}>{error.message}</div> : null}
+      <div style={{ marginTop: 18 }}>
+        <div style={{ marginTop: 10 }}>
+          <a href="/settings/availability" style={{ textDecoration: "underline", fontWeight: 800 }}>
+            영업시간 설정
+          </a>
         </div>
-      ) : (
-        <>
-          {/* 기능 영역 */}
-          <div
-            style={{
-              marginTop: 30,
-              border: "1px solid #e5e5e5",
-              borderRadius: 16,
-              padding: 20,
-              background: "#fff",
-            }}
-          >
-            <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 16 }}>
-              예약 설정
-            </div>
 
-            <div style={{ marginBottom: 12 }}>
-              <a href="/settings/availability" style={{ textDecoration: "underline", fontWeight: 700 }}>
-                영업시간 설정하기
-              </a>
-            </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <a href={`/reservations?handle=${handle}`} style={{ textDecoration: "underline", fontWeight: 700 }}>
-                예약 확인
-              </a>
-            </div>
-
-            <div style={{ marginBottom: 6, fontWeight: 700 }}>예약 링크</div>
-
-            <div style={{ fontSize: 13, marginBottom: 10 }}>
-              https://timeopen.app/u/{handle}
-            </div>
-
-            <a href={`/u/${handle}`} style={{ textDecoration: "underline", fontWeight: 700 }}>
-              예약 페이지 미리보기
+        <div style={{ marginTop: 10 }}>
+          {canLink ? (
+            <a
+              href={`/reservations?handle=${finalHandle}`}
+              style={{ textDecoration: "underline", fontWeight: 800 }}
+            >
+              예약 확인
             </a>
-          </div>
-        </>
-      )}
+          ) : (
+            <span style={{ color: "#b00020", fontWeight: 800 }}>handle이 없어 예약 확인을 열 수 없습니다.</span>
+          )}
+        </div>
+
+        <div style={{ marginTop: 10 }}>
+          {canLink ? (
+            <a href={`/u/${finalHandle}`} style={{ textDecoration: "underline", fontWeight: 800 }}>
+              예약 링크 미리보기
+            </a>
+          ) : (
+            <span style={{ color: "#b00020", fontWeight: 800 }}>handle이 없어 예약 링크를 만들 수 없습니다.</span>
+          )}
+        </div>
+      </div>
+
+      <ProfileEditor
+        organizationId={organizationId}
+        initialLocation={locationText}
+        initialNotice={noticeText}
+      />
     </main>
   );
 }

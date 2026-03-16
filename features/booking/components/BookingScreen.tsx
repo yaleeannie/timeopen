@@ -13,7 +13,7 @@ import { fetchExceptionForDate } from "@/features/availability/fetchExceptionFor
 import { computeAvailableStartTimes } from "@/features/availability/computeAvailableStartTimes";
 import type { WeeklySchedule } from "@/features/availability/weeklySchedule";
 
-import { fetchBusyFromDb } from "@/features/availability/fetchBusyFromDb"; // ✅ busyToMinutes 제거(안씀)
+import { fetchBusyFromDb } from "@/features/availability/fetchBusyFromDb";
 import { saveReservation } from "@/features/booking/saveReservation";
 import { fetchOrganizationByHandle } from "@/features/organizations/fetchOrganizationByHandle";
 
@@ -85,6 +85,15 @@ export default function BookingScreen({ handle }: Props) {
 
   const [noTimesForCurrent, setNoTimesForCurrent] = useState<boolean>(false);
 
+  const [orgLocation, setOrgLocation] = useState<string>("");
+  const [orgNotice, setOrgNotice] = useState<string>("");
+
+  const [msg, setMsg] = useState<string>("");
+
+  // ✅ Day 1 추가
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+
   const lastStableSelectionRef = useRef<{ dateISO: string | null; serviceId: string | null; time: string | null }>({
     dateISO: null,
     serviceId: null,
@@ -123,6 +132,8 @@ export default function BookingScreen({ handle }: Props) {
     (async () => {
       const org = await fetchOrganizationByHandle(handle);
       setOrganizationId(org?.id ?? null);
+      setOrgLocation((org?.location_text ?? "").trim());
+      setOrgNotice((org?.notice_text ?? "").trim());
     })();
   }, [handle]);
 
@@ -139,7 +150,7 @@ export default function BookingScreen({ handle }: Props) {
       const json = await res.json();
       setWeeklySchedule(convertRowsToWeeklySchedule(json.data));
     })();
-  }, [organizationId, handle]); // ✅ handle도 deps에 넣는게 안전
+  }, [organizationId, handle]);
 
   async function recomputeTimes(nextDateISO: string | null, nextServiceId: string | null) {
     if (!organizationId || !weeklySchedule) return;
@@ -168,13 +179,12 @@ export default function BookingScreen({ handle }: Props) {
       notBefore = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     }
 
-    // ✅✅✅ 핵심 수정: busyRes는 객체니까 busyRes.busy 만 넘겨야 함
     const busy = busyRes?.busy ?? [];
 
     const result = computeAvailableStartTimes({
       workWindows: daily.workWindows,
       breaks: daily.breaks,
-      busy, // ✅ 여기!
+      busy,
       durationMin: nextService.durationMin,
       bufferMin: nextService.bufferMin,
       stepMin: 15,
@@ -208,18 +218,33 @@ export default function BookingScreen({ handle }: Props) {
   }
 
   async function onReserve() {
+    setMsg("");
+
     if (!organizationId || !service || !dateISO || !serviceId || !time) return;
     if (!isTimesReadyForCurrent) return;
 
+    // ✅ Day 1 추가: 이름/전화 검증
+    if (!customerName.trim()) {
+      setMsg("이름을 입력해주세요.");
+      return;
+    }
+
+    if (!customerPhone.trim()) {
+      setMsg("전화번호를 입력해주세요.");
+      return;
+    }
+
     if (!availableTimes.includes(time)) {
-      alert("선택한 시간은 현재 예약할 수 없어요. 다시 선택해 주세요.");
+      setMsg("선택한 시간은 현재 예약할 수 없어요. 다시 선택해 주세요.");
       return;
     }
 
     const end = minToHhmm(hhmmToMin(time) + service.durationMin);
 
+    let rid: string | null = null;
+
     try {
-      await saveReservation({
+      const result = await saveReservation({
         handle,
         serviceId: service.id,
         dateISO,
@@ -227,22 +252,29 @@ export default function BookingScreen({ handle }: Props) {
         end,
         durationMin: service.durationMin,
         bufferMin: service.bufferMin,
-        name: "guest",
-        contact: "instagram",
+        customerName,
+        customerPhone,
       });
+
+      if (typeof result === "string") rid = result;
+      else rid = (result as any)?.id ?? (result as any)?.[0]?.id ?? null;
     } catch (e: any) {
-      alert(e?.message ?? "예약 처리 중 오류가 발생했습니다.");
+      setMsg(e?.message ?? "예약 처리 중 오류가 발생했습니다.");
       return;
     }
 
-    alert("예약이 완료되었습니다!");
+    if (!rid) {
+      setMsg("예약은 저장됐지만 reservation id를 찾을 수 없습니다.");
+      return;
+    }
 
-    setTime(null);
-    userPickedTimeRef.current = false;
-    setShowEarliestHint(false);
-    earliestHintKeyRef.current = null;
+    await fetch("/api/notify/booking", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reservationId: rid }),
+    }).catch(() => {});
 
-    await recomputeTimes(dateISO, serviceId);
+    window.location.href = `/u/${handle}/confirmed?rid=${encodeURIComponent(String(rid))}`;
   }
 
   const hintSlotHeight = 18;
@@ -301,14 +333,80 @@ export default function BookingScreen({ handle }: Props) {
           />
         </div>
 
+        {/* ✅ Day 1 추가: 고객 정보 입력 */}
+        <div style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>이름</div>
+          <input
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            placeholder="이름"
+            style={{
+              width: "100%",
+              padding: "12px 12px",
+              borderRadius: 12,
+              border: "1px solid #d0d0d0",
+              background: "#fff",
+              color: "#111",
+              outline: "none",
+              fontSize: 14,
+              marginBottom: 12,
+            }}
+          />
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>전화번호</div>
+          <input
+            value={customerPhone}
+            onChange={(e) => setCustomerPhone(e.target.value)}
+            placeholder="전화번호"
+            inputMode="tel"
+            style={{
+              width: "100%",
+              padding: "12px 12px",
+              borderRadius: 12,
+              border: "1px solid #d0d0d0",
+              background: "#fff",
+              color: "#111",
+              outline: "none",
+              fontSize: 14,
+              marginBottom: 12,
+            }}
+          />
+        </div>
+
         {noTimesForCurrent && (
           <div className="text-sm" style={{ color: "#666" }}>
             선택한 날짜에는 가능한 시간이 없어요.
           </div>
         )}
+
+        {msg ? (
+          <div className="text-sm" style={{ color: "#b00020", fontWeight: 700 }}>
+            {msg}
+          </div>
+        ) : null}
       </div>
 
       <BookingCta handle={handle} selection={ctaSelection} onReserve={onReserve} />
+
+      {(orgLocation || orgNotice) ? (
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #eee" }}>
+          {orgLocation ? (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontWeight: 800 }}>📍 위치</div>
+              <div style={{ whiteSpace: "pre-wrap" }}>{orgLocation}</div>
+            </div>
+          ) : null}
+
+          {orgNotice ? (
+            <div>
+              <div style={{ fontWeight: 800 }}>📢 예약 안내</div>
+              <div style={{ whiteSpace: "pre-wrap" }}>{orgNotice}</div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

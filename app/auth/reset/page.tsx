@@ -10,18 +10,38 @@ export default function AuthResetPage() {
   const [msg, setMsg] = useState<string>("");
   const [ready, setReady] = useState(false);
 
-  // reset 링크로 들어오면 Supabase가 세션을 붙여주는 경우가 많아서
-  // 페이지 진입 시점에 "세션 존재"만 확인해두면 UX가 안정적입니다.
   useEffect(() => {
     (async () => {
       try {
         const supabase = createSupabaseBrowserClient();
+
+        // 1) reset 링크로 들어오면 보통 code 파라미터가 있음
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
+
+        // 2) code -> session 교환 (이 과정을 해야 세션이 붙는 경우가 많음)
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            setReady(false);
+            setMsg("재설정 링크가 만료되었거나 올바르지 않습니다. 다시 요청해주세요.");
+            return;
+          }
+        }
+
+        // 3) 세션 확인
         const { data } = await supabase.auth.getSession();
         setReady(!!data.session);
+
+        if (!data.session && !msg) {
+          setMsg("재설정 링크가 만료되었거나 올바르지 않습니다. 다시 요청해주세요.");
+        }
       } catch {
         setReady(false);
+        setMsg("재설정 링크 처리 중 오류가 발생했습니다. 다시 요청해주세요.");
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function onSetPassword() {
@@ -40,16 +60,13 @@ export default function AuthResetPage() {
     try {
       const supabase = createSupabaseBrowserClient();
 
-      // ✅ reset 링크로 들어온 상태(세션 있음)에서 비밀번호 갱신
       const { error } = await supabase.auth.updateUser({ password: pw });
-
       if (error) {
         setMsg(error.message);
         return;
       }
 
       setMsg("비밀번호가 변경되었습니다. 이제 로그인해주세요.");
-      // 원하시면 바로 /login으로 보내도 됩니다.
       setTimeout(() => {
         window.location.href = "/login";
       }, 700);
@@ -91,7 +108,7 @@ export default function AuthResetPage() {
 
           {!ready ? (
             <div style={{ fontSize: 13, color: "#555", fontWeight: 700, lineHeight: 1.6 }}>
-              재설정 링크가 만료되었거나 올바르지 않을 수 있습니다.
+              {msg || "재설정 링크를 확인 중입니다..."}
               <div style={{ marginTop: 8 }}>
                 <a
                   href="/forgot-password"
@@ -167,7 +184,14 @@ export default function AuthResetPage() {
               </button>
 
               {msg ? (
-                <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: msg.includes("변경") ? "#111" : "#b00020" }}>
+                <div
+                  style={{
+                    marginTop: 12,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: msg.includes("변경") ? "#111" : "#b00020",
+                  }}
+                >
                   {msg}
                 </div>
               ) : null}

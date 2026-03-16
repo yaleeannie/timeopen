@@ -188,6 +188,32 @@ function TimePicker({
   );
 }
 
+/* ------------------ form state -> api rows ------------------ */
+function toApiRows(state: AvailabilityFormState) {
+  const map: Record<WeekdayKey, number> = {
+    sun: 0,
+    mon: 1,
+    tue: 2,
+    wed: 3,
+    thu: 4,
+    fri: 5,
+    sat: 6,
+  };
+
+  return WEEKDAYS.map(({ key }) => {
+    const d = state[key];
+
+    return {
+      weekday: map[key],
+      is_open: d.open,
+      work_start: d.open ? d.work_start : null,
+      work_end: d.open ? d.work_end : null,
+      break_start: d.open && d.break_start ? d.break_start : null,
+      break_end: d.open && d.break_end ? d.break_end : null,
+    };
+  });
+}
+
 /* ------------------ main ------------------ */
 export default function AvailabilitySettingsClient({ organizationId }: { organizationId: string }) {
   const [state, setState] = useState<AvailabilityFormState>(defaultState());
@@ -224,6 +250,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
 
   async function onSave() {
     setMsg(null);
+
     if (firstError) {
       setMsg(firstError);
       return;
@@ -231,11 +258,14 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
 
     setSaving(true);
     try {
+      const rows = toApiRows(state);
+
       const res = await fetch("/api/settings/availability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId, state }),
+        body: JSON.stringify({ rows }),
       });
+
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {

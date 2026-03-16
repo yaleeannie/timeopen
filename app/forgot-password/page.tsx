@@ -12,7 +12,7 @@ export default function ForgotPasswordPage() {
   async function onSend() {
     const e = email.trim().toLowerCase();
     if (!e) {
-      setMsg("이메일을 입력해줘.");
+      setMsg("이메일을 입력해주세요.");
       return;
     }
 
@@ -22,8 +22,8 @@ export default function ForgotPasswordPage() {
     try {
       const supabase = createSupabaseBrowserClient();
 
-      // ✅ reset 링크가 열릴 페이지 (다음 단계에서 /auth/reset 만들 예정)
-      const redirectTo = `${window.location.origin}/auth/reset`;
+      // ✅ reset 링크가 열릴 페이지
+      const redirectTo = `${window.location.origin}/auth/callback?next=/auth/reset`;
 
       const { error } = await supabase.auth.resetPasswordForEmail(e, {
         redirectTo,
@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
 
       setSent(true);
     } catch {
-      setMsg("네트워크 오류. 잠시 후 다시 시도해줘.");
+      setMsg("네트워크 오류. 잠시 후 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }
@@ -75,8 +75,13 @@ export default function ForgotPasswordPage() {
             <div style={{ fontSize: 14, fontWeight: 800, color: "#111", lineHeight: 1.6 }}>
               재설정 메일을 보냈습니다.
               <div style={{ marginTop: 8, fontSize: 13, color: "#555", fontWeight: 700 }}>
-                메일에서 링크를 눌러 새 비밀번호를 설정해줘.
+                메일에서 링크를 눌러 새 비밀번호를 설정해주세요.
               </div>
+              
+              <div style={{ marginTop: 10, fontSize: 12, color: "#777", lineHeight: 1.6 }}>
+                이메일이 도착하기까지 최대 5분 정도 걸릴 수 있어요.<br />
+                스팸함/프로모션함도 꼭 확인해주세요.
+                </div>
 
               <div style={{ marginTop: 14 }}>
                 <a href="/login" style={{ textDecoration: "underline", fontWeight: 800, color: "#111" }}>

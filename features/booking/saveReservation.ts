@@ -1,25 +1,20 @@
-// features/booking/saveReservation.ts
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export type Params = {
   handle: string;
-
   serviceId: string;
-  dateISO: string; // "YYYY-MM-DD"
-  start: string;   // "HH:MM"
-  end: string;     // "HH:MM"
-
+  dateISO: string;
+  start: string;
+  end: string;
   durationMin: number;
   bufferMin: number;
-
-  name: string;
-  contact: string;
+  customerName: string;
+  customerPhone: string;
 };
 
-export async function saveReservation(params: Params) {
+export async function saveReservation(params: Params): Promise<string> {
   const supabase = createSupabaseBrowserClient();
 
-  // ✅ RPC로 insert (org_id를 클라이언트가 직접 넘기지 않음)
   const { data, error } = await supabase.rpc("create_reservation_by_handle", {
     p_handle: params.handle,
     p_service_id: params.serviceId,
@@ -28,13 +23,23 @@ export async function saveReservation(params: Params) {
     p_end: params.end,
     p_duration_min: params.durationMin,
     p_buffer_min: params.bufferMin,
-    p_name: params.name,
-    p_contact: params.contact,
+    p_customer_name: params.customerName,
+    p_customer_phone: params.customerPhone,
   });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data;
+  const rid =
+  (typeof data === "string" || typeof data === "number" ? data : null) ??
+  (data as any)?.id ??
+  (data as any)?.reservation_id ??
+  (Array.isArray(data) ? (data as any)[0]?.id ?? (data as any)[0]?.reservation_id : null);
+
+  if (!rid) {
+    throw new Error("예약은 저장됐지만 reservation id를 찾을 수 없습니다.");
+  }
+
+  return String(rid);
 }
