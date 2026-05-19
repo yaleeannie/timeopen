@@ -7,7 +7,7 @@ import DateChips from "./DateChips";
 import TimePicker from "./TimePicker";
 import BookingCta from "./BookingCta";
 
-import { MOCK_SERVICES } from "@/features/booking/mock";
+import { fetchServicesByHandle, type ServiceRow } from "@/features/services/fetchServicesByHandle";
 import { buildDailySchedule } from "@/features/availability/buildDailySchedule";
 import { fetchExceptionForDate } from "@/features/availability/fetchExceptionForDate";
 import { computeAvailableStartTimes } from "@/features/availability/computeAvailableStartTimes";
@@ -68,6 +68,7 @@ function formatISODate(d: Date) {
 
 export default function BookingScreen({ handle }: Props) {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [services, setServices] = useState<ServiceRow[]>([]);
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule | null>(null);
 
   const [dateISO, setDateISO] = useState<string | null>(null);
@@ -101,8 +102,8 @@ export default function BookingScreen({ handle }: Props) {
   });
 
   const service = useMemo(
-    () => MOCK_SERVICES.find((s) => s.id === serviceId) ?? null,
-    [serviceId]
+  () => services.find((s) => s.id === serviceId) ?? null,
+  [services, serviceId]
   );
 
   const currentKey = useMemo(() => {
@@ -129,12 +130,19 @@ export default function BookingScreen({ handle }: Props) {
   }, [isTimesReadyForCurrent, dateISO, serviceId, time]);
 
   useEffect(() => {
-    (async () => {
-      const org = await fetchOrganizationByHandle(handle);
-      setOrganizationId(org?.id ?? null);
-      setOrgLocation((org?.location_text ?? "").trim());
-      setOrgNotice((org?.notice_text ?? "").trim());
-    })();
+  (async () => {
+    const org = await fetchOrganizationByHandle(handle);
+    setOrganizationId(org?.id ?? null);
+    setOrgLocation((org?.location_text ?? "").trim());
+    setOrgNotice((org?.notice_text ?? "").trim());
+
+    const rows = await fetchServicesByHandle(handle);
+    setServices(rows);
+
+    if (rows.length > 0) {
+      setServiceId((prev) => prev ?? rows[0].id);
+    }
+  })();
   }, [handle]);
 
   useEffect(() => {
@@ -156,7 +164,7 @@ export default function BookingScreen({ handle }: Props) {
     if (!organizationId || !weeklySchedule) return;
     if (!nextDateISO || !nextServiceId) return;
 
-    const nextService = MOCK_SERVICES.find((s) => s.id === nextServiceId) ?? null;
+    const nextService = services.find((s) => s.id === nextServiceId) ?? null;
     if (!nextService) return;
 
     const myReq = ++reqIdRef.current;
@@ -185,8 +193,8 @@ export default function BookingScreen({ handle }: Props) {
       workWindows: daily.workWindows,
       breaks: daily.breaks,
       busy,
-      durationMin: nextService.durationMin,
-      bufferMin: nextService.bufferMin,
+      durationMin: nextService.duration_min,
+      bufferMin: 0,
       stepMin: 15,
       notBefore,
     });
@@ -239,7 +247,7 @@ export default function BookingScreen({ handle }: Props) {
       return;
     }
 
-    const end = minToHhmm(hhmmToMin(time) + service.durationMin);
+    const end = minToHhmm(hhmmToMin(time) + service.duration_min);
 
     let rid: string | null = null;
 
@@ -250,8 +258,8 @@ export default function BookingScreen({ handle }: Props) {
         dateISO,
         start: time,
         end,
-        durationMin: service.durationMin,
-        bufferMin: service.bufferMin,
+        durationMin: service.duration_min,
+        bufferMin: 0,
         customerName,
         customerPhone,
       });
@@ -282,7 +290,7 @@ export default function BookingScreen({ handle }: Props) {
   return (
     <div className="space-y-8">
       <ServicePicker
-        services={MOCK_SERVICES}
+        services={services}
         value={serviceId}
         onChange={(next) => {
           userPickedTimeRef.current = false;

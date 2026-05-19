@@ -74,6 +74,29 @@ export default async function ReservationsPage() {
     );
   }
 
+  const { data: services, error: svcErr } = await supabase
+    .from("services")
+    .select("id, name")
+    .eq("organization_id", organizationId);
+
+  if (svcErr) {
+    return (
+      <div style={{ padding: 16 }}>
+        <div>services 조회 실패: {svcErr.message}</div>
+      </div>
+    );
+  }
+
+  const serviceNameMap = new Map(
+    (services ?? []).map((s: any) => [String(s.id), String(s.name)])
+  );
+
+  function formatServiceName(serviceId: unknown) {
+    if (!serviceId) return "-";
+    const key = String(serviceId);
+    return serviceNameMap.get(key) ?? key;
+  }
+
   return (
     <div style={{ padding: 16 }}>
       <div style={{ marginBottom: 12 }}>
@@ -97,7 +120,7 @@ export default async function ReservationsPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {(rows as any[]).map((r) => (
               <tr key={r.id}>
                 <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>{formatDateText(r)}</td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>
@@ -112,8 +135,12 @@ export default async function ReservationsPage() {
                 <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>
                   {r.customer_phone ? String(r.customer_phone) : "-"}
                 </td>
-                <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>{String(r.service_id ?? "-")}</td>
-                <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>{formatStatus(r.status)}</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>
+                  {formatServiceName(r.service_id)}
+                </td>
+                <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>
+                  {formatStatus(r.status)}
+                </td>
                 <td style={{ borderBottom: "1px solid #eee", padding: 8 }}>
                   {r.status === "confirmed" ? (
                     <form action={`/api/reservations/cancel`} method="post">

@@ -1,77 +1,62 @@
 "use client";
 
-import type { BookingService } from "../types";
-import { colors } from "@/lib/design/colors";
+type ServiceItem = {
+  id: string;
+  name: string;
+  durationMin?: number;
+  duration_min?: number;
+  price?: number | null;
+};
 
 type Props = {
-  services: BookingService[];
+  services: ServiceItem[];
   value: string | null;
-  onChange: (serviceId: string) => void;
+  onChange: (id: string) => void;
 };
 
 export default function ServicePicker({ services, value, onChange }: Props) {
-  return (
-    <div className="space-y-2">
-      <div className="text-sm font-medium" style={{ color: colors.text.primary }}>
-        서비스 선택
-      </div>
+  const scrollMode = services.length >= 4;
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+  return (
+    <div className="space-y-3">
+      <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
+
+      <div
+        className={
+          scrollMode
+            ? "flex gap-3 overflow-x-auto pb-2"
+            : "grid grid-cols-3 gap-3"
+        }
+      >
         {services.map((s) => {
-          const active = value === s.id;
+          const isActive = value === s.id;
+          const duration = s.durationMin ?? s.duration_min ?? null;
 
           return (
             <button
               key={s.id}
               type="button"
               onClick={() => onChange(s.id)}
-              className="w-full rounded-xl border px-4 py-3 text-left transition"
-              style={{
-                borderColor: active ? colors.border.active : colors.border.default,
-                background: active ? colors.brand.primary : colors.background.base,
-              }}
-              onMouseEnter={(e) => {
-                if (!active) e.currentTarget.style.borderColor = colors.border.active;
-              }}
-              onMouseLeave={(e) => {
-                if (!active) e.currentTarget.style.borderColor = colors.border.default;
-              }}
+              className={[
+                scrollMode ? "min-w-[150px] flex-shrink-0" : "w-full",
+                "rounded-[18px] border px-4 py-4 text-left transition",
+                isActive
+                  ? "border-black bg-black text-white"
+                  : "border-gray-200 bg-white text-gray-900 hover:border-gray-300",
+              ].join(" ")}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div
-                    className="font-semibold"
-                    style={{ color: active ? colors.text.inverse : colors.text.primary }}
-                  >
-                    {s.name}
-                  </div>
-
-                  {s.description && (
-                    <div
-                      className="mt-1 text-sm"
-                      style={{ color: active ? "rgba(255,255,255,0.85)" : colors.text.secondary }}
-                    >
-                      {s.description}
-                    </div>
-                  )}
-                </div>
-
-                <div
-                  className="shrink-0 text-sm"
-                  style={{ color: active ? "rgba(255,255,255,0.9)" : colors.text.muted }}
-                >
-                  {s.durationMin}m + {s.bufferMin}m
-                </div>
+              <div className="text-[16px] font-semibold leading-tight">
+                {s.name}
               </div>
 
-              {typeof s.price === "number" && (
-                <div
-                  className="mt-2 text-sm"
-                  style={{ color: active ? "rgba(255,255,255,0.9)" : colors.text.primary }}
-                >
-                  {s.price.toLocaleString()}원
-                </div>
-              )}
+              <div
+                className={`mt-2 text-[13px] ${
+                  isActive ? "text-gray-200" : "text-gray-500"
+                }`}
+              >
+                {duration ? `${duration}분` : ""}
+                {s.price != null ? ` · ${s.price.toLocaleString()}원` : ""}
+              </div>
             </button>
           );
         })}
