@@ -145,4 +145,40 @@ test("중복 workWindows는 현재 운영 동작대로 중복 슬롯을 반환�
   assert.deepEqual(result, ["09:00", "09:30", "09:00", "09:30"]);
 });
 
-test.todo("stepMin이 0 이하이면 무한 반복을 피하도록 입력 검증이 필요하다");
+test("stepMin이 0 이하이면 빈 결과를 반환한다", () => {
+  for (const stepMin of [0, -15]) {
+    const result = computeAvailableStartTimes({
+      ...baseParams,
+      workWindows: [{ start: "09:00", end: "10:00" }],
+      durationMin: 30,
+      stepMin,
+    });
+
+    assert.deepEqual(result, []);
+  }
+});
+
+test("durationMin이 0 이하이면 빈 결과를 반환한다", () => {
+  for (const durationMin of [0, -30]) {
+    const result = computeAvailableStartTimes({
+      ...baseParams,
+      workWindows: [{ start: "09:00", end: "10:00" }],
+      durationMin,
+      stepMin: 15,
+    });
+
+    assert.deepEqual(result, []);
+  }
+});
+
+test("bufferMin이 음수이면 빈 결과를 반환한다", () => {
+  const result = computeAvailableStartTimes({
+    ...baseParams,
+    workWindows: [{ start: "09:00", end: "10:00" }],
+    durationMin: 30,
+    bufferMin: -1,
+    stepMin: 15,
+  });
+
+  assert.deepEqual(result, []);
+});

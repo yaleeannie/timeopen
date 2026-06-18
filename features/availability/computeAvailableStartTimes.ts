@@ -43,6 +43,10 @@ export function computeAvailableStartTimes(params: {
 
   const result: string[] = [];
 
+  if (stepMin <= 0 || durationMin <= 0 || bufferMin < 0) {
+    return result;
+  }
+
   const blocked = [...breaks, ...busy].map((r) => ({
     start: hhmmToMin(r.start),
     end: hhmmToMin(r.end),
