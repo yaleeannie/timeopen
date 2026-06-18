@@ -3,10 +3,11 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
+import { getSiteUrl } from "@/lib/siteUrl";
 import LogoutButton from "./LogoutButton";
 import SummaryPanel from "./SummaryPanel";
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://timeopen.app").replace(/\/+$/, "");
+const SITE_URL = getSiteUrl();
 
 function getTodayISO() {
   return new Intl.DateTimeFormat("en-CA", {

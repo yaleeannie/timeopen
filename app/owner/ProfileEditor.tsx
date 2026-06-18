@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getBookingUrl } from "@/lib/siteUrl";
 
 type Props = {
   organizationId: string;
@@ -133,7 +134,7 @@ export default function ProfileEditor({
   }
 
   async function onCopyLink() {
-    const link = `${window.location.origin}/u/${handle}`;
+    const link = getBookingUrl(handle);
     try {
       await navigator.clipboard.writeText(link);
       setMsg("예약 링크가 복사되었습니다.");
@@ -188,7 +189,7 @@ export default function ProfileEditor({
         </div>
 
         <div className="mt-2 text-sm font-bold text-[#28b9dc] [overflow-wrap:anywhere]">
-          {handle ? `/u/${handle}` : "-"}
+          {handle ? getBookingUrl(handle) : "-"}
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
