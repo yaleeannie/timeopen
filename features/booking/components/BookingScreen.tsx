@@ -21,6 +21,7 @@ import {
 import { fetchOrganizationByHandle } from "@/features/organizations/fetchOrganizationByHandle";
 
 type Props = { handle: string };
+type BookingStep = "service" | "datetime" | "customer";
 
 function hhmmToMin(v: string) {
   const [h, m] = v.split(":").map(Number);
@@ -70,6 +71,7 @@ function formatISODate(d: Date) {
 }
 
 export default function BookingScreen({ handle }: Props) {
+  const [step, setStep] = useState<BookingStep>("service");
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule | null>(null);
@@ -323,9 +325,54 @@ export default function BookingScreen({ handle }: Props) {
   }
 
   const hintSlotHeight = 18;
+  const canContinueFromService = serviceId != null;
+  const canContinueFromDatetime =
+    dateISO != null && time != null && isTimesReadyForCurrent;
 
   return (
-    <div className="space-y-3.5">
+    <div className="space-y-3.5 pb-32">
+      <div className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          {(["service", "datetime", "customer"] as const).map((item, index) => {
+            const active = item === step;
+            const complete =
+              (item === "service" && step !== "service") ||
+              (item === "datetime" && step === "customer");
+
+            return (
+              <div key={item} className="flex min-w-0 flex-1 items-center gap-2">
+                <div
+                  className={[
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black",
+                    active || complete
+                      ? "bg-[#35bddc] text-white"
+                      : "bg-[#eef8fa] text-[#7aa8b3]",
+                  ].join(" ")}
+                >
+                  {index + 1}
+                </div>
+                <div
+                  className={[
+                    "truncate text-xs font-bold",
+                    active ? "text-[#159fbe]" : "text-gray-400",
+                  ].join(" ")}
+                >
+                  {item === "service"
+                    ? "서비스"
+                    : item === "datetime"
+                      ? "날짜·시간"
+                      : "예약자 정보"}
+                </div>
+                {index < 2 ? (
+                  <div className="h-px min-w-2 flex-1 bg-[#dceef2]" />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {step === "service" ? (
       <section className="relative block h-auto min-h-0 w-full overflow-visible rounded-[24px] border border-[#e5f3f6] bg-white p-4 opacity-100 shadow-sm visible">
         <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
 
@@ -366,7 +413,9 @@ export default function BookingScreen({ handle }: Props) {
           </div>
         ) : null}
       </section>
+      ) : null}
 
+      {step === "datetime" ? (
       <section className="space-y-4 rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
         <div className="booking-date-tone [&>div>div:nth-child(2)]:border-0 [&>div>div:nth-child(2)]:p-0">
           <DateChips
@@ -441,7 +490,10 @@ export default function BookingScreen({ handle }: Props) {
           </div>
         </div>
       </section>
+      ) : null}
 
+      {step === "customer" ? (
+      <>
       <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
         <div className="mb-4 text-base font-black">예약자 정보</div>
         {/* ✅ Day 1 추가: 고객 정보 입력 */}
@@ -489,8 +541,6 @@ export default function BookingScreen({ handle }: Props) {
         ) : null}
       </section>
 
-      <BookingCta selection={ctaSelection} onReserve={onReserve} />
-
       {(orgLocation || orgNotice) ? (
         <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
           <div className="mb-4 text-base font-black">방문 안내</div>
@@ -509,6 +559,46 @@ export default function BookingScreen({ handle }: Props) {
           ) : null}
         </section>
       ) : null}
+      </>
+      ) : null}
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#dceef2] bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(15,118,140,0.08)] backdrop-blur">
+        <div className="mx-auto flex w-full max-w-lg items-center gap-2">
+          {step !== "service" ? (
+            <button
+              type="button"
+              onClick={() => setStep(step === "customer" ? "datetime" : "service")}
+              className="min-h-12 shrink-0 rounded-2xl border border-[#dceef2] bg-white px-4 text-sm font-black text-[#397582] transition hover:bg-[#f3fbfc] focus:outline-none"
+            >
+              이전
+            </button>
+          ) : null}
+
+          {step === "service" ? (
+            <button
+              type="button"
+              disabled={!canContinueFromService}
+              onClick={() => setStep("datetime")}
+              className="min-h-12 w-full rounded-2xl bg-[#35bddc] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#20aeca] disabled:cursor-not-allowed disabled:bg-[#b8dfe8]"
+            >
+              날짜와 시간 선택
+            </button>
+          ) : step === "datetime" ? (
+            <button
+              type="button"
+              disabled={!canContinueFromDatetime}
+              onClick={() => setStep("customer")}
+              className="min-h-12 min-w-0 flex-1 rounded-2xl bg-[#35bddc] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#20aeca] disabled:cursor-not-allowed disabled:bg-[#b8dfe8]"
+            >
+              예약자 정보 입력
+            </button>
+          ) : (
+            <div className="min-w-0 flex-1">
+              <BookingCta selection={ctaSelection} onReserve={onReserve} />
+            </div>
+          )}
+        </div>
+      </div>
 
       <style jsx global>{`
         .booking-date-tone button,
