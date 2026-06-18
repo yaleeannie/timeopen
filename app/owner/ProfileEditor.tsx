@@ -143,46 +143,32 @@ export default function ProfileEditor({
   }
 
   return (
-    <section style={{ marginTop: 18, padding: 14, border: "1px solid #eee", borderRadius: 12 }}>
-      <div style={{ fontWeight: 900, marginBottom: 10 }}>기본 정보</div>
-
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>서비스명</div>
+    <section className="grid min-w-0 gap-5">
+      <div className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+        <div className="mb-4 text-base font-black">기본 정보</div>
+        <div className="mb-5">
+        <div className="mb-1.5 text-sm font-bold text-gray-700">서비스명</div>
         <input
           value={shopName}
           onChange={(e) => setShopName(e.target.value)}
           placeholder="예: 지수헤어"
-          style={{
-            width: "100%",
-            padding: 10,
-            borderRadius: 10,
-            border: "1px solid #ddd",
-            outline: "none",
-          }}
+          className="min-h-11 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
         />
 
-        <div style={{ marginTop: 10 }}>
+        <div className="mt-3">
           <button
             type="button"
             onClick={onSaveName}
             disabled={loadingName}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "1px solid #111",
-              background: "#111",
-              color: "#fff",
-              fontWeight: 800,
-              opacity: loadingName ? 0.7 : 1,
-            }}
+            className="min-h-11 rounded-xl bg-[#28b9dc] px-4 py-2.5 text-sm font-black text-white disabled:opacity-60"
           >
             {loadingName ? "저장 중..." : "서비스명 저장"}
           </button>
         </div>
       </div>
 
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>예약 링크</div>
+        <div>
+        <div className="mb-1.5 text-sm font-bold text-gray-700">예약 링크</div>
         <input
           value={handle}
           onChange={(e) => {
@@ -190,41 +176,27 @@ export default function ProfileEditor({
             setHandle(v);
           }}
           placeholder="예: jisu-hair (영어/숫자/-만)"
-          style={{
-            width: "100%",
-            padding: 10,
-            borderRadius: 10,
-            border: "1px solid #ddd",
-            outline: "none",
-          }}
+          className="min-h-11 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
         />
 
-        <div style={{ marginTop: 6, fontSize: 12, color: "#666" }}>
+        <div className="mt-2 text-sm leading-5 text-gray-500">
           영어 소문자, 숫자, 하이픈(-)만 사용 가능 (3~30자)
         </div>
 
-        <div style={{ marginTop: 4, fontSize: 12, color: "#999" }}>
+        <div className="mt-1 text-sm leading-5 text-gray-400">
           ※ 변경 시 기존 링크는 더 이상 사용되지 않을 수 있어요
         </div>
 
-        <div style={{ marginTop: 8, fontSize: 13, color: "#666" }}>
+        <div className="mt-2 text-sm font-bold text-[#28b9dc] [overflow-wrap:anywhere]">
           {handle ? `/u/${handle}` : "-"}
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={onSaveHandle}
             disabled={loadingHandle}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "1px solid #111",
-              background: "#111",
-              color: "#fff",
-              fontWeight: 800,
-              opacity: loadingHandle ? 0.7 : 1,
-            }}
+            className="min-h-11 rounded-xl bg-[#28b9dc] px-3 py-2.5 text-sm font-black text-white disabled:opacity-60"
           >
             {loadingHandle ? "저장 중..." : "예약 링크 저장"}
           </button>
@@ -233,112 +205,81 @@ export default function ProfileEditor({
             type="button"
             onClick={onCopyLink}
             disabled={!handle}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "1px solid #ddd",
-              background: "#fff",
-              fontWeight: 800,
-              opacity: !handle ? 0.5 : 1,
-            }}
+            className="min-h-11 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-sm font-black text-[#5594a3] disabled:opacity-50"
           >
             링크 복사
           </button>
         </div>
       </div>
 
-      <hr style={{ margin: "20px 0" }} />
+      </div>
 
-      <div style={{ fontWeight: 900, marginBottom: 10 }}>추가 정보</div>
-
-      <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>위치 안내 (선택)</div>
+      <div className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+      <div className="mb-4 text-base font-black">추가 정보</div>
+      <div className="mb-1.5 text-sm font-bold text-gray-700">위치 안내 (선택)</div>
       <textarea
         value={locationText}
         onChange={(e) => setLocationText(e.target.value)}
         rows={3}
         placeholder="예) 서울시 마포구 ... / 2층"
-        style={{
-          width: "100%",
-          padding: 10,
-          borderRadius: 10,
-          border: "1px solid #ddd",
-          outline: "none",
-          marginBottom: 12,
-        }}
+        className="mb-4 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
       />
 
-      <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>예약 안내문 (선택)</div>
+      <div className="mb-1.5 text-sm font-bold text-gray-700">예약 안내문 (선택)</div>
       <textarea
         value={noticeText}
         onChange={(e) => setNoticeText(e.target.value)}
         rows={4}
         placeholder="예) 10분 전 도착 부탁드립니다. 지각 시 자동 취소될 수 있어요."
-        style={{
-          width: "100%",
-          padding: 10,
-          borderRadius: 10,
-          border: "1px solid #ddd",
-          outline: "none",
-          marginBottom: 12,
-        }}
+        className="mb-4 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
       />
 
       <button
         type="button"
         onClick={onSaveExtra}
         disabled={loadingExtra}
-        style={{
-          padding: "10px 12px",
-          borderRadius: 10,
-          border: "1px solid #111",
-          background: "#111",
-          color: "#fff",
-          fontWeight: 900,
-          opacity: loadingExtra ? 0.7 : 1,
-        }}
+        className="min-h-11 w-full rounded-xl bg-[#28b9dc] px-4 py-2.5 text-sm font-black text-white disabled:opacity-60"
       >
         {loadingExtra ? "저장 중..." : "추가 정보 저장"}
       </button>
 
       {msg ? (
-        <div
-          style={{
-            marginTop: 10,
-            fontSize: 13,
-            fontWeight: 800,
-            color: msg.includes("실패") || msg.includes("오류") ? "#b00020" : "#111",
-          }}
-        >
+        <div className={`mt-3 rounded-xl px-4 py-3 text-sm font-bold [overflow-wrap:anywhere] ${
+          msg.includes("실패") || msg.includes("오류")
+            ? "bg-red-50 text-red-700"
+            : "bg-[#eef9fb] text-[#287f94]"
+        }`}>
           {msg}
         </div>
       ) : null}
+      </div>
 
-      <hr style={{ margin: "24px 0" }} />
+      <div className="rounded-[24px] bg-gradient-to-br from-[#61a8fa] to-[#477eea] p-5 text-white shadow-[0_14px_30px_rgba(71,126,234,0.2)]">
+      <div className="mb-4 text-base font-black">고객 화면 미리보기</div>
 
-      <div style={{ fontWeight: 900, marginBottom: 8 }}>고객 화면 표시 미리보기</div>
-
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ fontWeight: 800 }}>서비스명</div>
-        <div>{shopName || "-"}</div>
+      <div className="mb-3">
+        <div className="text-sm font-bold text-blue-100">서비스명</div>
+        <div className="mt-1 break-words font-black [overflow-wrap:anywhere]">{shopName || "-"}</div>
       </div>
 
       {locationText.trim() ? (
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ fontWeight: 800 }}>📍 위치</div>
-          <div style={{ fontSize: 14, whiteSpace: "pre-wrap" }}>{locationText}</div>
+        <div className="mb-3">
+          <div className="text-sm font-bold text-blue-100">위치</div>
+          <div className="mt-1 whitespace-pre-wrap text-sm leading-5 [overflow-wrap:anywhere]">{locationText}</div>
         </div>
       ) : null}
 
       {noticeText.trim() ? (
         <div>
-          <div style={{ fontWeight: 800 }}>📢 예약 안내</div>
-          <div style={{ fontSize: 14, whiteSpace: "pre-wrap" }}>{noticeText}</div>
+          <div className="text-sm font-bold text-blue-100">예약 안내</div>
+          <div className="mt-1 whitespace-pre-wrap text-sm leading-5 [overflow-wrap:anywhere]">{noticeText}</div>
         </div>
       ) : null}
 
       {!shopName.trim() && !locationText.trim() && !noticeText.trim() ? (
-        <div style={{ fontSize: 13, color: "#666" }}>아직 입력된 내용이 없습니다.</div>
+        <div className="text-sm text-blue-100">아직 입력된 내용이 없습니다.</div>
       ) : null}
+      </div>
     </section>
   );
 }

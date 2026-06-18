@@ -122,9 +122,9 @@ function TimePicker({
   }, [open, selectedIndex, rootRef]);
 
   const btnCls =
-    "flex w-full items-center justify-between gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-left " +
-    "text-gray-900 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-gray-200 " +
-    "hover:border-gray-400 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400";
+    "flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-left " +
+    "text-gray-900 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-cyan-100 " +
+    "hover:border-[#55d4f0] disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400";
 
   return (
     <div ref={rootRef} className="relative">
@@ -160,7 +160,7 @@ function TimePicker({
                     setOpen(false);
                   }}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
-                    active ? "bg-black text-white" : "text-gray-900 hover:bg-gray-100"
+                    active ? "bg-[#28b9dc] text-white" : "text-gray-900 hover:bg-[#eef9fb]"
                   }`}
                 >
                   <span className="font-semibold">{t}</span>
@@ -283,14 +283,8 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Availability Settings</h1>
-        <p className="text-sm font-medium text-gray-700">요일별 영업시간과 브레이크 시간을 설정하세요.</p>
-        <p className="text-xs text-gray-500">organizationId: {organizationId}</p>
-      </div>
-
-      <div className="space-y-4">
+    <div className="min-w-0 space-y-5">
+      <div className="space-y-3">
         {WEEKDAYS.map(({ key, label }) => {
           const d = state[key];
           const dayError = validateDay(d, label);
@@ -298,14 +292,14 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
           return (
             <div
               key={key}
-              className={`rounded-2xl border bg-white p-5 shadow-sm ${
+              className={`min-w-0 rounded-2xl border bg-white p-4 shadow-sm ${
                 dayError ? "border-red-200" : "border-gray-200"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-baseline gap-2">
-                  <div className="text-lg font-semibold text-gray-900">{label}</div>
-                  <span className={`text-xs font-bold ${d.open ? "text-green-700" : "text-gray-600"}`}>
+                  <div className="text-base font-black text-gray-900">{label}</div>
+                  <span className={`text-xs font-bold ${d.open ? "text-[#22a988]" : "text-gray-500"}`}>
                     {d.open ? "OPEN" : "CLOSED"}
                   </span>
                 </div>
@@ -318,13 +312,13 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
                       const open = e.target.checked;
                       patch(key, { open, ...(open ? {} : { break_start: "", break_end: "" }) });
                     }}
-                    className="h-4 w-4 accent-black"
+                    className="h-5 w-5 accent-[#28b9dc]"
                   />
                   <span className="font-semibold">{d.open ? "open" : "closed"}</span>
                 </label>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <div className="text-xs font-bold text-gray-800">work_start</div>
                   <TimePicker
@@ -346,7 +340,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <div className="text-xs font-bold text-gray-800">break_start (optional)</div>
                   <TimePicker
@@ -390,11 +384,11 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
         </div>
       )}
 
-      <div className="flex items-center justify-end">
+      <div>
         <button
           onClick={onSave}
           disabled={saving}
-          className="rounded-xl bg-black px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11 w-full rounded-xl bg-[#28b9dc] px-5 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-[#20afd2] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save"}
         </button>

@@ -171,168 +171,135 @@ export default function ServicesEditor({ organizationId }: Props) {
   }
 
   return (
-    <section style={{ marginTop: 24, padding: 16, border: "1px solid #eee", borderRadius: 12 }}>
-      <div style={{ fontWeight: 900, marginBottom: 12 }}>서비스 관리</div>
-
-      <div style={{ display: "grid", gap: 10, marginBottom: 14 }}>
+    <section className="min-w-0">
+      <div className="mb-6 rounded-[24px] bg-gradient-to-br from-[#58dfbe] to-[#2fc9a5] p-5 text-white shadow-[0_14px_30px_rgba(47,201,165,0.22)]">
+        <div className="mb-4 text-lg font-black">새 서비스</div>
+        <div className="grid gap-4">
         <div>
-          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>서비스명</div>
+          <div className="mb-1.5 text-sm font-bold text-white/90">서비스명</div>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="예: 커트"
-            style={{ width: "100%", padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
+            className="min-h-11 w-full min-w-0 rounded-xl border border-white/30 bg-white px-3 py-2.5 text-base text-gray-900 outline-none"
           />
         </div>
 
         <div>
-          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>소요시간 (분)</div>
+          <div className="mb-1.5 text-sm font-bold text-white/90">소요시간 (분)</div>
           <input
             value={durationMin}
             onChange={(e) => setDurationMin(e.target.value)}
             placeholder="예: 30"
             inputMode="numeric"
-            style={{ width: "100%", padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
+            className="min-h-11 w-full min-w-0 rounded-xl border border-white/30 bg-white px-3 py-2.5 text-base text-gray-900 outline-none"
           />
         </div>
 
         <div>
-          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>가격 (원, 선택)</div>
+          <div className="mb-1.5 text-sm font-bold text-white/90">가격 (원, 선택)</div>
           <input
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             placeholder="예: 30000"
             inputMode="numeric"
-            style={{ width: "100%", padding: 10, border: "1px solid #ddd", borderRadius: 10 }}
+            className="min-h-11 w-full min-w-0 rounded-xl border border-white/30 bg-white px-3 py-2.5 text-base text-gray-900 outline-none"
           />
         </div>
 
         <button
           type="button"
           onClick={addService}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 10,
-            border: "1px solid #111",
-            background: "#111",
-            color: "#fff",
-            fontWeight: 800,
-            width: "fit-content",
-          }}
+          className="min-h-11 w-full rounded-xl bg-white px-4 py-2.5 text-sm font-black text-[#22a988] shadow-sm"
         >
           서비스 저장
         </button>
+        </div>
       </div>
 
-      {msg ? <div style={{ marginBottom: 12, fontSize: 13, fontWeight: 700 }}>{msg}</div> : null}
+      {msg ? <div className="mb-4 rounded-xl bg-[#eef9fb] px-4 py-3 text-sm font-bold text-[#287f94] [overflow-wrap:anywhere]">{msg}</div> : null}
 
-      <div style={{ display: "grid", gap: 10 }}>
+      <div className="mb-3 flex items-center justify-between px-1">
+        <div className="text-base font-black">서비스 목록</div>
+        <div className="text-sm font-bold text-gray-400">{rows.length}개</div>
+      </div>
+      <div className="grid gap-3">
         {rows.map((row) => {
           const isEditing = editingId === row.id;
 
           return (
             <div
               key={row.id}
-              style={{
-                border: "1px solid #eee",
-                borderRadius: 10,
-                padding: 12,
-              }}
+              className="min-w-0 rounded-2xl border border-[#e5f3f6] bg-white p-4 shadow-sm"
             >
               {isEditing ? (
-                <div style={{ display: "grid", gap: 10 }}>
+                <div className="grid gap-4">
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>서비스명</div>
+                    <div className="mb-1.5 text-sm font-bold text-gray-700">서비스명</div>
                     <input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="서비스명"
-                      style={{ width: "100%", padding: 10, border: "1px solid #ddd", borderRadius: 8 }}
+                      className="min-h-11 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
                     />
                   </div>
 
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>소요시간 (분)</div>
+                    <div className="mb-1.5 text-sm font-bold text-gray-700">소요시간 (분)</div>
                     <input
                       value={editDurationMin}
                       onChange={(e) => setEditDurationMin(e.target.value)}
                       placeholder="소요시간(분)"
                       inputMode="numeric"
-                      style={{ width: "100%", padding: 10, border: "1px solid #ddd", borderRadius: 8 }}
+                      className="min-h-11 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
                     />
                   </div>
 
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>가격 (원, 선택)</div>
+                    <div className="mb-1.5 text-sm font-bold text-gray-700">가격 (원, 선택)</div>
                     <input
                       value={editPrice}
                       onChange={(e) => setEditPrice(e.target.value)}
                       placeholder="가격"
                       inputMode="numeric"
-                      style={{ width: "100%", padding: 10, border: "1px solid #ddd", borderRadius: 8 }}
+                      className="min-h-11 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
                     />
                   </div>
 
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 4 }}>
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => saveEdit(row.id)}
-                      style={{
-                        padding: "10px 14px",
-                        borderRadius: 10,
-                        border: "1px solid #111",
-                        background: "#111",
-                        color: "#fff",
-                        fontWeight: 700,
-                      }}
+                      className="min-h-11 rounded-xl bg-[#28b9dc] px-4 py-2.5 text-sm font-black text-white"
                     >
                       저장
                     </button>
                     <button
                       type="button"
                       onClick={cancelEdit}
-                      style={{
-                        padding: "10px 14px",
-                        borderRadius: 10,
-                        border: "1px solid #ddd",
-                        background: "#fff",
-                        fontWeight: 700,
-                      }}
+                      className="min-h-11 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-600"
                     >
                       취소
                     </button>
                   </div>
                 </div>
               ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    gap: 12,
-                  }}
-                >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 800 }}>{row.name}</div>
-                    <div style={{ fontSize: 13, color: "#666" }}>
+                <div className="min-w-0">
+                  <div className="min-w-0">
+                    <div className="truncate font-black">{row.name}</div>
+                    <div className="mt-1 text-sm text-gray-500">
                       {row.duration_min}분 {row.price != null ? `· ${row.price.toLocaleString()}원` : ""}
                     </div>
-                    <div style={{ fontSize: 12, color: row.active ? "#111" : "#999" }}>
+                    <div className={`mt-1 text-sm font-bold ${row.active ? "text-[#22a988]" : "text-gray-400"}`}>
                       {row.active ? "활성" : "비활성"}
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                  <div className="mt-4 grid grid-cols-3 gap-2">
                     <button
                       type="button"
                       onClick={() => startEdit(row)}
-                      style={{
-                        padding: "8px 10px",
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                        background: "#fff",
-                        fontWeight: 700,
-                      }}
+                      className="min-h-11 rounded-xl border border-gray-200 bg-white px-2 py-2 text-sm font-bold text-gray-600"
                     >
                       수정
                     </button>
@@ -340,13 +307,7 @@ export default function ServicesEditor({ organizationId }: Props) {
                     <button
                       type="button"
                       onClick={() => toggleActive(row)}
-                      style={{
-                        padding: "8px 10px",
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                        background: "#fff",
-                        fontWeight: 700,
-                      }}
+                      className="min-h-11 rounded-xl border border-gray-200 bg-white px-2 py-2 text-sm font-bold text-gray-600"
                     >
                       {row.active ? "비활성화" : "활성화"}
                     </button>
@@ -354,14 +315,7 @@ export default function ServicesEditor({ organizationId }: Props) {
                     <button
                       type="button"
                       onClick={() => deleteService(row.id)}
-                      style={{
-                        padding: "8px 10px",
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                        background: "#fff",
-                        fontWeight: 700,
-                        color: "#b00020",
-                      }}
+                      className="min-h-11 rounded-xl border border-red-100 bg-red-50 px-2 py-2 text-sm font-bold text-red-600"
                     >
                       삭제
                     </button>

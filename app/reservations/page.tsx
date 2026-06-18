@@ -328,124 +328,59 @@ export default async function ReservationsPage({ searchParams }: Props) {
   )?.[1] ?? [];
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#f3f4f6",
-        color: "#111827",
-        padding: "24px 16px 48px",
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: 760, margin: "0 auto" }}>
-        <header style={{ marginBottom: 24 }}>
-          <a
-            href="/owner"
-            style={{
-              display: "inline-block",
-              marginBottom: 14,
-              color: "#6b7280",
-              fontSize: 13,
-              fontWeight: 700,
-              textDecoration: "none",
-            }}
-          >
-            ← 대시보드
+    <main className="min-h-screen overflow-x-hidden bg-[#eef6f8] px-3 py-4 text-gray-900 sm:px-5 sm:py-7">
+      <div className="mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] bg-[#fbfdfe] shadow-[0_20px_60px_rgba(80,145,164,0.14)] sm:rounded-[36px]">
+        <div className="px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7">
+        <header className="mb-6">
+          <a href="/owner" className="mb-3 inline-flex min-h-11 items-center text-sm font-bold text-[#28b9dc]">
+            ← 오늘
           </a>
-
-          <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.03em" }}>
-            예약 일정
-          </div>
-          <div style={{ marginTop: 7, color: "#6b7280", fontSize: 14, lineHeight: 1.5 }}>
-            날짜별 예약 일정과 고객 정보를 확인할 수 있습니다.
-          </div>
-          <div style={{ marginTop: 10, color: "#9ca3af", fontSize: 12 }}>
+          <h1 className="text-3xl font-black tracking-[-0.04em]">예약</h1>
+          <p className="mt-1 text-sm leading-5 text-gray-500">날짜별 일정과 고객 정보를 확인하세요.</p>
+          <p className="mt-2 text-sm text-gray-400">
             {handle ? `@${handle}` : "예약 일정"} · 전체 {reservationRows.length}건
-          </div>
+          </p>
         </header>
 
         <section
-          style={{
-            marginBottom: 28,
-            border: "1px solid #e5e7eb",
-            borderRadius: 20,
-            background: "#fff",
-            padding: 16,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-          }}
+          className="mb-7 rounded-[24px] border border-[#e5f3f6] bg-white p-3 shadow-sm sm:p-4"
           aria-label="예약 날짜 선택"
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-              marginBottom: 14,
-            }}
-          >
+          <div className="mb-3 flex items-center justify-between gap-3">
             <a
               href={`/reservations?date=${previousWeek}`}
               aria-label="이전 주"
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 10,
-                color: "#4b5563",
-                padding: "7px 10px",
-                textDecoration: "none",
-                fontWeight: 900,
-              }}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#dceef2] bg-white text-xl font-black text-[#5594a3]"
             >
               ‹
             </a>
 
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 17, fontWeight: 900 }}>
+            <div className="min-w-0 text-center">
+              <div className="truncate text-base font-black">
                 {formatCalendarMonth(calendarStart, calendarEnd)}
               </div>
               {selectedDate !== todayISO ? (
                 <a
                   href={`/reservations?date=${todayISO}`}
-                  style={{
-                    display: "inline-block",
-                    marginTop: 3,
-                    color: "#2563eb",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    textDecoration: "none",
-                  }}
+                  className="mt-1 inline-block text-sm font-bold text-[#28b9dc]"
                 >
                   오늘로 이동
                 </a>
               ) : (
-                <div style={{ marginTop: 3, color: "#9ca3af", fontSize: 12 }}>
-                  오늘
-                </div>
+                <div className="mt-1 text-sm text-gray-400">오늘</div>
               )}
             </div>
 
             <a
               href={`/reservations?date=${nextWeek}`}
               aria-label="다음 주"
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 10,
-                color: "#4b5563",
-                padding: "7px 10px",
-                textDecoration: "none",
-                fontWeight: 900,
-              }}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#dceef2] bg-white text-xl font-black text-[#5594a3]"
             >
               ›
             </a>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-              gap: 6,
-            }}
-          >
+          <div className="grid grid-cols-7 gap-1">
             {calendarDates.map((dateISO) => {
               const { weekday, day } = formatCalendarDay(dateISO);
               const count = reservationCountByDate.get(dateISO) ?? 0;
@@ -457,40 +392,19 @@ export default async function ReservationsPage({ searchParams }: Props) {
                   key={dateISO}
                   href={`/reservations?date=${dateISO}`}
                   aria-current={selected ? "date" : undefined}
-                  style={{
-                    minWidth: 0,
-                    border: selected
-                      ? "1px solid #111827"
+                  className={`min-w-0 rounded-xl border px-0.5 py-2 text-center ${
+                    selected
+                      ? "border-[#28b9dc] bg-[#28b9dc] text-white"
                       : today
-                        ? "1px solid #bfdbfe"
-                        : "1px solid transparent",
-                    borderRadius: 12,
-                    background: selected ? "#111827" : today ? "#eff6ff" : "#fff",
-                    color: selected ? "#fff" : "#374151",
-                    padding: "8px 2px 7px",
-                    textAlign: "center",
-                    textDecoration: "none",
-                  }}
+                        ? "border-[#bcecf5] bg-[#eefafd] text-gray-700"
+                        : "border-transparent bg-white text-gray-700"
+                  }`}
                 >
-                  <div
-                    style={{
-                      color: selected ? "#d1d5db" : "#9ca3af",
-                      fontSize: 10,
-                      fontWeight: 800,
-                    }}
-                  >
+                  <div className={`text-[10px] font-bold ${selected ? "text-cyan-50" : "text-gray-400"}`}>
                     {weekday}
                   </div>
-                  <div style={{ marginTop: 3, fontSize: 15, fontWeight: 900 }}>{day}</div>
-                  <div
-                    style={{
-                      minHeight: 16,
-                      marginTop: 3,
-                      color: selected ? "#fff" : "#2563eb",
-                      fontSize: 10,
-                      fontWeight: 900,
-                    }}
-                  >
+                  <div className="mt-0.5 text-sm font-black">{day}</div>
+                  <div className={`mt-0.5 min-h-4 text-[10px] font-black ${selected ? "text-white" : "text-[#28b9dc]"}`}>
                     {count > 0 ? `${count}건` : "·"}
                   </div>
                 </a>
@@ -499,109 +413,42 @@ export default async function ReservationsPage({ searchParams }: Props) {
           </div>
         </section>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
-            gap: 12,
-            marginBottom: 10,
-            padding: "0 2px",
-          }}
-        >
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900 }}>
+        <div className="mb-3 flex items-baseline justify-between gap-3 px-1">
+          <h2 className="min-w-0 text-base font-black">
             {formatDateLabel(selectedDate)}
           </h2>
-          <span style={{ flexShrink: 0, color: "#6b7280", fontSize: 13, fontWeight: 800 }}>
+          <span className="shrink-0 text-sm font-bold text-gray-500">
             {selectedReservations.length}건
           </span>
         </div>
 
         {selectedReservations.length === 0 ? (
-          <div
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 20,
-              background: "#fff",
-              padding: "42px 24px",
-              textAlign: "center",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-            }}
-          >
-            <div style={{ fontSize: 17, fontWeight: 900 }}>
-              이 날짜에는 예약이 없습니다
-            </div>
-            <div style={{ marginTop: 8, color: "#6b7280", fontSize: 14, lineHeight: 1.6 }}>
+          <div className="rounded-[24px] border border-[#e5f3f6] bg-white px-5 py-10 text-center shadow-sm">
+            <div className="text-base font-black">이 날짜에는 예약이 없습니다</div>
+            <div className="mt-2 text-sm leading-6 text-gray-500">
               캘린더에서 다른 날짜를 선택해 예약 일정을 확인해보세요.
             </div>
           </div>
         ) : (
           <section>
-            <div style={{ display: "grid", gap: 8 }}>
+            <div className="grid gap-3">
               {selectedReservations.map(({ row, start, end, serviceName }) => (
                 <article
                   key={row.id}
-                  style={{
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 14,
-                    background: "#fff",
-                    padding: "12px 14px",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-                  }}
+                  className="min-w-0 rounded-2xl border border-[#e5f3f6] bg-white p-4 shadow-sm"
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      justifyContent: "space-between",
-                      gap: 10,
-                    }}
-                  >
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "baseline",
-                          gap: 9,
-                          minWidth: 0,
-                        }}
-                      >
-                        <div
-                          style={{
-                            flexShrink: 0,
-                            color: "#111827",
-                            fontSize: 17,
-                            fontWeight: 900,
-                            letterSpacing: "-0.02em",
-                          }}
-                        >
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-baseline gap-2">
+                        <div className="shrink-0 text-base font-black tracking-tight">
                           {formatTimeRange(start, end)}
                         </div>
-                        <div
-                          style={{
-                            minWidth: 0,
-                            color: "#374151",
-                            fontSize: 14,
-                            fontWeight: 800,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
+                        <div className="min-w-0 truncate text-sm font-bold text-gray-600">
                           {serviceName === "-" ? "서비스 미지정" : serviceName}
                         </div>
                       </div>
 
-                      <div
-                        style={{
-                          marginTop: 6,
-                          color: "#6b7280",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          lineHeight: 1.35,
-                          overflowWrap: "anywhere",
-                        }}
-                      >
+                      <div className="mt-2 text-sm font-medium leading-5 text-gray-500 [overflow-wrap:anywhere]">
                         {displayValue(row.customer_name)} · {displayValue(row.customer_phone)}
                       </div>
                     </div>
@@ -622,28 +469,12 @@ export default async function ReservationsPage({ searchParams }: Props) {
                   </div>
 
                   {row.status === "confirmed" ? (
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        marginTop: 9,
-                      }}
-                    >
+                    <div className="mt-3 flex justify-end">
                       <form action="/api/reservations/cancel" method="post">
                         <input type="hidden" name="reservationId" value={String(row.id)} />
                         <button
                           type="submit"
-                          style={{
-                            border: "none",
-                            background: "transparent",
-                            color: "#6b7280",
-                            padding: "3px 0",
-                            fontSize: 12,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            textDecoration: "underline",
-                            textUnderlineOffset: 3,
-                          }}
+                          className="min-h-11 rounded-xl px-3 py-2 text-sm font-bold text-gray-500 underline decoration-gray-300 underline-offset-4"
                         >
                           예약 취소
                         </button>
@@ -655,6 +486,13 @@ export default async function ReservationsPage({ searchParams }: Props) {
             </div>
           </section>
         )}
+        <nav className="mt-7 grid grid-cols-4 gap-1 rounded-2xl border border-[#e5f3f6] bg-white p-2 shadow-sm">
+          <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">오늘</a>
+          <a href="/reservations" className="flex min-h-11 items-center justify-center rounded-xl bg-[#e8f9fd] text-sm font-black text-[#20afd2]">예약</a>
+          <a href="/settings/services" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">서비스</a>
+          <a href="/settings/profile" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">설정</a>
+        </nav>
+        </div>
       </div>
     </main>
   );
