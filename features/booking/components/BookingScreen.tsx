@@ -326,11 +326,11 @@ export default function BookingScreen({ handle }: Props) {
 
   return (
     <div className="space-y-3.5">
-      <section className="h-auto overflow-visible rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+      <section className="relative block h-auto min-h-0 w-full overflow-visible rounded-[24px] border border-[#e5f3f6] bg-white p-4 opacity-100 shadow-sm visible">
         <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
 
         {services.length > 0 ? (
-          <div className="mt-3 grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="relative mt-3 grid h-auto min-h-0 w-full grid-cols-1 gap-3 overflow-visible opacity-100 visible sm:grid-cols-3">
             {services.map((item) => {
               const active = item.id === serviceId;
 
@@ -349,7 +349,7 @@ export default function BookingScreen({ handle }: Props) {
                     setServiceId(item.id);
                   }}
                   className={[
-                    "min-h-[88px] w-full min-w-0 rounded-[18px] border px-4 py-4 text-left transition",
+                    "relative block min-h-[88px] w-full min-w-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 transition visible",
                     active
                       ? "border-black bg-black text-white"
                       : "border-gray-200 bg-white text-gray-900 hover:border-gray-300",
