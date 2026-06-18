@@ -6,6 +6,17 @@ import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import LogoutButton from "./LogoutButton";
 import SummaryPanel from "./SummaryPanel";
 
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://timeopen.app").replace(/\/+$/, "");
+
+function getTodayISO() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
 function MenuCard({
   href,
   title,
@@ -113,7 +124,7 @@ export default async function OwnerPage() {
   const nameText = (orgRow?.name as string | null) ?? "";
   const finalHandle = (orgRow?.handle as string | null) ?? handle;
   const previewPath = finalHandle ? `/u/${finalHandle}` : "-";
-  const previewFullLink = finalHandle ? `https://timeopen.app/u/${finalHandle}` : "";
+  const previewFullLink = finalHandle ? `${SITE_URL}/u/${finalHandle}` : "";
   const canLink = !!finalHandle && finalHandle !== "null";
 
   const { count: serviceCount } = await supabase
@@ -122,10 +133,7 @@ export default async function OwnerPage() {
     .eq("organization_id", organizationId)
     .eq("active", true);
 
-  const today = new Date();
-  const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(
-    today.getDate()
-  ).padStart(2, "0")}`;
+  const todayISO = getTodayISO();
 
   const { count: todayReservationCount } = await supabase
     .from("reservations")

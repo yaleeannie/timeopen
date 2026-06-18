@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 type Props = {
   nameText: string;
   todayReservationCount: number;
@@ -14,36 +16,15 @@ function StatItem({
   label,
   value,
   sub,
-  copyValue,
+  children,
 }: {
   label: string;
   value: string;
   sub?: string;
-  copyValue?: string;
+  children?: React.ReactNode;
 }) {
-  const isCopyable = !!copyValue;
-
   return (
-    <button
-      type="button"
-      onClick={async () => {
-        if (!copyValue) return;
-        try {
-          await navigator.clipboard.writeText(copyValue);
-          alert("예약 링크가 복사되었습니다.");
-        } catch {
-          alert("링크 복사에 실패했습니다.");
-        }
-      }}
-      style={{
-        width: "100%",
-        textAlign: "left",
-        background: "transparent",
-        border: "none",
-        padding: 16,
-        cursor: isCopyable ? "pointer" : "default",
-      }}
-    >
+    <div className="min-h-36 bg-white p-4 md:min-h-40 md:p-5">
       <div style={{ fontSize: 12, fontWeight: 800, color: "#6b7280", marginBottom: 8 }}>
         {label}
       </div>
@@ -65,7 +46,9 @@ function StatItem({
           {sub}
         </div>
       ) : null}
-    </button>
+
+      {children}
+    </div>
   );
 }
 
@@ -78,6 +61,19 @@ export default function SummaryPanel({
   canLink,
   todayISO,
 }: Props) {
+  const [copyStatus, setCopyStatus] = useState("");
+
+  async function copyBookingLink() {
+    if (!canLink || !previewFullLink) return;
+
+    try {
+      await navigator.clipboard.writeText(previewFullLink);
+      setCopyStatus("복사됨");
+    } catch {
+      setCopyStatus("복사 실패");
+    }
+  }
+
   return (
     <div
       style={{
@@ -89,43 +85,46 @@ export default function SummaryPanel({
       }}
     >
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-        }}
+        className="grid grid-cols-2 gap-px bg-gray-200 md:grid-cols-4"
       >
-        <div style={{ borderRight: "1px solid #e5e7eb", borderBottom: "1px solid #e5e7eb" }}>
-          <StatItem
-            label="서비스명"
-            value={nameText || "-"}
-            sub="고객에게 표시되는 대표 이름"
-          />
-        </div>
+        <StatItem
+          label="서비스명"
+          value={nameText || "-"}
+          sub="고객에게 표시되는 대표 이름"
+        />
 
-        <div style={{ borderBottom: "1px solid #e5e7eb" }}>
-          <StatItem
-            label="오늘 예약"
-            value={String(todayReservationCount ?? 0)}
-            sub={`${todayISO} 기준 확정 예약`}
-          />
-        </div>
+        <StatItem
+          label="오늘 예약"
+          value={String(todayReservationCount ?? 0)}
+          sub={`${todayISO} 기준 확정 예약`}
+        />
 
-        <div style={{ borderRight: "1px solid #e5e7eb" }}>
-          <StatItem
-            label="활성 서비스"
-            value={String(serviceCount ?? 0)}
-            sub="현재 예약 가능한 서비스 수"
-          />
-        </div>
+        <StatItem
+          label="활성 서비스"
+          value={String(serviceCount ?? 0)}
+          sub="현재 예약 가능한 서비스 수"
+        />
 
-        <div>
-          <StatItem
-            label="예약 링크"
-            value={previewPath}
-            sub={canLink ? "눌러서 링크 복사" : "handle 설정 필요"}
-            copyValue={canLink ? previewFullLink : undefined}
-          />
-        </div>
+        <StatItem
+          label="예약 링크"
+          value={previewPath}
+          sub={canLink ? previewFullLink : "handle 설정 필요"}
+        >
+          {canLink ? (
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={copyBookingLink}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50"
+              >
+                링크 복사
+              </button>
+              <span className="text-xs font-medium text-gray-500" aria-live="polite">
+                {copyStatus}
+              </span>
+            </div>
+          ) : null}
+        </StatItem>
       </div>
     </div>
   );
