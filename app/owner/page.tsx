@@ -17,6 +17,15 @@ function getTodayISO() {
   }).format(new Date());
 }
 
+function getCurrentTimeText() {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Seoul",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date());
+}
+
 function MenuCard({
   href,
   title,
@@ -127,12 +136,6 @@ export default async function OwnerPage() {
   const previewFullLink = finalHandle ? `${SITE_URL}/u/${finalHandle}` : "";
   const canLink = !!finalHandle && finalHandle !== "null";
 
-  const { count: serviceCount } = await supabase
-    .from("services")
-    .select("*", { count: "exact", head: true })
-    .eq("organization_id", organizationId)
-    .eq("active", true);
-
   const todayISO = getTodayISO();
 
   const { count: todayReservationCount } = await supabase
@@ -141,6 +144,24 @@ export default async function OwnerPage() {
     .eq("organization_id", organizationId)
     .eq("date", todayISO)
     .eq("status", "confirmed");
+
+  const { data: nextReservationRows } = await supabase
+    .from("reservations")
+    .select("start_time, customer_name")
+    .eq("organization_id", organizationId)
+    .eq("date", todayISO)
+    .eq("status", "confirmed")
+    .gte("start_time", getCurrentTimeText())
+    .order("start_time", { ascending: true })
+    .limit(1);
+
+  const nextReservation = nextReservationRows?.[0] ?? null;
+  const nextReservationTime = nextReservation?.start_time
+    ? String(nextReservation.start_time).slice(0, 5)
+    : "";
+  const nextReservationCustomer = nextReservation?.customer_name
+    ? String(nextReservation.customer_name)
+    : "";
 
   return (
     <main
@@ -151,7 +172,7 @@ export default async function OwnerPage() {
         padding: 24,
       }}
     >
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ maxWidth: 760, margin: "0 auto" }}>
         <div
           style={{
             display: "flex",
@@ -169,13 +190,12 @@ export default async function OwnerPage() {
                 letterSpacing: "-0.02em",
               }}
             >
-              TimeOpen 판매자 대시보드
+              오늘
             </div>
 
             <div style={{ marginTop: 10, fontSize: 15, color: "#4b5563", lineHeight: 1.6 }}>
-              <div>로그인됨: {user.email}</div>
-              <div>서비스명: {nameText || "-"}</div>
-              <div>예약 링크: {previewPath}</div>
+              <div>{nameText || "TimeOpen"}</div>
+              <div>{todayISO} 예약 현황</div>
             </div>
           </div>
 
@@ -185,12 +205,10 @@ export default async function OwnerPage() {
         </div>
 
         <div style={{ marginBottom: 28 }}>
-          <div style={{ marginBottom: 10, fontSize: 18, fontWeight: 900 }}>요약</div>
-
           <SummaryPanel
-            nameText={nameText || "-"}
             todayReservationCount={todayReservationCount ?? 0}
-            serviceCount={serviceCount ?? 0}
+            nextReservationTime={nextReservationTime}
+            nextReservationCustomer={nextReservationCustomer}
             previewPath={previewPath}
             previewFullLink={previewFullLink}
             canLink={canLink}
@@ -208,33 +226,27 @@ export default async function OwnerPage() {
           }}
         >
           <MenuCard
-            href="/settings/profile"
-            title="기본정보 및 추가정보"
-            description="서비스명, 예약 링크, 위치 안내, 예약 안내문을 설정합니다."
+            href="/owner"
+            title="오늘"
+            description="오늘 예약과 다음 일정을 확인합니다."
+          />
+
+          <MenuCard
+            href="/reservations"
+            title="예약"
+            description="전체 예약을 확인하고 취소 상태를 관리합니다."
           />
 
           <MenuCard
             href="/settings/services"
-            title="서비스 관리"
-            description="서비스 추가, 수정, 활성/비활성, 삭제를 관리합니다."
+            title="서비스"
+            description="예약 가능한 서비스를 관리합니다."
           />
 
           <MenuCard
-            href="/settings/availability"
-            title="영업시간 설정"
-            description="요일별 운영 시간과 브레이크 시간을 설정합니다."
-          />
-
-          <MenuCard
-            href={canLink ? `/reservations?handle=${finalHandle}` : "/owner"}
-            title="예약 확인"
-            description="예약 목록을 확인하고 취소 상태를 관리합니다."
-          />
-
-          <MenuCard
-            href={canLink ? `/u/${finalHandle}` : "/owner"}
-            title="예약 링크 미리보기"
-            description="고객이 보게 될 실제 예약 페이지를 확인합니다."
+            href="/settings/profile"
+            title="설정"
+            description="기본정보와 예약 링크 설정을 관리합니다."
           />
         </div>
       </div>

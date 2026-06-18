@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
-  nameText: string;
   todayReservationCount: number;
-  serviceCount: number;
+  nextReservationTime: string;
+  nextReservationCustomer: string;
   previewPath: string;
   previewFullLink: string;
   canLink: boolean;
@@ -61,9 +61,9 @@ function StatItem({
 }
 
 export default function SummaryPanel({
-  nameText,
   todayReservationCount,
-  serviceCount,
+  nextReservationTime,
+  nextReservationCustomer,
   previewPath,
   previewFullLink,
   canLink,
@@ -118,21 +118,15 @@ export default function SummaryPanel({
         className="grid grid-cols-2 gap-px bg-gray-200 md:grid-cols-4"
       >
         <StatItem
-          label="서비스명"
-          value={nameText || "-"}
-          sub="고객에게 표시되는 대표 이름"
-        />
-
-        <StatItem
           label="오늘 예약"
           value={String(todayReservationCount ?? 0)}
           sub={`${todayISO} 기준 확정 예약`}
         />
 
         <StatItem
-          label="활성 서비스"
-          value={String(serviceCount ?? 0)}
-          sub="현재 예약 가능한 서비스 수"
+          label="다음 예약"
+          value={nextReservationTime || "예정 없음"}
+          sub={nextReservationTime ? nextReservationCustomer || "고객명 미입력" : "오늘 남은 확정 예약"}
         />
 
         <StatItem
@@ -155,6 +149,12 @@ export default function SummaryPanel({
             </div>
           ) : null}
         </StatItem>
+
+        <StatItem
+          label="문자 크레딧"
+          value="준비 중"
+          sub="문자 발송 잔액 기능을 준비하고 있습니다."
+        />
       </div>
     </div>
   );
