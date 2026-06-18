@@ -6,12 +6,14 @@ import {
   PublicBookingI18nProvider,
   usePublicBookingI18n,
 } from "./PublicBookingI18n";
+import { getLocalizedServiceName } from "@/features/services/serviceTranslations";
 
 type Props = {
   handle: string;
   dateText: string;
   timeText: string;
   serviceName: string;
+  serviceNameTranslations: Record<string, string>;
   customerName: string;
   customerPhone: string;
   locationText: string;
@@ -23,7 +25,7 @@ type Props = {
 };
 
 function PublicConfirmedPageContent(props: Props) {
-  const { t } = usePublicBookingI18n();
+  const { locale, t } = usePublicBookingI18n();
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#eef6f8] px-3 py-4 text-gray-900 sm:px-5 sm:py-7">
@@ -60,7 +62,11 @@ function PublicConfirmedPageContent(props: Props) {
             <div>
               <div className="text-sm font-bold text-cyan-50">{t("service")}</div>
               <div className="mt-1 break-words text-xl font-black [overflow-wrap:anywhere]">
-                {props.serviceName}
+                {getLocalizedServiceName(
+                  props.serviceName,
+                  props.serviceNameTranslations,
+                  locale
+                )}
               </div>
             </div>
           </section>
