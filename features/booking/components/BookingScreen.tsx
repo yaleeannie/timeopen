@@ -73,7 +73,6 @@ function formatISODate(d: Date) {
 export default function BookingScreen({ handle }: Props) {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [services, setServices] = useState<ServiceRow[]>([]);
-  const [servicesLoading, setServicesLoading] = useState(true);
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule | null>(null);
 
   const [dateISO, setDateISO] = useState<string | null>(null);
@@ -88,10 +87,8 @@ export default function BookingScreen({ handle }: Props) {
   const userPickedTimeRef = useRef(false);
   const computedKeyRef = useRef<string | null>(null);
   const reqIdRef = useRef(0);
-  const timesCacheRef = useRef<Map<string, string[]>>(new Map());
 
   const [noTimesForCurrent, setNoTimesForCurrent] = useState<boolean>(false);
-  const [isTimesLoading, setIsTimesLoading] = useState(false);
 
   const [orgLocation, setOrgLocation] = useState<string>("");
   const [orgNotice, setOrgNotice] = useState<string>("");
@@ -138,46 +135,35 @@ export default function BookingScreen({ handle }: Props) {
   }, [isTimesReadyForCurrent, dateISO, serviceId, time]);
 
   useEffect(() => {
-    let active = true;
-    setServicesLoading(true);
-    timesCacheRef.current.clear();
-    computedKeyRef.current = null;
-    reqIdRef.current += 1;
+  (async () => {
+    const org = await fetchOrganizationByHandle(handle);
+    setOrganizationId(org?.id ?? null);
+    setOrgLocation((org?.location_text ?? "").trim());
+    setOrgNotice((org?.notice_text ?? "").trim());
 
-    void fetchOrganizationByHandle(handle).then((org) => {
-      if (!active) return;
-      setOrganizationId(org?.id ?? null);
-      setOrgLocation((org?.location_text ?? "").trim());
-      setOrgNotice((org?.notice_text ?? "").trim());
-    });
+    const rows = await fetchServicesByHandle(handle);
+    setServices(rows);
 
-    void fetchServicesByHandle(handle)
-      .then((rows) => {
-        if (!active) return;
-        setServices(rows);
-        if (rows.length > 0) {
-          setServiceId((prev) => prev ?? rows[0].id);
-        }
-      })
-      .finally(() => {
-        if (active) setServicesLoading(false);
-      });
+    if (rows.length > 0) {
+      setServiceId((prev) => prev ?? rows[0].id);
+    }
+  })();
+  }, [handle]);
 
-    void fetch("/api/fetchAvailability", {
+  useEffect(() => {
+    if (!organizationId) return;
+
+    (async () => {
+      const res = await fetch("/api/fetchAvailability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ handle }),
-      })
-      .then((res) => res.json())
-      .then((json) => {
-        if (active) setWeeklySchedule(convertRowsToWeeklySchedule(json.data));
       });
 
-    return () => {
-      active = false;
-      reqIdRef.current += 1;
-    };
-  }, [handle]);
+      const json = await res.json();
+      setWeeklySchedule(convertRowsToWeeklySchedule(json.data));
+    })();
+  }, [organizationId, handle]);
 
   async function recomputeTimes(nextDateISO: string | null, nextServiceId: string | null) {
     if (!organizationId || !weeklySchedule) return;
@@ -188,91 +174,61 @@ export default function BookingScreen({ handle }: Props) {
 
     const myReq = ++reqIdRef.current;
     const key = `${organizationId}_${nextDateISO}_${nextServiceId}`;
-    const cached = timesCacheRef.current.get(key);
 
-    if (cached) {
-      setAvailableTimes(cached);
-      computedKeyRef.current = key;
-      setNoTimesForCurrent(cached.length === 0);
-      setIsTimesLoading(false);
+    const [ex, busyRes] = await Promise.all([
+      fetchExceptionForDate({ handle, dateISO: nextDateISO }),
+      fetchBusyFromDb({ handle, dateISO: nextDateISO }),
+    ]);
 
-      const first = cached[0] ?? null;
-      setTime(first);
-      setShowEarliestHint(first != null);
-      earliestHintKeyRef.current = first != null ? key : null;
-      return;
+    if (reqIdRef.current !== myReq) return;
+
+    const [y, m, d] = nextDateISO.split("-").map(Number);
+    const daily = buildDailySchedule(new Date(y, m - 1, d), weeklySchedule, ex ?? null);
+
+    const now = new Date();
+    const todayISO = formatISODate(now);
+    let notBefore: string | undefined = undefined;
+    if (nextDateISO === todayISO) {
+      notBefore = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     }
 
-    setIsTimesLoading(true);
-    setAvailableTimes([]);
-    setNoTimesForCurrent(false);
+    const busy = busyRes?.busy ?? [];
 
-    try {
-      const [ex, busyRes] = await Promise.all([
-        fetchExceptionForDate({ handle, dateISO: nextDateISO }),
-        fetchBusyFromDb({ handle, dateISO: nextDateISO }),
-      ]);
+    const result = computeAvailableStartTimes({
+      workWindows: daily.workWindows,
+      breaks: daily.breaks,
+      busy,
+      durationMin: nextService.duration_min,
+      bufferMin: 0,
+      stepMin: 15,
+      notBefore,
+    });
 
-      if (reqIdRef.current !== myReq) return;
+    if (reqIdRef.current !== myReq) return;
 
-      const [y, m, d] = nextDateISO.split("-").map(Number);
-      const daily = buildDailySchedule(new Date(y, m - 1, d), weeklySchedule, ex ?? null);
+    setAvailableTimes(result);
+    computedKeyRef.current = key;
+    setNoTimesForCurrent(result.length === 0);
 
-      const now = new Date();
-      const todayISO = formatISODate(now);
-      let notBefore: string | undefined = undefined;
-      if (nextDateISO === todayISO) {
-        notBefore = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      }
+    const first = result[0] ?? null;
 
-      const busy = busyRes?.busy ?? [];
-
-      const result = computeAvailableStartTimes({
-        workWindows: daily.workWindows,
-        breaks: daily.breaks,
-        busy,
-        durationMin: nextService.duration_min,
-        bufferMin: 0,
-        stepMin: 15,
-        notBefore,
-      });
-
-      if (reqIdRef.current !== myReq) return;
-
-      timesCacheRef.current.set(key, result);
-      setAvailableTimes(result);
-      computedKeyRef.current = key;
-      setNoTimesForCurrent(result.length === 0);
-
-      const first = result[0] ?? null;
-
-      if (!userPickedTimeRef.current) {
+    if (!userPickedTimeRef.current) {
+      setTime(first);
+      setShowEarliestHint(first != null);
+      earliestHintKeyRef.current = key;
+    } else {
+      const stillValid = time != null && result.includes(time);
+      if (!stillValid) {
+        userPickedTimeRef.current = false;
         setTime(first);
         setShowEarliestHint(first != null);
         earliestHintKeyRef.current = key;
       } else {
-        const stillValid = time != null && result.includes(time);
-        if (!stillValid) {
-          userPickedTimeRef.current = false;
-          setTime(first);
-          setShowEarliestHint(first != null);
-          earliestHintKeyRef.current = key;
-        } else {
-          setShowEarliestHint(false);
-          earliestHintKeyRef.current = null;
-        }
+        setShowEarliestHint(false);
+        earliestHintKeyRef.current = null;
       }
-    } finally {
-      if (reqIdRef.current === myReq) setIsTimesLoading(false);
     }
   }
-
-  useEffect(() => {
-    if (!dateISO || !serviceId || !organizationId || !weeklySchedule) return;
-    const key = `${organizationId}_${dateISO}_${serviceId}`;
-    if (computedKeyRef.current === key) return;
-    void recomputeTimes(dateISO, serviceId);
-  }, [dateISO, serviceId, organizationId, weeklySchedule]);
 
   async function onReserve() {
     setMsg("");
@@ -344,49 +300,28 @@ export default function BookingScreen({ handle }: Props) {
 
   return (
     <div className="space-y-3.5">
-      <section className="booking-services block h-auto min-h-[116px] overflow-visible rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm [&_button]:min-h-20 [&_button]:rounded-2xl [&_button]:border-[#dceef2] [&_button]:px-3.5 [&_button]:py-3.5">
-        {servicesLoading ? (
-          <div>
-            <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              {[0, 1, 2].map((item) => (
-                <div key={item} className="h-20 animate-pulse rounded-2xl bg-[#eef6f8]" />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <ServicePicker
-            services={services}
-            value={serviceId}
-            onChange={(next) => {
-              if (next === serviceId) return;
-              reqIdRef.current += 1;
-              userPickedTimeRef.current = false;
-              computedKeyRef.current = null;
-              setTime(null);
-              setAvailableTimes([]);
-              setNoTimesForCurrent(false);
-              setIsTimesLoading(dateISO != null);
-              setServiceId(next);
-            }}
-          />
-        )}
+      <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm [&_button]:min-h-20 [&_button]:rounded-2xl [&_button]:border-[#dceef2] [&_button]:px-3.5 [&_button]:py-3.5 [&_button.bg-black]:border-[#28b9dc] [&_button.bg-black]:bg-[#28b9dc]">
+        <ServicePicker
+          services={services}
+          value={serviceId}
+          onChange={(next) => {
+            userPickedTimeRef.current = false;
+            setTime(null);
+            setServiceId(next);
+            void recomputeTimes(dateISO, next);
+          }}
+        />
       </section>
 
       <section className="space-y-4 rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
-        <div className="booking-date [&>div>div:nth-child(2)]:border-0 [&>div>div:nth-child(2)]:p-0">
+        <div className="[&>div>div:nth-child(2)]:border-0 [&>div>div:nth-child(2)]:p-0">
           <DateChips
             value={dateISO}
             onChange={(next) => {
-              if (next === dateISO) return;
-              reqIdRef.current += 1;
               userPickedTimeRef.current = false;
-              computedKeyRef.current = null;
               setTime(null);
-              setAvailableTimes([]);
-              setNoTimesForCurrent(false);
-              setIsTimesLoading(serviceId != null);
               setDateISO(next);
+              void recomputeTimes(next, serviceId);
             }}
           />
         </div>
@@ -408,34 +343,20 @@ export default function BookingScreen({ handle }: Props) {
             </div>
           </div>
 
-          <div className="booking-times mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:border-[#dceef2] [&_button]:px-4 [&_button]:font-bold">
-            {isTimesLoading ? (
-              <div className="rounded-2xl border border-[#dceef2] bg-[#f8fcfd] px-4 py-5">
-                <div className="flex items-center gap-2 text-sm font-bold text-[#5594a3]">
-                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#28b9dc]" />
-                  가능한 시간을 불러오는 중
-                </div>
-                <div className="mt-3 flex gap-2">
-                  {[0, 1, 2, 3].map((item) => (
-                    <div key={item} className="h-10 w-16 animate-pulse rounded-xl bg-[#e6f4f7]" />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <TimePicker
-                times={availableTimes}
-                value={time}
-                onChange={(t) => {
-                  if (!isTimesReadyForCurrent) return;
+          <div className="mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:border-[#dceef2] [&_button]:px-4 [&_button]:font-bold">
+            <TimePicker
+              times={availableTimes}
+              value={time}
+              onChange={(t) => {
+                if (!isTimesReadyForCurrent) return;
 
-                  userPickedTimeRef.current = true;
-                  setTime(t);
+                userPickedTimeRef.current = true;
+                setTime(t);
 
-                  setShowEarliestHint(false);
-                  earliestHintKeyRef.current = null;
-                }}
-              />
-            )}
+                setShowEarliestHint(false);
+                earliestHintKeyRef.current = null;
+              }}
+            />
           </div>
         </div>
       </section>
@@ -513,26 +434,6 @@ export default function BookingScreen({ handle }: Props) {
           ) : null}
         </section>
       ) : null}
-
-      <style jsx global>{`
-        .booking-services button.bg-black {
-          border-color: #28b9dc !important;
-          background: linear-gradient(135deg, #5bd8f2, #24b8df) !important;
-          color: #ffffff !important;
-          box-shadow: 0 8px 18px rgba(40, 185, 220, 0.2);
-        }
-        .booking-date button[style*="background:#2F2F2F"],
-        .booking-date button[style*="background: #2F2F2F"],
-        .booking-date button[style*="background: rgb(47, 47, 47)"],
-        .booking-times button[style*="background:#2F2F2F"],
-        .booking-times button[style*="background: #2F2F2F"],
-        .booking-times button[style*="background: rgb(47, 47, 47)"] {
-          border-color: #28b9dc !important;
-          background: linear-gradient(135deg, #5bd8f2, #24b8df) !important;
-          color: #ffffff !important;
-          box-shadow: 0 6px 14px rgba(40, 185, 220, 0.18);
-        }
-      `}</style>
     </div>
   );
 }
