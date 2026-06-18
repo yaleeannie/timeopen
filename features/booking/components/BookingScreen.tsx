@@ -15,6 +15,10 @@ import type { WeeklySchedule } from "@/features/availability/weeklySchedule";
 
 import { fetchBusyFromDb } from "@/features/availability/fetchBusyFromDb";
 import { saveReservation } from "@/features/booking/saveReservation";
+import {
+  normalizePhoneToE164,
+  type SupportedPhoneCountry,
+} from "@/features/booking/phone";
 import { fetchOrganizationByHandle } from "@/features/organizations/fetchOrganizationByHandle";
 
 type Props = { handle: string };
@@ -93,6 +97,7 @@ export default function BookingScreen({ handle }: Props) {
 
   // ✅ Day 1 추가
   const [customerName, setCustomerName] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState<SupportedPhoneCountry>("KR");
   const [customerPhone, setCustomerPhone] = useState("");
 
   const lastStableSelectionRef = useRef<{ dateISO: string | null; serviceId: string | null; time: string | null }>({
@@ -242,6 +247,12 @@ export default function BookingScreen({ handle }: Props) {
       return;
     }
 
+    const normalizedPhone = normalizePhoneToE164(phoneCountry, customerPhone);
+    if (!normalizedPhone.ok) {
+      setMsg("선택한 국가에 맞는 전화번호를 입력해주세요.");
+      return;
+    }
+
     if (!availableTimes.includes(time)) {
       setMsg("선택한 시간은 현재 예약할 수 없어요. 다시 선택해 주세요.");
       return;
@@ -261,7 +272,7 @@ export default function BookingScreen({ handle }: Props) {
         durationMin: service.duration_min,
         bufferMin: 0,
         customerName,
-        customerPhone,
+        customerPhone: normalizedPhone.e164,
       });
 
       if (typeof result === "string") rid = result;
@@ -364,23 +375,49 @@ export default function BookingScreen({ handle }: Props) {
 
         <div style={{ marginTop: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>전화번호</div>
-          <input
-            value={customerPhone}
-            onChange={(e) => setCustomerPhone(e.target.value)}
-            placeholder="전화번호"
-            inputMode="tel"
-            style={{
-              width: "100%",
-              padding: "12px 12px",
-              borderRadius: 12,
-              border: "1px solid #d0d0d0",
-              background: "#fff",
-              color: "#111",
-              outline: "none",
-              fontSize: 14,
-              marginBottom: 12,
-            }}
-          />
+          <div style={{ display: "flex", gap: 8, alignItems: "stretch", marginBottom: 12 }}>
+            <select
+              value={phoneCountry}
+              onChange={(e) => setPhoneCountry(e.target.value as SupportedPhoneCountry)}
+              aria-label="전화번호 국가"
+              style={{
+                flex: "0 0 132px",
+                minWidth: 0,
+                padding: "12px 10px",
+                borderRadius: 12,
+                border: "1px solid #d0d0d0",
+                background: "#fff",
+                color: "#111",
+                outline: "none",
+                fontSize: 14,
+              }}
+            >
+              <option value="KR">대한민국 +82</option>
+              <option value="JP">일본 +81</option>
+              <option value="US">미국 +1</option>
+              <option value="CA">캐나다 +1</option>
+              <option value="TH">태국 +66</option>
+              <option value="CN">중국 +86</option>
+            </select>
+
+            <input
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+              placeholder="전화번호"
+              inputMode="tel"
+              style={{
+                flex: 1,
+                minWidth: 0,
+                padding: "12px 12px",
+                borderRadius: 12,
+                border: "1px solid #d0d0d0",
+                background: "#fff",
+                color: "#111",
+                outline: "none",
+                fontSize: 14,
+              }}
+            />
+          </div>
         </div>
 
         {noTimesForCurrent && (
