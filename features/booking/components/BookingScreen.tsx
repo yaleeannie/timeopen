@@ -377,7 +377,7 @@ export default function BookingScreen({ handle }: Props) {
         <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
 
         {services.length > 0 ? (
-          <div className="-mx-1 mt-3 flex gap-3 overflow-x-auto px-1 pb-2">
+          <div className="mt-3 flex max-h-[42vh] flex-col gap-3 overflow-x-hidden overflow-y-auto pr-1">
             {services.map((item) => {
               const active = item.id === serviceId;
 
@@ -396,7 +396,7 @@ export default function BookingScreen({ handle }: Props) {
                     setServiceId(item.id);
                   }}
                   className={[
-                    "relative block min-h-[104px] w-[150px] shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none",
+                    "relative block min-h-[104px] w-full shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none",
                     active
                       ? "border-transparent bg-[#35bddc] text-white"
                       : "border-[#dceef2] bg-white text-gray-900 hover:border-[#8ee8f5] hover:bg-[#ecfeff]",
@@ -581,7 +581,7 @@ export default function BookingScreen({ handle }: Props) {
               onClick={() => setStep("datetime")}
               className="min-h-12 w-full rounded-2xl bg-[#35bddc] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#20aeca] disabled:cursor-not-allowed disabled:bg-[#b8dfe8]"
             >
-              날짜와 시간 선택
+              다음
             </button>
           ) : step === "datetime" ? (
             <button
