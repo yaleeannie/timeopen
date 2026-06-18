@@ -299,8 +299,8 @@ export default function BookingScreen({ handle }: Props) {
   const hintSlotHeight = 18;
 
   return (
-    <div className="space-y-4">
-      <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+    <div className="space-y-3.5">
+      <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm [&_button]:min-h-20 [&_button]:rounded-2xl [&_button]:border-[#dceef2] [&_button]:px-3.5 [&_button]:py-3.5 [&_button.bg-black]:border-[#28b9dc] [&_button.bg-black]:bg-[#28b9dc]">
         <ServicePicker
           services={services}
           value={serviceId}
@@ -314,44 +314,50 @@ export default function BookingScreen({ handle }: Props) {
       </section>
 
       <section className="space-y-4 rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
-        <DateChips
-          value={dateISO}
-          onChange={(next) => {
-            userPickedTimeRef.current = false;
-            setTime(null);
-            setDateISO(next);
-            void recomputeTimes(next, serviceId);
-          }}
-        />
+        <div className="[&>div>div:nth-child(2)]:border-0 [&>div>div:nth-child(2)]:p-0">
+          <DateChips
+            value={dateISO}
+            onChange={(next) => {
+              userPickedTimeRef.current = false;
+              setTime(null);
+              setDateISO(next);
+              void recomputeTimes(next, serviceId);
+            }}
+          />
+        </div>
 
-        <div className="space-y-3">
-          <div style={{ height: hintSlotHeight, display: "flex", alignItems: "center" }}>
+        <div className="border-t border-[#edf5f7] pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-bold text-gray-900">시간 선택</div>
             <div
-              className="text-xs font-bold"
+              className="text-right text-[11px] font-bold"
               style={{
                 color: "#28b9dc",
                 opacity: shouldShowEarliestHint ? 1 : 0,
                 transition: "opacity 160ms ease",
                 pointerEvents: "none",
+                minHeight: hintSlotHeight,
               }}
             >
-              현재 예약 가능한 가장 빠른 시간이에요!
+              가장 빠른 시간
             </div>
           </div>
 
-          <TimePicker
-            times={availableTimes}
-            value={time}
-            onChange={(t) => {
-              if (!isTimesReadyForCurrent) return;
+          <div className="mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:border-[#dceef2] [&_button]:px-4 [&_button]:font-bold">
+            <TimePicker
+              times={availableTimes}
+              value={time}
+              onChange={(t) => {
+                if (!isTimesReadyForCurrent) return;
 
-              userPickedTimeRef.current = true;
-              setTime(t);
+                userPickedTimeRef.current = true;
+                setTime(t);
 
-              setShowEarliestHint(false);
-              earliestHintKeyRef.current = null;
-            }}
-          />
+                setShowEarliestHint(false);
+                earliestHintKeyRef.current = null;
+              }}
+            />
+          </div>
         </div>
       </section>
 
@@ -408,9 +414,7 @@ export default function BookingScreen({ handle }: Props) {
         ) : null}
       </section>
 
-      <div className="[&>div]:rounded-[24px] [&>div]:border-[#e5f3f6] [&>div]:bg-white [&>div]:p-4 [&>div]:shadow-sm [&_button]:min-h-11 [&_button]:bg-[#28b9dc] [&_button]:font-black [&_button]:shadow-sm hover:[&_button]:bg-[#20afd2]">
-        <BookingCta handle={handle} selection={ctaSelection} onReserve={onReserve} />
-      </div>
+      <BookingCta selection={ctaSelection} onReserve={onReserve} />
 
       {(orgLocation || orgNotice) ? (
         <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
