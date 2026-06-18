@@ -27,7 +27,7 @@ export default function BookingCta({ selection, onReserve }: Props) {
         type="button"
         disabled={!ready}
         onClick={onReserve}
-        className="min-h-11 shrink-0 rounded-xl bg-[#28b9dc] px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-[#20afd2] disabled:cursor-not-allowed disabled:bg-[#b8dfe8] disabled:opacity-100"
+        className="min-h-11 shrink-0 rounded-xl bg-[#35bddc] px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-[#20aeca] disabled:cursor-not-allowed disabled:bg-[#b8dfe8] disabled:opacity-100"
       >
         예약하기
       </button>
