@@ -88,6 +88,7 @@ export default function BookingScreen({ handle }: Props) {
   const reqIdRef = useRef(0);
 
   const [noTimesForCurrent, setNoTimesForCurrent] = useState<boolean>(false);
+  const [isTimesLoading, setIsTimesLoading] = useState(false);
 
   const [orgLocation, setOrgLocation] = useState<string>("");
   const [orgNotice, setOrgNotice] = useState<string>("");
@@ -136,12 +137,12 @@ export default function BookingScreen({ handle }: Props) {
   useEffect(() => {
   (async () => {
     const org = await fetchOrganizationByHandle(handle);
-    setOrganizationId(org?.id ?? null);
     setOrgLocation((org?.location_text ?? "").trim());
     setOrgNotice((org?.notice_text ?? "").trim());
 
     const rows = await fetchServicesByHandle(handle);
     setServices(rows);
+    setOrganizationId(org?.id ?? rows[0]?.organization_id ?? null);
 
     if (rows.length > 0) {
       setServiceId((prev) => prev ?? rows[0].id);
@@ -174,60 +175,78 @@ export default function BookingScreen({ handle }: Props) {
     const myReq = ++reqIdRef.current;
     const key = `${organizationId}_${nextDateISO}_${nextServiceId}`;
 
-    const [ex, busyRes] = await Promise.all([
-      fetchExceptionForDate({ handle, dateISO: nextDateISO }),
-      fetchBusyFromDb({ handle, dateISO: nextDateISO }),
-    ]);
+    setIsTimesLoading(true);
+    setNoTimesForCurrent(false);
 
-    if (reqIdRef.current !== myReq) return;
+    try {
+      const [ex, busyRes] = await Promise.all([
+        fetchExceptionForDate({ handle, dateISO: nextDateISO }),
+        fetchBusyFromDb({ handle, dateISO: nextDateISO }),
+      ]);
 
-    const [y, m, d] = nextDateISO.split("-").map(Number);
-    const daily = buildDailySchedule(new Date(y, m - 1, d), weeklySchedule, ex ?? null);
+      if (reqIdRef.current !== myReq) return;
 
-    const now = new Date();
-    const todayISO = formatISODate(now);
-    let notBefore: string | undefined = undefined;
-    if (nextDateISO === todayISO) {
-      notBefore = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    }
+      const [y, m, d] = nextDateISO.split("-").map(Number);
+      const daily = buildDailySchedule(new Date(y, m - 1, d), weeklySchedule, ex ?? null);
 
-    const busy = busyRes?.busy ?? [];
+      const now = new Date();
+      const todayISO = formatISODate(now);
+      let notBefore: string | undefined = undefined;
+      if (nextDateISO === todayISO) {
+        notBefore = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      }
 
-    const result = computeAvailableStartTimes({
-      workWindows: daily.workWindows,
-      breaks: daily.breaks,
-      busy,
-      durationMin: nextService.duration_min,
-      bufferMin: 0,
-      stepMin: 15,
-      notBefore,
-    });
+      const busy = busyRes?.busy ?? [];
 
-    if (reqIdRef.current !== myReq) return;
+      const result = computeAvailableStartTimes({
+        workWindows: daily.workWindows,
+        breaks: daily.breaks,
+        busy,
+        durationMin: nextService.duration_min,
+        bufferMin: 0,
+        stepMin: 15,
+        notBefore,
+      });
 
-    setAvailableTimes(result);
-    computedKeyRef.current = key;
-    setNoTimesForCurrent(result.length === 0);
+      if (reqIdRef.current !== myReq) return;
 
-    const first = result[0] ?? null;
+      setAvailableTimes(result);
+      computedKeyRef.current = key;
+      setNoTimesForCurrent(result.length === 0);
 
-    if (!userPickedTimeRef.current) {
-      setTime(first);
-      setShowEarliestHint(first != null);
-      earliestHintKeyRef.current = key;
-    } else {
-      const stillValid = time != null && result.includes(time);
-      if (!stillValid) {
-        userPickedTimeRef.current = false;
+      const first = result[0] ?? null;
+
+      if (!userPickedTimeRef.current) {
         setTime(first);
         setShowEarliestHint(first != null);
         earliestHintKeyRef.current = key;
       } else {
-        setShowEarliestHint(false);
-        earliestHintKeyRef.current = null;
+        const stillValid = time != null && result.includes(time);
+        if (!stillValid) {
+          userPickedTimeRef.current = false;
+          setTime(first);
+          setShowEarliestHint(first != null);
+          earliestHintKeyRef.current = key;
+        } else {
+          setShowEarliestHint(false);
+          earliestHintKeyRef.current = null;
+        }
+      }
+    } finally {
+      if (reqIdRef.current === myReq) {
+        setIsTimesLoading(false);
       }
     }
   }
+
+  useEffect(() => {
+    if (!organizationId || !weeklySchedule || !dateISO || !serviceId) return;
+
+    const key = `${organizationId}_${dateISO}_${serviceId}`;
+    if (computedKeyRef.current === key) return;
+
+    void recomputeTimes(dateISO, serviceId);
+  }, [organizationId, weeklySchedule, dateISO, serviceId, services]);
 
   async function onReserve() {
     setMsg("");
@@ -303,7 +322,7 @@ export default function BookingScreen({ handle }: Props) {
         <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
 
         {services.length > 0 ? (
-          <div className={`mt-3 ${services.length >= 4 ? "flex gap-3 overflow-x-auto pb-2" : "grid grid-cols-3 gap-3"}`}>
+          <div className="mt-3 grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
             {services.map((item) => {
               const active = item.id === serviceId;
 
@@ -313,13 +332,15 @@ export default function BookingScreen({ handle }: Props) {
                   type="button"
                   onClick={() => {
                     userPickedTimeRef.current = false;
+                    computedKeyRef.current = null;
                     setTime(null);
+                    setAvailableTimes([]);
+                    setNoTimesForCurrent(false);
+                    setIsTimesLoading(dateISO != null);
                     setServiceId(item.id);
-                    void recomputeTimes(dateISO, item.id);
                   }}
                   className={[
-                    services.length >= 4 ? "min-w-[150px] shrink-0" : "w-full",
-                    "min-h-20 rounded-[18px] border px-4 py-4 text-left transition",
+                    "min-h-[88px] w-full min-w-0 rounded-[18px] border px-4 py-4 text-left transition",
                     active
                       ? "border-black bg-black text-white"
                       : "border-gray-200 bg-white text-gray-900 hover:border-gray-300",
@@ -343,9 +364,12 @@ export default function BookingScreen({ handle }: Props) {
             value={dateISO}
             onChange={(next) => {
               userPickedTimeRef.current = false;
+              computedKeyRef.current = null;
               setTime(null);
+              setAvailableTimes([]);
+              setNoTimesForCurrent(false);
+              setIsTimesLoading(serviceId != null);
               setDateISO(next);
-              void recomputeTimes(next, serviceId);
             }}
           />
         </div>
@@ -368,19 +392,38 @@ export default function BookingScreen({ handle }: Props) {
           </div>
 
           <div className="mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:border-[#dceef2] [&_button]:px-4 [&_button]:font-bold">
-            <TimePicker
-              times={availableTimes}
-              value={time}
-              onChange={(t) => {
-                if (!isTimesReadyForCurrent) return;
+            {!serviceId || !dateISO ? (
+              <TimePicker
+                times={[]}
+                value={null}
+                disabled
+                onChange={() => {}}
+              />
+            ) : isTimesLoading || !organizationId || !weeklySchedule ? (
+              <div className="rounded-2xl border border-[#dceef2] bg-[#f8fcfd] px-4 py-6 text-sm font-medium text-[#5594a3]">
+                가능한 시간을 불러오는 중...
+              </div>
+            ) : noTimesForCurrent && isTimesReadyForCurrent ? (
+              <div className="rounded-2xl border border-[#dceef2] bg-white px-4 py-6">
+                <div className="text-sm font-semibold text-gray-900">가능한 시간이 없어요</div>
+                <div className="mt-1 text-sm text-gray-600">연속 시간이 필요해요.</div>
+                <div className="mt-3 text-sm text-gray-400">다른 날짜를 선택해주세요.</div>
+              </div>
+            ) : (
+              <TimePicker
+                times={availableTimes}
+                value={time}
+                onChange={(t) => {
+                  if (!isTimesReadyForCurrent) return;
 
-                userPickedTimeRef.current = true;
-                setTime(t);
+                  userPickedTimeRef.current = true;
+                  setTime(t);
 
-                setShowEarliestHint(false);
-                earliestHintKeyRef.current = null;
-              }}
-            />
+                  setShowEarliestHint(false);
+                  earliestHintKeyRef.current = null;
+                }}
+              />
+            )}
           </div>
         </div>
       </section>
@@ -424,12 +467,6 @@ export default function BookingScreen({ handle }: Props) {
             />
           </div>
         </div>
-
-        {noTimesForCurrent && (
-          <div className="mt-4 rounded-xl bg-[#f4fafb] px-4 py-3 text-sm font-medium text-gray-500">
-            선택한 날짜에는 가능한 시간이 없어요.
-          </div>
-        )}
 
         {msg ? (
           <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold leading-5 text-red-700 [overflow-wrap:anywhere]">
