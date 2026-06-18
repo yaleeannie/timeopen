@@ -349,14 +349,14 @@ export default function BookingScreen({ handle }: Props) {
                     setServiceId(item.id);
                   }}
                   className={[
-                    "relative block min-h-[104px] w-[150px] shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none focus:ring-2 focus:ring-[#67e8f9] focus:ring-offset-2",
+                    "relative block min-h-[104px] w-[150px] shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none focus:ring-2 focus:ring-[#8ee8f5] focus:ring-offset-2",
                     active
-                      ? "border-[#67e8f9] bg-[#e6faff] text-[#075985]"
+                      ? "border-[#35bddc] bg-[#35bddc] text-white"
                       : "border-[#dceef2] bg-white text-gray-900 hover:border-[#8ee8f5] hover:bg-[#ecfeff]",
                   ].join(" ")}
                 >
                   <div className="text-base font-semibold leading-tight">{item.name}</div>
-                  <div className={`mt-2 text-[13px] leading-5 ${active ? "text-[#0e7490]" : "text-gray-500"}`}>
+                  <div className={`mt-2 text-[13px] leading-5 ${active ? "text-white/85" : "text-gray-500"}`}>
                     {item.duration_min ? `${item.duration_min}분` : ""}
                     {item.price != null ? ` · ${item.price.toLocaleString()}원` : ""}
                   </div>
@@ -390,7 +390,7 @@ export default function BookingScreen({ handle }: Props) {
             <div
               className="text-right text-[11px] font-bold"
               style={{
-                color: "#28b9dc",
+                color: "#20aeca",
                 opacity: shouldShowEarliestHint ? 1 : 0,
                 transition: "opacity 160ms ease",
                 pointerEvents: "none",
@@ -496,14 +496,14 @@ export default function BookingScreen({ handle }: Props) {
           <div className="mb-4 text-base font-black">방문 안내</div>
           {orgLocation ? (
             <div className="mb-4">
-              <div className="text-sm font-bold text-[#28b9dc]">위치</div>
+              <div className="text-sm font-bold text-[#20aeca]">위치</div>
               <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">{orgLocation}</div>
             </div>
           ) : null}
 
           {orgNotice ? (
             <div>
-              <div className="text-sm font-bold text-[#28b9dc]">예약 안내</div>
+              <div className="text-sm font-bold text-[#20aeca]">예약 안내</div>
               <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">{orgNotice}</div>
             </div>
           ) : null}
@@ -538,15 +538,15 @@ export default function BookingScreen({ handle }: Props) {
         .booking-time-tone button[style*="background:#2F2F2F"],
         .booking-time-tone button[style*="background: #2F2F2F"],
         .booking-time-tone button[style*="background: rgb(47, 47, 47)"] {
-          border-color: #67e8f9 !important;
-          background: #e6faff !important;
-          color: #075985 !important;
+          border-color: #35bddc !important;
+          background: #35bddc !important;
+          color: #ffffff !important;
         }
 
         .booking-date-tone button[style*="background:#2F2F2F"] div,
         .booking-date-tone button[style*="background: #2F2F2F"] div,
         .booking-date-tone button[style*="background: rgb(47, 47, 47)"] div {
-          color: #0e7490 !important;
+          color: rgba(255, 255, 255, 0.86) !important;
         }
       `}</style>
     </div>
