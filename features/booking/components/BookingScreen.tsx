@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import ServicePicker from "./ServicePicker";
 import DateChips from "./DateChips";
 import TimePicker from "./TimePicker";
 import BookingCta from "./BookingCta";
@@ -143,26 +144,24 @@ export default function BookingScreen({ handle }: Props) {
     computedKeyRef.current = null;
     reqIdRef.current += 1;
 
-    void (async () => {
-      try {
-        const org = await fetchOrganizationByHandle(handle);
+    void fetchOrganizationByHandle(handle).then((org) => {
+      if (!active) return;
+      setOrganizationId(org?.id ?? null);
+      setOrgLocation((org?.location_text ?? "").trim());
+      setOrgNotice((org?.notice_text ?? "").trim());
+    });
+
+    void fetchServicesByHandle(handle)
+      .then((rows) => {
         if (!active) return;
-
-        setOrganizationId(org?.id ?? null);
-        setOrgLocation((org?.location_text ?? "").trim());
-        setOrgNotice((org?.notice_text ?? "").trim());
-
-        const rows = await fetchServicesByHandle(handle);
-        if (!active) return;
-
         setServices(rows);
         if (rows.length > 0) {
           setServiceId((prev) => prev ?? rows[0].id);
         }
-      } finally {
+      })
+      .finally(() => {
         if (active) setServicesLoading(false);
-      }
-    })();
+      });
 
     void fetch("/api/fetchAvailability", {
         method: "POST",
@@ -355,53 +354,22 @@ export default function BookingScreen({ handle }: Props) {
               ))}
             </div>
           </div>
-        ) : services.length === 0 ? (
-          <div>
-            <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
-            <div className="mt-3 rounded-2xl border border-[#dceef2] bg-[#f8fcfd] px-4 py-5 text-sm font-medium text-gray-500">
-              예약 가능한 서비스가 없어요.
-            </div>
-          </div>
         ) : (
-          <div className="space-y-3">
-            <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
-            <div className={services.length >= 4 ? "flex gap-3 overflow-x-auto pb-2" : "grid grid-cols-3 gap-3"}>
-              {services.map((item) => {
-                const active = item.id === serviceId;
-
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      if (item.id === serviceId) return;
-                      reqIdRef.current += 1;
-                      userPickedTimeRef.current = false;
-                      computedKeyRef.current = null;
-                      setTime(null);
-                      setAvailableTimes([]);
-                      setNoTimesForCurrent(false);
-                      setIsTimesLoading(dateISO != null);
-                      setServiceId(item.id);
-                    }}
-                    className={[
-                      services.length >= 4 ? "min-w-[150px] shrink-0" : "w-full",
-                      "min-h-20 rounded-2xl border px-3.5 py-3.5 text-left transition",
-                      active
-                        ? "border-[#28b9dc] bg-gradient-to-br from-[#5bd8f2] to-[#24b8df] text-white shadow-[0_8px_18px_rgba(40,185,220,0.2)]"
-                        : "border-[#dceef2] bg-white text-gray-900 hover:border-[#a9dce7]",
-                    ].join(" ")}
-                  >
-                    <div className="text-base font-semibold leading-tight">{item.name}</div>
-                    <div className={`mt-2 text-[13px] ${active ? "text-cyan-50" : "text-gray-500"}`}>
-                      {item.duration_min ? `${item.duration_min}분` : ""}
-                      {item.price != null ? ` · ${item.price.toLocaleString()}원` : ""}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <ServicePicker
+            services={services}
+            value={serviceId}
+            onChange={(next) => {
+              if (next === serviceId) return;
+              reqIdRef.current += 1;
+              userPickedTimeRef.current = false;
+              computedKeyRef.current = null;
+              setTime(null);
+              setAvailableTimes([]);
+              setNoTimesForCurrent(false);
+              setIsTimesLoading(dateISO != null);
+              setServiceId(next);
+            }}
+          />
         )}
       </section>
 
@@ -547,6 +515,12 @@ export default function BookingScreen({ handle }: Props) {
       ) : null}
 
       <style jsx global>{`
+        .booking-services button.bg-black {
+          border-color: #28b9dc !important;
+          background: linear-gradient(135deg, #5bd8f2, #24b8df) !important;
+          color: #ffffff !important;
+          box-shadow: 0 8px 18px rgba(40, 185, 220, 0.2);
+        }
         .booking-date button[style*="background:#2F2F2F"],
         .booking-date button[style*="background: #2F2F2F"],
         .booking-date button[style*="background: rgb(47, 47, 47)"],
