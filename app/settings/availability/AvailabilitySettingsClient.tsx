@@ -276,7 +276,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
       setMsg("저장되었습니다.");
     } catch (e) {
       console.error(e);
-      setMsg("네트워크 오류. 잠시 후 다시 시도해줘.");
+      setMsg("네트워크 오류입니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setSaving(false);
     }

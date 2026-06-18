@@ -22,7 +22,7 @@ export default function OwnerAuthClient({ initialEmail = "" }: Props) {
     const v = email.trim();
 
     if (!v) {
-      setMsg("이메일을 입력해줘!");
+      setMsg("이메일을 입력해주세요.");
       return;
     }
 
@@ -43,7 +43,7 @@ export default function OwnerAuthClient({ initialEmail = "" }: Props) {
         return;
       }
 
-      setMsg("로그인 메일을 보냈어! 메일함을 확인해줘 🙂");
+      setMsg("로그인 메일을 보냈습니다. 메일함을 확인해주세요.");
     } catch (e: any) {
       setMsg(e?.message ?? "네트워크 오류");
     } finally {

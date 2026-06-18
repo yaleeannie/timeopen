@@ -11,7 +11,7 @@ export default function LoginPanel() {
   async function onLogin() {
     const v = email.trim();
     if (!v) {
-      setMsg("이메일을 입력해줘!");
+      setMsg("이메일을 입력해주세요.");
       return;
     }
 
@@ -31,7 +31,7 @@ export default function LoginPanel() {
       setMsg(error.message);
       return;
     }
-    setMsg("메일함에서 로그인 링크를 눌러줘!");
+    setMsg("메일함에서 로그인 링크를 눌러주세요.");
   }
 
   async function onLogout() {

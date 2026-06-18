@@ -12,7 +12,7 @@ export default function LoginPage() {
   async function onLogin() {
     const e = email.trim().toLowerCase();
     if (!e || !pw) {
-      setMsg("이메일/비밀번호를 입력해줘.");
+      setMsg("이메일/비밀번호를 입력해주세요.");
       return;
     }
 
@@ -32,9 +32,9 @@ export default function LoginPage() {
         const m = (error.message || "").toLowerCase();
 
         if (m.includes("invalid login credentials")) {
-          setMsg("이메일 또는 비밀번호가 맞지 않아요. 비밀번호를 잊었으면 재설정을 눌러줘.");
+          setMsg("이메일 또는 비밀번호가 맞지 않아요. 비밀번호를 잊으셨다면 재설정을 눌러주세요.");
         } else if (m.includes("email not confirmed")) {
-          setMsg("이메일 인증이 아직 안 됐어요. 메일함에서 인증 링크를 먼저 눌러줘.");
+          setMsg("이메일 인증이 아직 완료되지 않았어요. 메일함에서 인증 링크를 먼저 눌러주세요.");
         } else {
           setMsg(error.message);
         }
@@ -43,7 +43,7 @@ export default function LoginPage() {
 
       window.location.href = "/owner";
     } catch {
-      setMsg("네트워크 오류. 잠시 후 다시 시도해줘.");
+      setMsg("네트워크 오류입니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }

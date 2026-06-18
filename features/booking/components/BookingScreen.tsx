@@ -590,7 +590,7 @@ export default function BookingScreen({ handle }: Props) {
               onClick={() => setStep("customer")}
               className="min-h-12 min-w-0 flex-1 rounded-2xl bg-[#35bddc] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#20aeca] disabled:cursor-not-allowed disabled:bg-[#b8dfe8]"
             >
-              예약자 정보 입력
+              다음
             </button>
           ) : (
             <div className="min-w-0 flex-1">

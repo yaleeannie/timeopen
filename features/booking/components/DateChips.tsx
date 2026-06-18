@@ -60,7 +60,7 @@ export default function DateChips({ value, onChange, days = 14 }: Props) {
       >
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold" style={{ color: colors.text.primary }}>
-            {selectedISO ?? "날짜를 선택해줘"}
+            {selectedISO ?? "날짜를 선택해주세요"}
           </div>
           <div className="text-xs" style={{ color: colors.text.muted }}>
             최근 {days}일

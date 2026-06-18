@@ -39,7 +39,7 @@ export default function TimePicker({
           background: colors.background.subtle,
         }}
       >
-        서비스와 날짜를 먼저 선택해줘
+        서비스와 날짜를 먼저 선택해주세요
       </div>
     );
   }
@@ -63,7 +63,7 @@ export default function TimePicker({
             : "연속 시간이 필요해요."}
         </div>
         <div className="mt-3 text-sm" style={{ color: colors.text.muted }}>
-          다른 날짜를 선택해줘.
+          다른 날짜를 선택해주세요.
         </div>
       </div>
     );
@@ -71,7 +71,7 @@ export default function TimePicker({
 
   // 3) 가능한 시간 버튼들
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="grid w-full max-w-md grid-cols-3 gap-3 sm:grid-cols-4">
       {times.map((t) => {
         const active = value === t;
         const isRecommended = recommendedTime != null && t === recommendedTime;
@@ -81,7 +81,7 @@ export default function TimePicker({
             key={t}
             type="button"
             onClick={() => onChange(t)}
-            className="rounded-xl border px-4 py-2 text-sm transition"
+            className="min-h-10 w-full rounded-xl border px-3 py-2 text-sm transition"
             style={{
               borderColor: active ? colors.border.active : colors.border.default,
               background: active ? colors.brand.primary : colors.background.base,
