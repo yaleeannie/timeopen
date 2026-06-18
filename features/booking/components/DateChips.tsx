@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { colors } from "@/lib/design/colors";
+import { usePublicBookingI18n } from "./PublicBookingI18n";
 
 type Props = {
   value: string | null; // YYYY-MM-DD
@@ -26,21 +27,20 @@ function addDays(d: Date, n: number) {
   return x;
 }
 
-const DOW = ["일", "월", "화", "수", "목", "금", "토"] as const;
-
 export default function DateChips({ value, onChange, days = 14 }: Props) {
+  const { locale, t } = usePublicBookingI18n();
   const today = useMemo(() => startOfDay(new Date()), []);
   const items = useMemo(() => {
     return Array.from({ length: days }, (_, i) => {
       const d = addDays(today, i);
       return {
         iso: toISO(d),
-        dow: DOW[d.getDay()],
+        dow: new Intl.DateTimeFormat(locale, { weekday: "short" }).format(d),
         dd: d.getDate(),
-        mm: d.getMonth() + 1,
+        month: new Intl.DateTimeFormat(locale, { month: "short" }).format(d),
       };
     });
-  }, [today, days]);
+  }, [today, days, locale]);
 
   // ✅ value가 null이면 "선택 없음"
   const selectedISO = value;
@@ -48,7 +48,7 @@ export default function DateChips({ value, onChange, days = 14 }: Props) {
   return (
     <div className="space-y-2">
       <div className="text-sm font-medium" style={{ color: colors.text.primary }}>
-        날짜 선택
+        {t("selectDate")}
       </div>
 
       <div
@@ -60,10 +60,10 @@ export default function DateChips({ value, onChange, days = 14 }: Props) {
       >
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold" style={{ color: colors.text.primary }}>
-            {selectedISO ?? "날짜를 선택해주세요"}
+            {selectedISO ?? t("selectDatePrompt")}
           </div>
           <div className="text-xs" style={{ color: colors.text.muted }}>
-            최근 {days}일
+            {t("nextDays", { days })}
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export default function DateChips({ value, onChange, days = 14 }: Props) {
                     className="text-[11px]"
                     style={{ color: active ? "rgba(255,255,255,0.75)" : colors.text.muted }}
                   >
-                    {it.mm}월
+                    {it.month}
                   </div>
                 </button>
               );

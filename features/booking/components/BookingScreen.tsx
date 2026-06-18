@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import DateChips from "./DateChips";
 import TimePicker from "./TimePicker";
 import BookingCta from "./BookingCta";
+import { usePublicBookingI18n } from "./PublicBookingI18n";
 
 import { fetchServicesByHandle, type ServiceRow } from "@/features/services/fetchServicesByHandle";
 import { buildDailySchedule } from "@/features/availability/buildDailySchedule";
@@ -71,6 +72,7 @@ function formatISODate(d: Date) {
 }
 
 export default function BookingScreen({ handle }: Props) {
+  const { locale, t } = usePublicBookingI18n();
   const [step, setStep] = useState<BookingStep>("service");
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [services, setServices] = useState<ServiceRow[]>([]);
@@ -112,6 +114,15 @@ export default function BookingScreen({ handle }: Props) {
   const service = useMemo(
   () => services.find((s) => s.id === serviceId) ?? null,
   [services, serviceId]
+  );
+  const priceFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: "KRW",
+        maximumFractionDigits: 0,
+      }),
+    [locale]
   );
 
   const currentKey = useMemo(() => {
@@ -241,7 +252,7 @@ export default function BookingScreen({ handle }: Props) {
       console.error("[BookingScreen] available times load failed", error);
       setAvailableTimes([]);
       setNoTimesForCurrent(false);
-      setTimesError("예약 가능 시간을 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
+      setTimesError(t("loadTimesFailed"));
     } finally {
       if (reqIdRef.current === myReq) {
         setIsTimesLoading(false);
@@ -266,23 +277,23 @@ export default function BookingScreen({ handle }: Props) {
 
     // ✅ Day 1 추가: 이름/전화 검증
     if (!customerName.trim()) {
-      setMsg("이름을 입력해주세요.");
+      setMsg(t("enterName"));
       return;
     }
 
     if (!customerPhone.trim()) {
-      setMsg("전화번호를 입력해주세요.");
+      setMsg(t("enterPhone"));
       return;
     }
 
     const normalizedPhone = normalizePhoneToE164(phoneCountry, customerPhone);
     if (!normalizedPhone.ok) {
-      setMsg("선택한 국가에 맞는 전화번호를 입력해주세요.");
+      setMsg(t("invalidPhone"));
       return;
     }
 
     if (!availableTimes.includes(time)) {
-      setMsg("선택한 시간은 현재 예약할 수 없어요. 다시 선택해 주세요.");
+      setMsg(t("unavailableTime"));
       return;
     }
 
@@ -306,12 +317,12 @@ export default function BookingScreen({ handle }: Props) {
       if (typeof result === "string") rid = result;
       else rid = (result as any)?.id ?? (result as any)?.[0]?.id ?? null;
     } catch (e: any) {
-      setMsg(e?.message ?? "예약 처리 중 오류가 발생했습니다.");
+      setMsg(e?.message ?? t("bookingFailed"));
       return;
     }
 
     if (!rid) {
-      setMsg("예약은 저장됐지만 reservation id를 찾을 수 없습니다.");
+      setMsg(t("reservationIdMissing"));
       return;
     }
 
@@ -328,6 +339,7 @@ export default function BookingScreen({ handle }: Props) {
   const canContinueFromService = serviceId != null;
   const canContinueFromDatetime =
     dateISO != null && time != null && isTimesReadyForCurrent;
+  const regionNames = new Intl.DisplayNames([locale], { type: "region" });
 
   return (
     <div className="space-y-3.5 pb-32">
@@ -358,10 +370,10 @@ export default function BookingScreen({ handle }: Props) {
                   ].join(" ")}
                 >
                   {item === "service"
-                    ? "서비스"
+                    ? t("service")
                     : item === "datetime"
-                      ? "날짜·시간"
-                      : "예약자 정보"}
+                      ? t("dateTime")
+                      : t("customerInfo")}
                 </div>
                 {index < 2 ? (
                   <div className="h-px min-w-2 flex-1 bg-[#dceef2]" />
@@ -374,7 +386,7 @@ export default function BookingScreen({ handle }: Props) {
 
       {step === "service" ? (
       <section className="relative block h-auto min-h-0 w-full overflow-visible rounded-[24px] border border-[#e5f3f6] bg-white p-4 opacity-100 shadow-sm visible">
-        <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
+        <div className="text-sm font-semibold text-gray-900">{t("selectService")}</div>
 
         {services.length > 0 ? (
           <div className="mt-3 flex max-h-[42vh] flex-col gap-3 overflow-x-hidden overflow-y-auto pr-1">
@@ -404,8 +416,8 @@ export default function BookingScreen({ handle }: Props) {
                 >
                   <div className="text-base font-semibold leading-tight">{item.name}</div>
                   <div className={`mt-2 text-[13px] leading-5 ${active ? "text-white/85" : "text-gray-500"}`}>
-                    {item.duration_min ? `${item.duration_min}분` : ""}
-                    {item.price != null ? ` · ${item.price.toLocaleString()}원` : ""}
+                    {item.duration_min ? t("minutes", { count: item.duration_min }) : ""}
+                    {item.price != null ? ` · ${priceFormatter.format(item.price)}` : ""}
                   </div>
                 </button>
               );
@@ -435,7 +447,7 @@ export default function BookingScreen({ handle }: Props) {
 
         <div className="border-t border-[#edf5f7] pt-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-bold text-gray-900">시간 선택</div>
+            <div className="text-sm font-bold text-gray-900">{t("selectTime")}</div>
             <div
               className="text-right text-[11px] font-bold"
               style={{
@@ -446,7 +458,7 @@ export default function BookingScreen({ handle }: Props) {
                 minHeight: hintSlotHeight,
               }}
             >
-              가장 빠른 시간
+              {t("earliestTime")}
             </div>
           </div>
 
@@ -460,7 +472,7 @@ export default function BookingScreen({ handle }: Props) {
               />
             ) : isTimesLoading || !organizationId || !weeklySchedule ? (
               <div className="rounded-2xl border border-[#dceef2] bg-[#f8fcfd] px-4 py-6 text-sm font-medium text-[#5594a3]">
-                가능한 시간을 불러오는 중...
+                {t("loadingTimes")}
               </div>
             ) : timesError ? (
               <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-6 text-sm font-bold text-red-700">
@@ -468,9 +480,9 @@ export default function BookingScreen({ handle }: Props) {
               </div>
             ) : noTimesForCurrent && isTimesReadyForCurrent ? (
               <div className="rounded-2xl border border-[#dceef2] bg-white px-4 py-6">
-                <div className="text-sm font-semibold text-gray-900">가능한 시간이 없어요</div>
-                <div className="mt-1 text-sm text-gray-600">연속 시간이 필요해요.</div>
-                <div className="mt-3 text-sm text-gray-400">다른 날짜를 선택해주세요.</div>
+                <div className="text-sm font-semibold text-gray-900">{t("noTimes")}</div>
+                <div className="mt-1 text-sm text-gray-600">{t("continuousTimeRequired")}</div>
+                <div className="mt-3 text-sm text-gray-400">{t("chooseAnotherDate")}</div>
               </div>
             ) : (
               <TimePicker
@@ -495,39 +507,39 @@ export default function BookingScreen({ handle }: Props) {
       {step === "customer" ? (
       <>
       <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
-        <div className="mb-4 text-base font-black">예약자 정보</div>
+        <div className="mb-4 text-base font-black">{t("customerInfo")}</div>
         {/* ✅ Day 1 추가: 고객 정보 입력 */}
         <div>
-          <div className="mb-1.5 text-sm font-bold text-gray-700">이름</div>
+          <div className="mb-1.5 text-sm font-bold text-gray-700">{t("name")}</div>
           <input
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
-            placeholder="이름"
+            placeholder={t("name")}
             className="mb-4 min-h-11 w-full min-w-0 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
           />
         </div>
 
         <div>
-          <div className="mb-1.5 text-sm font-bold text-gray-700">전화번호</div>
+          <div className="mb-1.5 text-sm font-bold text-gray-700">{t("phone")}</div>
           <div className="flex items-stretch gap-2">
             <select
               value={phoneCountry}
               onChange={(e) => setPhoneCountry(e.target.value as SupportedPhoneCountry)}
-              aria-label="전화번호 국가"
+              aria-label={t("country")}
               className="min-h-11 w-[132px] min-w-0 shrink-0 rounded-xl border border-[#dceef2] bg-white px-2.5 py-2.5 text-sm outline-none focus:border-[#55d4f0]"
             >
-              <option value="KR">대한민국 +82</option>
-              <option value="JP">일본 +81</option>
-              <option value="US">미국 +1</option>
-              <option value="CA">캐나다 +1</option>
-              <option value="TH">태국 +66</option>
-              <option value="CN">중국 +86</option>
+              <option value="KR">{regionNames.of("KR") ?? "KR"} +82</option>
+              <option value="JP">{regionNames.of("JP") ?? "JP"} +81</option>
+              <option value="US">{regionNames.of("US") ?? "US"} +1</option>
+              <option value="CA">{regionNames.of("CA") ?? "CA"} +1</option>
+              <option value="TH">{regionNames.of("TH") ?? "TH"} +66</option>
+              <option value="CN">{regionNames.of("CN") ?? "CN"} +86</option>
             </select>
 
             <input
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
-              placeholder="전화번호"
+              placeholder={t("phone")}
               inputMode="tel"
               className="min-h-11 min-w-0 flex-1 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
             />
@@ -543,17 +555,17 @@ export default function BookingScreen({ handle }: Props) {
 
       {(orgLocation || orgNotice) ? (
         <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
-          <div className="mb-4 text-base font-black">방문 안내</div>
+          <div className="mb-4 text-base font-black">{t("visitorGuide")}</div>
           {orgLocation ? (
             <div className="mb-4">
-              <div className="text-sm font-bold text-[#20aeca]">위치</div>
+              <div className="text-sm font-bold text-[#20aeca]">{t("location")}</div>
               <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">{orgLocation}</div>
             </div>
           ) : null}
 
           {orgNotice ? (
             <div>
-              <div className="text-sm font-bold text-[#20aeca]">예약 안내</div>
+              <div className="text-sm font-bold text-[#20aeca]">{t("bookingNotice")}</div>
               <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">{orgNotice}</div>
             </div>
           ) : null}
@@ -570,7 +582,7 @@ export default function BookingScreen({ handle }: Props) {
               onClick={() => setStep(step === "customer" ? "datetime" : "service")}
               className="min-h-12 shrink-0 rounded-2xl border border-[#dceef2] bg-white px-4 text-sm font-black text-[#397582] transition hover:bg-[#f3fbfc] focus:outline-none"
             >
-              이전
+              {t("previous")}
             </button>
           ) : null}
 
@@ -581,7 +593,7 @@ export default function BookingScreen({ handle }: Props) {
               onClick={() => setStep("datetime")}
               className="min-h-12 w-full rounded-2xl bg-[#35bddc] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#20aeca] disabled:cursor-not-allowed disabled:bg-[#b8dfe8]"
             >
-              다음
+              {t("next")}
             </button>
           ) : step === "datetime" ? (
             <button
@@ -590,7 +602,7 @@ export default function BookingScreen({ handle }: Props) {
               onClick={() => setStep("customer")}
               className="min-h-12 min-w-0 flex-1 rounded-2xl bg-[#35bddc] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#20aeca] disabled:cursor-not-allowed disabled:bg-[#b8dfe8]"
             >
-              다음
+              {t("next")}
             </button>
           ) : (
             <div className="min-w-0 flex-1">

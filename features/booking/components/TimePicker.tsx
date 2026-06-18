@@ -1,6 +1,7 @@
 "use client";
 
 import { colors } from "@/lib/design/colors";
+import { usePublicBookingI18n } from "./PublicBookingI18n";
 
 type Props = {
   times: string[];
@@ -11,13 +12,16 @@ type Props = {
   recommendedTime?: string | null;
 };
 
-function fmtRequired(requiredMin?: number) {
+function fmtRequired(
+  requiredMin: number | undefined,
+  t: ReturnType<typeof usePublicBookingI18n>["t"]
+) {
   if (!requiredMin || requiredMin <= 0) return "";
   const h = Math.floor(requiredMin / 60);
   const m = requiredMin % 60;
-  if (h <= 0) return `${m}분`;
-  if (m === 0) return `${h}시간`;
-  return `${h}시간 ${m}분`;
+  if (h <= 0) return t("minutes", { count: m });
+  if (m === 0) return t("hours", { count: h });
+  return t("hoursMinutes", { hours: h, minutes: m });
 }
 
 export default function TimePicker({
@@ -28,6 +32,7 @@ export default function TimePicker({
   onChange,
   recommendedTime, // ✅ 이게 빠져 있었음
 }: Props) {
+  const { t } = usePublicBookingI18n();
   // 1) 서비스/날짜를 안 골랐으면 안내
   if (disabled) {
     return (
@@ -39,7 +44,7 @@ export default function TimePicker({
           background: colors.background.subtle,
         }}
       >
-        서비스와 날짜를 먼저 선택해주세요
+        {t("selectServiceAndDate")}
       </div>
     );
   }
@@ -55,15 +60,15 @@ export default function TimePicker({
         }}
       >
         <div className="text-sm font-semibold" style={{ color: colors.text.primary }}>
-          가능한 시간이 없어요
+          {t("noTimes")}
         </div>
         <div className="mt-1 text-sm" style={{ color: colors.text.secondary }}>
           {requiredMin
-            ? `연속 ${fmtRequired(requiredMin)} 필요해요 (서비스 시간 + 버퍼).`
-            : "연속 시간이 필요해요."}
+            ? t("continuousMinutesRequired", { duration: fmtRequired(requiredMin, t) })
+            : t("continuousTimeRequired")}
         </div>
         <div className="mt-3 text-sm" style={{ color: colors.text.muted }}>
-          다른 날짜를 선택해주세요.
+          {t("chooseAnotherDate")}
         </div>
       </div>
     );
@@ -72,15 +77,15 @@ export default function TimePicker({
   // 3) 가능한 시간 버튼들
   return (
     <div className="grid w-full max-w-md grid-cols-3 gap-3 sm:grid-cols-4">
-      {times.map((t) => {
-        const active = value === t;
-        const isRecommended = recommendedTime != null && t === recommendedTime;
+      {times.map((time) => {
+        const active = value === time;
+        const isRecommended = recommendedTime != null && time === recommendedTime;
 
         return (
           <button
-            key={t}
+            key={time}
             type="button"
-            onClick={() => onChange(t)}
+            onClick={() => onChange(time)}
             className="min-h-10 w-full rounded-xl border px-3 py-2 text-sm transition"
             style={{
               borderColor: active ? colors.border.active : colors.border.default,
@@ -88,7 +93,7 @@ export default function TimePicker({
               color: active ? colors.text.inverse : colors.text.primary,
             }}
           >
-            <span>{t}</span>
+            <span>{time}</span>
 
             {/* ✅ 추천 배지 */}
             {isRecommended && (
@@ -100,7 +105,7 @@ export default function TimePicker({
                   color: colors.text.secondary,
                 }}
               >
-                추천
+                {t("recommended")}
               </span>
             )}
           </button>
