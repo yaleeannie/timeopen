@@ -1,9 +1,11 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { ServiceNameTranslations } from "./serviceTranslations";
 
 export type ServiceRow = {
   id: string;
   organization_id: string;
   name: string;
+  name_translations: ServiceNameTranslations;
   duration_min: number;
   price: number | null;
   active: boolean;

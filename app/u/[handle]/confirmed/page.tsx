@@ -52,6 +52,7 @@ export default async function ConfirmedPage({ params, searchParams }: Props) {
   let reservation: any = null;
   let reservationErrMsg: string | null = null;
   let serviceName = "-";
+  let serviceNameTranslations: Record<string, string> = {};
 
   if (!rid) {
     reservationErrMsg = null;
@@ -92,12 +93,16 @@ export default async function ConfirmedPage({ params, searchParams }: Props) {
     if (reservation?.service_id) {
       const { data: serviceRow } = await supabase
         .from("services")
-        .select("name")
+        .select("name, name_translations")
         .eq("id", reservation.service_id)
         .maybeSingle();
 
       if (serviceRow?.name) {
         serviceName = String(serviceRow.name);
+        serviceNameTranslations =
+          serviceRow.name_translations && typeof serviceRow.name_translations === "object"
+            ? (serviceRow.name_translations as Record<string, string>)
+            : {};
       } else {
         serviceName = String(reservation.service_id);
       }
@@ -129,6 +134,7 @@ export default async function ConfirmedPage({ params, searchParams }: Props) {
       dateText={dateText}
       timeText={timeText}
       serviceName={serviceName}
+      serviceNameTranslations={serviceNameTranslations}
       customerName={customerName}
       customerPhone={customerPhone}
       locationText={locationText}

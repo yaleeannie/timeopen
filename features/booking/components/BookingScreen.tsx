@@ -20,6 +20,7 @@ import {
   type SupportedPhoneCountry,
 } from "@/features/booking/phone";
 import { fetchOrganizationByHandle } from "@/features/organizations/fetchOrganizationByHandle";
+import { getLocalizedServiceName } from "@/features/services/serviceTranslations";
 
 type Props = { handle: string };
 type BookingStep = "service" | "datetime" | "customer";
@@ -414,7 +415,9 @@ export default function BookingScreen({ handle }: Props) {
                       : "border-[#dceef2] bg-white text-gray-900 hover:border-[#8ee8f5] hover:bg-[#ecfeff]",
                   ].join(" ")}
                 >
-                  <div className="text-base font-semibold leading-tight">{item.name}</div>
+                  <div className="text-base font-semibold leading-tight">
+                    {getLocalizedServiceName(item.name, item.name_translations, locale)}
+                  </div>
                   <div className={`mt-2 text-[13px] leading-5 ${active ? "text-white/85" : "text-gray-500"}`}>
                     {item.duration_min ? t("minutes", { count: item.duration_min }) : ""}
                     {item.price != null ? ` · ${priceFormatter.format(item.price)}` : ""}

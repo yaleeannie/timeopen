@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  SERVICE_TRANSLATION_LABELS,
+  SERVICE_TRANSLATION_LOCALES,
+  normalizeServiceNameTranslations,
+  type ServiceNameTranslations,
+} from "@/features/services/serviceTranslations";
 
 type Props = {
   organizationId: string;
@@ -10,10 +16,55 @@ type Props = {
 type ServiceRow = {
   id: string;
   name: string;
+  name_translations: ServiceNameTranslations;
   duration_min: number;
   price: number | null;
   active: boolean;
 };
+
+function TranslationFields({
+  value,
+  onChange,
+  tone = "light",
+}: {
+  value: ServiceNameTranslations;
+  onChange: (next: ServiceNameTranslations) => void;
+  tone?: "light" | "cyan";
+}) {
+  const labelClass = tone === "cyan" ? "text-white/90" : "text-gray-700";
+  const inputClass =
+    tone === "cyan"
+      ? "border-white/30 bg-white text-gray-900"
+      : "border-gray-200 bg-white text-gray-900 focus:border-[#55d4f0]";
+
+  return (
+    <details className={`rounded-2xl border p-3 ${tone === "cyan" ? "border-white/25 bg-white/10" : "border-[#dceef2] bg-[#f8fcfd]"}`}>
+      <summary className={`cursor-pointer text-sm font-black ${labelClass}`}>
+        외국어 서비스명
+      </summary>
+      <div className="mt-4 grid gap-3">
+        {SERVICE_TRANSLATION_LOCALES.map((locale) => (
+          <label key={locale} className="block">
+            <span className={`mb-1.5 block text-sm font-bold ${labelClass}`}>
+              {SERVICE_TRANSLATION_LABELS[locale]}
+            </span>
+            <input
+              value={value[locale] ?? ""}
+              onChange={(event) =>
+                onChange({
+                  ...value,
+                  [locale]: event.target.value,
+                })
+              }
+              placeholder={SERVICE_TRANSLATION_LABELS[locale]}
+              className={`min-h-11 w-full min-w-0 rounded-xl border px-3 py-2.5 text-base outline-none ${inputClass}`}
+            />
+          </label>
+        ))}
+      </div>
+    </details>
+  );
+}
 
 export default function ServicesEditor({ organizationId }: Props) {
   const supabase = createSupabaseBrowserClient();
@@ -22,17 +73,19 @@ export default function ServicesEditor({ organizationId }: Props) {
   const [name, setName] = useState("");
   const [durationMin, setDurationMin] = useState("");
   const [price, setPrice] = useState("");
+  const [nameTranslations, setNameTranslations] = useState<ServiceNameTranslations>({});
   const [msg, setMsg] = useState("");
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDurationMin, setEditDurationMin] = useState("");
   const [editPrice, setEditPrice] = useState("");
+  const [editNameTranslations, setEditNameTranslations] = useState<ServiceNameTranslations>({});
 
   async function load() {
     const { data, error } = await supabase
       .from("services")
-      .select("id, name, duration_min, price, active")
+      .select("id, name, name_translations, duration_min, price, active")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true });
 
@@ -65,6 +118,7 @@ export default function ServicesEditor({ organizationId }: Props) {
     const { error } = await supabase.from("services").insert({
       organization_id: organizationId,
       name: name.trim(),
+      name_translations: normalizeServiceNameTranslations(nameTranslations),
       duration_min: duration,
       price: price.trim() ? Number(price) : null,
       active: true,
@@ -78,6 +132,7 @@ export default function ServicesEditor({ organizationId }: Props) {
     setName("");
     setDurationMin("");
     setPrice("");
+    setNameTranslations({});
     setMsg("저장되었습니다.");
     await load();
   }
@@ -85,6 +140,7 @@ export default function ServicesEditor({ organizationId }: Props) {
   function startEdit(row: ServiceRow) {
     setEditingId(row.id);
     setEditName(row.name);
+    setEditNameTranslations(normalizeServiceNameTranslations(row.name_translations));
     setEditDurationMin(String(row.duration_min));
     setEditPrice(row.price != null ? String(row.price) : "");
     setMsg("");
@@ -95,6 +151,7 @@ export default function ServicesEditor({ organizationId }: Props) {
     setEditName("");
     setEditDurationMin("");
     setEditPrice("");
+    setEditNameTranslations({});
   }
 
   async function saveEdit(id: string) {
@@ -115,6 +172,7 @@ export default function ServicesEditor({ organizationId }: Props) {
       .from("services")
       .update({
         name: editName.trim(),
+        name_translations: normalizeServiceNameTranslations(editNameTranslations),
         duration_min: duration,
         price: editPrice.trim() ? Number(editPrice) : null,
       })
@@ -207,6 +265,12 @@ export default function ServicesEditor({ organizationId }: Props) {
           />
         </div>
 
+        <TranslationFields
+          value={nameTranslations}
+          onChange={setNameTranslations}
+          tone="cyan"
+        />
+
         <button
           type="button"
           onClick={addService}
@@ -265,6 +329,11 @@ export default function ServicesEditor({ organizationId }: Props) {
                       className="min-h-11 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
                     />
                   </div>
+
+                  <TranslationFields
+                    value={editNameTranslations}
+                    onChange={setEditNameTranslations}
+                  />
 
                   <div className="grid grid-cols-2 gap-2">
                     <button
