@@ -330,7 +330,7 @@ export default function BookingScreen({ handle }: Props) {
         <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
 
         {services.length > 0 ? (
-          <div className="relative mt-3 grid h-auto min-h-0 w-full grid-cols-1 gap-3 overflow-visible opacity-100 visible sm:grid-cols-3">
+          <div className="-mx-1 mt-3 flex gap-3 overflow-x-auto px-1 pb-2">
             {services.map((item) => {
               const active = item.id === serviceId;
 
@@ -349,14 +349,14 @@ export default function BookingScreen({ handle }: Props) {
                     setServiceId(item.id);
                   }}
                   className={[
-                    "relative block min-h-[88px] w-full min-w-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 transition visible",
+                    "relative block min-h-[104px] w-[150px] shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none focus:ring-2 focus:ring-[#67e8f9] focus:ring-offset-2",
                     active
-                      ? "border-black bg-black text-white"
-                      : "border-gray-200 bg-white text-gray-900 hover:border-gray-300",
+                      ? "border-[#67e8f9] bg-[#e6faff] text-[#075985]"
+                      : "border-[#dceef2] bg-white text-gray-900 hover:border-[#8ee8f5] hover:bg-[#ecfeff]",
                   ].join(" ")}
                 >
                   <div className="text-base font-semibold leading-tight">{item.name}</div>
-                  <div className={`mt-2 text-[13px] ${active ? "text-gray-200" : "text-gray-500"}`}>
+                  <div className={`mt-2 text-[13px] leading-5 ${active ? "text-[#0e7490]" : "text-gray-500"}`}>
                     {item.duration_min ? `${item.duration_min}분` : ""}
                     {item.price != null ? ` · ${item.price.toLocaleString()}원` : ""}
                   </div>
@@ -368,7 +368,7 @@ export default function BookingScreen({ handle }: Props) {
       </section>
 
       <section className="space-y-4 rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
-        <div className="[&>div>div:nth-child(2)]:border-0 [&>div>div:nth-child(2)]:p-0">
+        <div className="booking-date-tone [&>div>div:nth-child(2)]:border-0 [&>div>div:nth-child(2)]:p-0">
           <DateChips
             value={dateISO}
             onChange={(next) => {
@@ -401,7 +401,7 @@ export default function BookingScreen({ handle }: Props) {
             </div>
           </div>
 
-          <div className="mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:border-[#dceef2] [&_button]:px-4 [&_button]:font-bold">
+          <div className="booking-time-tone mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:border-[#dceef2] [&_button]:px-4 [&_button]:font-bold">
             {!serviceId || !dateISO ? (
               <TimePicker
                 times={[]}
@@ -509,6 +509,46 @@ export default function BookingScreen({ handle }: Props) {
           ) : null}
         </section>
       ) : null}
+
+      <style jsx global>{`
+        .booking-date-tone button,
+        .booking-time-tone button {
+          transition:
+            border-color 160ms ease,
+            background-color 160ms ease,
+            color 160ms ease,
+            box-shadow 160ms ease;
+        }
+
+        .booking-date-tone button:hover,
+        .booking-time-tone button:hover {
+          border-color: #8ee8f5 !important;
+          background: #ecfeff !important;
+        }
+
+        .booking-date-tone button:focus-visible,
+        .booking-time-tone button:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.45);
+        }
+
+        .booking-date-tone button[style*="background:#2F2F2F"],
+        .booking-date-tone button[style*="background: #2F2F2F"],
+        .booking-date-tone button[style*="background: rgb(47, 47, 47)"],
+        .booking-time-tone button[style*="background:#2F2F2F"],
+        .booking-time-tone button[style*="background: #2F2F2F"],
+        .booking-time-tone button[style*="background: rgb(47, 47, 47)"] {
+          border-color: #67e8f9 !important;
+          background: #e6faff !important;
+          color: #075985 !important;
+        }
+
+        .booking-date-tone button[style*="background:#2F2F2F"] div,
+        .booking-date-tone button[style*="background: #2F2F2F"] div,
+        .booking-date-tone button[style*="background: rgb(47, 47, 47)"] div {
+          color: #0e7490 !important;
+        }
+      `}</style>
     </div>
   );
 }
