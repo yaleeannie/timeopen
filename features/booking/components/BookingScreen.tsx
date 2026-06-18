@@ -299,19 +299,21 @@ export default function BookingScreen({ handle }: Props) {
   const hintSlotHeight = 18;
 
   return (
-    <div className="space-y-8">
-      <ServicePicker
-        services={services}
-        value={serviceId}
-        onChange={(next) => {
-          userPickedTimeRef.current = false;
-          setTime(null);
-          setServiceId(next);
-          void recomputeTimes(dateISO, next);
-        }}
-      />
+    <div className="space-y-4">
+      <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+        <ServicePicker
+          services={services}
+          value={serviceId}
+          onChange={(next) => {
+            userPickedTimeRef.current = false;
+            setTime(null);
+            setServiceId(next);
+            void recomputeTimes(dateISO, next);
+          }}
+        />
+      </section>
 
-      <div className="space-y-4">
+      <section className="space-y-4 rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
         <DateChips
           value={dateISO}
           onChange={(next) => {
@@ -325,9 +327,9 @@ export default function BookingScreen({ handle }: Props) {
         <div className="space-y-3">
           <div style={{ height: hintSlotHeight, display: "flex", alignItems: "center" }}>
             <div
-              className="text-xs"
+              className="text-xs font-bold"
               style={{
-                color: "#666",
+                color: "#28b9dc",
                 opacity: shouldShowEarliestHint ? 1 : 0,
                 transition: "opacity 160ms ease",
                 pointerEvents: "none",
@@ -351,46 +353,29 @@ export default function BookingScreen({ handle }: Props) {
             }}
           />
         </div>
+      </section>
 
+      <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+        <div className="mb-4 text-base font-black">예약자 정보</div>
         {/* ✅ Day 1 추가: 고객 정보 입력 */}
-        <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>이름</div>
+        <div>
+          <div className="mb-1.5 text-sm font-bold text-gray-700">이름</div>
           <input
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder="이름"
-            style={{
-              width: "100%",
-              padding: "12px 12px",
-              borderRadius: 12,
-              border: "1px solid #d0d0d0",
-              background: "#fff",
-              color: "#111",
-              outline: "none",
-              fontSize: 14,
-              marginBottom: 12,
-            }}
+            className="mb-4 min-h-11 w-full min-w-0 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
           />
         </div>
 
-        <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>전화번호</div>
-          <div style={{ display: "flex", gap: 8, alignItems: "stretch", marginBottom: 12 }}>
+        <div>
+          <div className="mb-1.5 text-sm font-bold text-gray-700">전화번호</div>
+          <div className="flex items-stretch gap-2">
             <select
               value={phoneCountry}
               onChange={(e) => setPhoneCountry(e.target.value as SupportedPhoneCountry)}
               aria-label="전화번호 국가"
-              style={{
-                flex: "0 0 132px",
-                minWidth: 0,
-                padding: "12px 10px",
-                borderRadius: 12,
-                border: "1px solid #d0d0d0",
-                background: "#fff",
-                color: "#111",
-                outline: "none",
-                fontSize: 14,
-              }}
+              className="min-h-11 w-[132px] min-w-0 shrink-0 rounded-xl border border-[#dceef2] bg-white px-2.5 py-2.5 text-sm outline-none focus:border-[#55d4f0]"
             >
               <option value="KR">대한민국 +82</option>
               <option value="JP">일본 +81</option>
@@ -405,52 +390,45 @@ export default function BookingScreen({ handle }: Props) {
               onChange={(e) => setCustomerPhone(e.target.value)}
               placeholder="전화번호"
               inputMode="tel"
-              style={{
-                flex: 1,
-                minWidth: 0,
-                padding: "12px 12px",
-                borderRadius: 12,
-                border: "1px solid #d0d0d0",
-                background: "#fff",
-                color: "#111",
-                outline: "none",
-                fontSize: 14,
-              }}
+              className="min-h-11 min-w-0 flex-1 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
             />
           </div>
         </div>
 
         {noTimesForCurrent && (
-          <div className="text-sm" style={{ color: "#666" }}>
+          <div className="mt-4 rounded-xl bg-[#f4fafb] px-4 py-3 text-sm font-medium text-gray-500">
             선택한 날짜에는 가능한 시간이 없어요.
           </div>
         )}
 
         {msg ? (
-          <div className="text-sm" style={{ color: "#b00020", fontWeight: 700 }}>
+          <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold leading-5 text-red-700 [overflow-wrap:anywhere]">
             {msg}
           </div>
         ) : null}
+      </section>
+
+      <div className="[&>div]:rounded-[24px] [&>div]:border-[#e5f3f6] [&>div]:bg-white [&>div]:p-4 [&>div]:shadow-sm [&_button]:min-h-11 [&_button]:bg-[#28b9dc] [&_button]:font-black [&_button]:shadow-sm hover:[&_button]:bg-[#20afd2]">
+        <BookingCta handle={handle} selection={ctaSelection} onReserve={onReserve} />
       </div>
 
-      <BookingCta handle={handle} selection={ctaSelection} onReserve={onReserve} />
-
       {(orgLocation || orgNotice) ? (
-        <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #eee" }}>
+        <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+          <div className="mb-4 text-base font-black">방문 안내</div>
           {orgLocation ? (
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontWeight: 800 }}>📍 위치</div>
-              <div style={{ whiteSpace: "pre-wrap" }}>{orgLocation}</div>
+            <div className="mb-4">
+              <div className="text-sm font-bold text-[#28b9dc]">위치</div>
+              <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">{orgLocation}</div>
             </div>
           ) : null}
 
           {orgNotice ? (
             <div>
-              <div style={{ fontWeight: 800 }}>📢 예약 안내</div>
-              <div style={{ whiteSpace: "pre-wrap" }}>{orgNotice}</div>
+              <div className="text-sm font-bold text-[#28b9dc]">예약 안내</div>
+              <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">{orgNotice}</div>
             </div>
           ) : null}
-        </div>
+        </section>
       ) : null}
     </div>
   );

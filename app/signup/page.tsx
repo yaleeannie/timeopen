@@ -58,50 +58,37 @@ export default function SignupPage() {
 }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#ffffff",
-        color: "#111",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: 420 }}>
-        <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 8 }}>TimeOpen</div>
-        <div style={{ fontSize: 14, color: "#555", marginBottom: 18 }}>처음 1회만 이메일 인증해요.</div>
+    <main className="flex min-h-screen overflow-x-hidden bg-[#eef6f8] px-3 py-4 text-gray-900 sm:px-5 sm:py-7">
+      <div className="mx-auto flex w-full min-w-0 max-w-lg items-center">
+        <div className="w-full rounded-[28px] bg-[#fbfdfe] px-4 pb-7 pt-8 shadow-[0_20px_60px_rgba(80,145,164,0.14)] sm:rounded-[36px] sm:px-6 sm:pb-9 sm:pt-10">
+          <header className="mb-6 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#5bd8f2] to-[#24b8df] text-2xl font-black text-white shadow-[0_12px_26px_rgba(40,185,220,0.22)]">T</div>
+            <h1 className="mt-5 text-3xl font-black tracking-[-0.04em]">TimeOpen</h1>
+            <p className="mt-1 text-sm text-gray-500">처음 한 번만 이메일을 인증해주세요.</p>
+          </header>
 
-        <div
-          style={{
-            border: "1px solid #e6e6e6",
-            borderRadius: 16,
-            padding: 16,
-            boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
-            background: "#fff",
-          }}
-        >
-          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 12 }}>회원가입</div>
+          <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+            <div className="mb-4 text-lg font-black">회원가입</div>
 
           {sent ? (
-            <div style={{ fontSize: 14, fontWeight: 800, color: "#111", lineHeight: 1.6 }}>
-              가입 확인 메일을 보냈습니다.
-              <div style={{ marginTop: 8, fontSize: 13, color: "#555", fontWeight: 700 }}>
+            <div className="text-sm font-bold leading-6 text-gray-900">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#eafaf6] text-2xl font-black text-[#22a988]">✓</div>
+              <div className="text-center text-base font-black">가입 확인 메일을 보냈습니다.</div>
+              <div className="mt-2 text-center text-sm font-medium leading-6 text-gray-500">
                 메일이 안 오면 이미 가입된 이메일일 수 있어요. 아래에서 로그인하거나 비밀번호 재설정을 해주세요.
               </div>
 
               {msg ? (
-                <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: "#b00020" }}>{msg}</div>
+                <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold leading-5 text-red-700 [overflow-wrap:anywhere]">{msg}</div>
               ) : null}
 
-              <div style={{ marginTop: 14, display: "flex", gap: 12, flexWrap: "wrap" }}>
-                <a href="/login" style={{ textDecoration: "underline", fontWeight: 800, color: "#111" }}>
+              <div className="mt-5 grid gap-2 text-center text-sm">
+                <a href="/login" className="min-h-11 rounded-xl bg-[#28b9dc] px-3 py-3 font-black text-white">
                   로그인
                 </a>
                 <a
                   href="/forgot-password"
-                  style={{ textDecoration: "underline", fontWeight: 800, color: "#111" }}
+                  className="min-h-11 rounded-xl border border-[#dceef2] px-3 py-3 font-bold text-[#5594a3]"
                 >
                   비밀번호 재설정
                 </a>
@@ -109,27 +96,17 @@ export default function SignupPage() {
             </div>
           ) : (
             <>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 800, marginBottom: 6 }}>이메일</label>
+              <label className="mb-1.5 block text-sm font-bold text-gray-700">이메일</label>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="email@example.com"
                 inputMode="email"
                 autoComplete="email"
-                style={{
-                  width: "100%",
-                  padding: "12px 12px",
-                  borderRadius: 12,
-                  border: "1px solid #d0d0d0",
-                  background: "#fff",
-                  color: "#111",
-                  outline: "none",
-                  fontSize: 14,
-                  marginBottom: 12,
-                }}
+                className="mb-4 min-h-11 w-full min-w-0 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
               />
 
-              <label style={{ display: "block", fontSize: 12, fontWeight: 800, marginBottom: 6 }}>
+              <label className="mb-1.5 block text-sm font-bold text-gray-700">
                 비밀번호
               </label>
               <input
@@ -138,49 +115,30 @@ export default function SignupPage() {
                 placeholder="비밀번호"
                 type="password"
                 autoComplete="new-password"
-                style={{
-                  width: "100%",
-                  padding: "12px 12px",
-                  borderRadius: 12,
-                  border: "1px solid #d0d0d0",
-                  background: "#fff",
-                  color: "#111",
-                  outline: "none",
-                  fontSize: 14,
-                  marginBottom: 12,
-                }}
+                className="mb-4 min-h-11 w-full min-w-0 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
               />
 
               <button
                 type="button"
                 onClick={onSignup}
                 disabled={loading}
-                style={{
-                  width: "100%",
-                  padding: "12px 12px",
-                  borderRadius: 12,
-                  border: "1px solid #111",
-                  background: "#111",
-                  color: "#fff",
-                  fontWeight: 900,
-                  cursor: loading ? "not-allowed" : "pointer",
-                  opacity: loading ? 0.7 : 1,
-                }}
+                className="min-h-11 w-full rounded-xl bg-[#28b9dc] px-4 py-3 text-base font-black text-white shadow-sm transition hover:bg-[#20afd2] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "처리 중..." : "가입하기"}
               </button>
 
               {msg ? (
-                <div style={{ marginTop: 12, fontSize: 13, fontWeight: 700, color: "#b00020" }}>{msg}</div>
+                <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold leading-5 text-red-700 [overflow-wrap:anywhere]">{msg}</div>
               ) : null}
 
-              <div style={{ marginTop: 14, fontSize: 13 }}>
-                <a href="/login" style={{ textDecoration: "underline", fontWeight: 800, color: "#111" }}>
+              <div className="mt-5 text-center text-sm">
+                <a href="/login" className="flex min-h-11 items-center justify-center rounded-xl border border-[#dceef2] px-3 py-3 font-bold text-[#5594a3]">
                   이미 계정 있어요 → 로그인
                 </a>
               </div>
             </>
           )}
+          </section>
         </div>
       </div>
     </main>
