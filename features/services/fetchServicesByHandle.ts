@@ -11,24 +11,18 @@ export type ServiceRow = {
 
 export async function fetchServicesByHandle(handle: string): Promise<ServiceRow[]> {
   const supabase = createSupabaseBrowserClient();
+  const normalizedHandle = handle.trim().toLowerCase();
 
-  const { data: org, error: orgErr } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("handle", handle)
-    .maybeSingle();
+  if (!normalizedHandle) return [];
 
-  if (orgErr || !org?.id) {
+  const { data, error } = await supabase.rpc("get_services_by_handle", {
+    p_handle: normalizedHandle,
+  });
+
+  if (error) {
+    console.error("[fetchServicesByHandle]", error);
     return [];
   }
 
-  const { data, error } = await supabase
-    .from("services")
-    .select("id, organization_id, name, duration_min, price, active")
-    .eq("organization_id", org.id)
-    .eq("active", true)
-    .order("created_at", { ascending: true });
-
-  if (error || !data) return [];
-  return data as ServiceRow[];
+  return (data ?? []) as ServiceRow[];
 }
