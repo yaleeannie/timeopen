@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   nameText: string;
@@ -42,7 +42,15 @@ function StatItem({
       </div>
 
       {sub ? (
-        <div style={{ marginTop: 6, fontSize: 12, color: "#9ca3af", lineHeight: 1.4 }}>
+        <div
+          style={{
+            marginTop: 6,
+            fontSize: 12,
+            color: "#9ca3af",
+            lineHeight: 1.4,
+            overflowWrap: "anywhere",
+          }}
+        >
           {sub}
         </div>
       ) : null}
@@ -62,15 +70,37 @@ export default function SummaryPanel({
   todayISO,
 }: Props) {
   const [copyStatus, setCopyStatus] = useState("");
+  const copyStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyStatusTimerRef.current) {
+        clearTimeout(copyStatusTimerRef.current);
+      }
+    };
+  }, []);
+
+  function showCopyStatus(status: string) {
+    setCopyStatus(status);
+
+    if (copyStatusTimerRef.current) {
+      clearTimeout(copyStatusTimerRef.current);
+    }
+
+    copyStatusTimerRef.current = setTimeout(() => {
+      setCopyStatus("");
+      copyStatusTimerRef.current = null;
+    }, 2000);
+  }
 
   async function copyBookingLink() {
     if (!canLink || !previewFullLink) return;
 
     try {
       await navigator.clipboard.writeText(previewFullLink);
-      setCopyStatus("복사됨");
+      showCopyStatus("복사됨");
     } catch {
-      setCopyStatus("복사 실패");
+      showCopyStatus("복사 실패");
     }
   }
 
@@ -111,11 +141,11 @@ export default function SummaryPanel({
           sub={canLink ? previewFullLink : "handle 설정 필요"}
         >
           {canLink ? (
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center">
               <button
                 type="button"
                 onClick={copyBookingLink}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50"
               >
                 링크 복사
               </button>
