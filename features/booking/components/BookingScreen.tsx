@@ -89,6 +89,7 @@ export default function BookingScreen({ handle }: Props) {
 
   const [noTimesForCurrent, setNoTimesForCurrent] = useState<boolean>(false);
   const [isTimesLoading, setIsTimesLoading] = useState(false);
+  const [timesError, setTimesError] = useState<string>("");
 
   const [orgLocation, setOrgLocation] = useState<string>("");
   const [orgNotice, setOrgNotice] = useState<string>("");
@@ -177,6 +178,7 @@ export default function BookingScreen({ handle }: Props) {
 
     setIsTimesLoading(true);
     setNoTimesForCurrent(false);
+    setTimesError("");
 
     try {
       const [ex, busyRes] = await Promise.all([
@@ -232,6 +234,12 @@ export default function BookingScreen({ handle }: Props) {
           earliestHintKeyRef.current = null;
         }
       }
+    } catch (error) {
+      if (reqIdRef.current !== myReq) return;
+      console.error("[BookingScreen] available times load failed", error);
+      setAvailableTimes([]);
+      setNoTimesForCurrent(false);
+      setTimesError("예약 가능 시간을 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
     } finally {
       if (reqIdRef.current === myReq) {
         setIsTimesLoading(false);
@@ -336,6 +344,7 @@ export default function BookingScreen({ handle }: Props) {
                     setTime(null);
                     setAvailableTimes([]);
                     setNoTimesForCurrent(false);
+                    setTimesError("");
                     setIsTimesLoading(dateISO != null);
                     setServiceId(item.id);
                   }}
@@ -368,6 +377,7 @@ export default function BookingScreen({ handle }: Props) {
               setTime(null);
               setAvailableTimes([]);
               setNoTimesForCurrent(false);
+              setTimesError("");
               setIsTimesLoading(serviceId != null);
               setDateISO(next);
             }}
@@ -402,6 +412,10 @@ export default function BookingScreen({ handle }: Props) {
             ) : isTimesLoading || !organizationId || !weeklySchedule ? (
               <div className="rounded-2xl border border-[#dceef2] bg-[#f8fcfd] px-4 py-6 text-sm font-medium text-[#5594a3]">
                 가능한 시간을 불러오는 중...
+              </div>
+            ) : timesError ? (
+              <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-6 text-sm font-bold text-red-700">
+                {timesError}
               </div>
             ) : noTimesForCurrent && isTimesReadyForCurrent ? (
               <div className="rounded-2xl border border-[#dceef2] bg-white px-4 py-6">
