@@ -128,6 +128,10 @@ export default function BookingScreen({ handle }: Props) {
     time != null &&
     availableTimes[0] === time;
 
+  const hasServices = services.length > 0;
+  const showNoServices =
+    !servicesLoading && organizationId != null && services.length === 0;
+
   const ctaSelection = useMemo(() => {
     if (isTimesReadyForCurrent) {
       lastStableSelectionRef.current = { dateISO, serviceId, time };
@@ -355,14 +359,14 @@ export default function BookingScreen({ handle }: Props) {
               ))}
             </div>
           </div>
-        ) : services.length === 0 ? (
+        ) : showNoServices ? (
           <div>
             <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
             <div className="mt-3 rounded-2xl border border-[#dceef2] bg-[#f8fcfd] px-4 py-5 text-sm font-medium text-gray-500">
               예약 가능한 서비스가 없어요.
             </div>
           </div>
-        ) : (
+        ) : hasServices ? (
           <div className="space-y-3">
             <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
             <div className={services.length >= 4 ? "flex gap-3 overflow-x-auto pb-2" : "grid grid-cols-3 gap-3"}>
@@ -402,7 +406,7 @@ export default function BookingScreen({ handle }: Props) {
               })}
             </div>
           </div>
-        )}
+        ) : null}
       </section>
 
       <section className="space-y-4 rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
@@ -452,6 +456,10 @@ export default function BookingScreen({ handle }: Props) {
                     <div key={item} className="h-10 w-16 animate-pulse rounded-xl bg-[#e6f4f7]" />
                   ))}
                 </div>
+              </div>
+            ) : noTimesForCurrent ? (
+              <div className="rounded-2xl border border-[#dceef2] bg-[#f8fcfd] px-4 py-5 text-sm font-medium text-gray-500">
+                선택한 날짜에는 예약 가능한 시간이 없어요.
               </div>
             ) : (
               <TimePicker
@@ -511,12 +519,6 @@ export default function BookingScreen({ handle }: Props) {
             />
           </div>
         </div>
-
-        {noTimesForCurrent && (
-          <div className="mt-4 rounded-xl bg-[#f4fafb] px-4 py-3 text-sm font-medium text-gray-500">
-            선택한 날짜에는 가능한 시간이 없어요.
-          </div>
-        )}
 
         {msg ? (
           <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold leading-5 text-red-700 [overflow-wrap:anywhere]">
