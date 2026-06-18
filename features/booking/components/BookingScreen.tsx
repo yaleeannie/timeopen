@@ -349,9 +349,9 @@ export default function BookingScreen({ handle }: Props) {
                     setServiceId(item.id);
                   }}
                   className={[
-                    "relative block min-h-[104px] w-[150px] shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none focus:ring-2 focus:ring-[#8ee8f5] focus:ring-offset-2",
+                    "relative block min-h-[104px] w-[150px] shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none",
                     active
-                      ? "border-[#35bddc] bg-[#35bddc] text-white"
+                      ? "border-transparent bg-[#35bddc] text-white"
                       : "border-[#dceef2] bg-white text-gray-900 hover:border-[#8ee8f5] hover:bg-[#ecfeff]",
                   ].join(" ")}
                 >
