@@ -7,7 +7,7 @@ const features = [
   {
     label: "8개 언어",
     title: "다국어 예약 화면",
-    description: "고객의 언어에 맞는 예약 화면으로 외국인 고객도 어려움 없이 예약해요.",
+    description: "외국인 고객도 번역된 화면에서 쉽게 예약해요.",
   },
   {
     label: "자동 안내",
@@ -83,16 +83,17 @@ export default async function Page() {
 
           <div className="relative mx-auto max-w-3xl text-center">
             <div className="inline-flex rounded-full border border-[#cceff2] bg-[#ecfbfd] px-3.5 py-2 text-xs font-black text-[#168ca8]">
-              예약을 더 쉽고 가깝게
+              링크 하나로 시작하는 예약
             </div>
-            <h1 className="mx-auto mt-5 max-w-2xl text-[2.35rem] font-black leading-[1.12] tracking-[-0.055em] sm:text-6xl sm:leading-[1.08]">
-              외국인 고객도
-              <br />
-              쉽게 예약하는 링크
+            <h1 className="mx-auto mt-5 max-w-3xl text-[2.15rem] font-black leading-[1.15] tracking-[-0.055em] sm:text-6xl sm:leading-[1.08]">
+              <span className="block">내 예약 링크를 만들면</span>
+              <span className="mt-1 block text-[1.45rem] sm:mt-0 sm:text-6xl">
+                고객은 로그인 없이 예약해요
+              </span>
             </h1>
             <p className="mx-auto mt-5 max-w-md text-[15px] font-medium leading-7 text-gray-600 sm:text-lg sm:leading-8">
               <span className="block">서비스와 영업시간만 설정하면</span>
-              <span className="block">외국인 고객도 바로 예약할 수 있어요.</span>
+              <span className="block">예약 링크로 바로 예약을 받을 수 있어요.</span>
             </p>
             <div className="mx-auto mt-8 max-w-sm">
               <a
