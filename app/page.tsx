@@ -29,25 +29,151 @@ const features = [
 const setupSteps = [
   {
     number: "1",
+    preview: "services",
     title: "서비스 설정",
     description: "시술명, 가격, 소요 시간을 등록해요.",
   },
   {
     number: "2",
+    preview: "hours",
     title: "영업시간 설정",
     description: "예약 가능한 요일과 쉬는 시간을 정해요.",
   },
   {
     number: "3",
+    preview: "link",
     title: "예약 링크 만들기",
     description: "내 가게만의 예약 링크를 바로 만들어요.",
   },
   {
     number: "4",
+    preview: "dashboard",
     title: "대시보드 · 예약관리",
     description: "예약 현황, 문자 알림, 고객 정보를 한눈에 확인해요.",
   },
-];
+] as const;
+
+function StepPreview({ type }: { type: (typeof setupSteps)[number]["preview"] }) {
+  if (type === "services") {
+    return (
+      <div className="rounded-[22px] bg-[#f8fbfb] p-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-bold text-[#28b9dc]">서비스</div>
+            <div className="mt-0.5 text-sm font-black">예약 메뉴</div>
+          </div>
+          <div className="rounded-full bg-[#e8faf8] px-2.5 py-1 text-[10px] font-black text-[#168ca8]">
+            + 추가
+          </div>
+        </div>
+        <div className="mt-3 grid gap-2">
+          <div className="flex items-center justify-between rounded-2xl border border-[#dff0f2] bg-white p-3 shadow-sm">
+            <div>
+              <div className="text-sm font-black">커트</div>
+              <div className="mt-1 text-[11px] font-medium text-gray-400">30분</div>
+            </div>
+            <div className="text-sm font-black text-[#167f97]">₩30,000</div>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl border border-[#dff0f2] bg-white p-3 shadow-sm">
+            <div>
+              <div className="text-sm font-black">염색</div>
+              <div className="mt-1 text-[11px] font-medium text-gray-400">90분</div>
+            </div>
+            <div className="text-sm font-black text-[#167f97]">₩80,000</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "hours") {
+    return (
+      <div className="rounded-[22px] bg-[#f8fbfb] p-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-bold text-[#28b9dc]">영업시간</div>
+            <div className="mt-0.5 text-sm font-black">예약 가능 시간</div>
+          </div>
+          <div className="h-6 w-10 rounded-full bg-[#35bddc] p-1">
+            <div className="ml-auto h-4 w-4 rounded-full bg-white shadow-sm" />
+          </div>
+        </div>
+        <div className="mt-3 grid gap-2 text-xs font-bold">
+          <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 shadow-sm">
+            <span className="text-gray-500">월–금</span>
+            <span>10:00 ~ 19:00</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 shadow-sm">
+            <span className="text-gray-500">토</span>
+            <span>11:00 ~ 17:00</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-[#fff7e5] px-3 py-3 text-[#806329]">
+            <span>점심시간</span>
+            <span>13:00 ~ 14:00</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "link") {
+    return (
+      <div className="rounded-[22px] bg-gradient-to-br from-[#ddf7f2] to-[#eefbfc] p-4">
+        <div className="text-[10px] font-bold text-[#168ca8]">내 예약 링크</div>
+        <div className="mt-2 rounded-2xl bg-white p-3 shadow-sm">
+          <div className="truncate text-base font-black text-[#245e6b]">timeopen.app/u/yourshop</div>
+          <div className="mt-3 flex min-h-10 items-center justify-center rounded-xl bg-[#35bddc] text-xs font-black text-white">
+            링크 복사
+          </div>
+        </div>
+        <div className="mt-3 flex items-center gap-2 rounded-2xl bg-white/70 px-3 py-2.5">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#e2f8f4] text-xs font-black text-[#168b72]">
+            ✓
+          </div>
+          <div className="text-xs font-bold leading-5 text-[#3e727b]">고객은 로그인 없이 예약해요</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[22px] bg-[#f8fbfb] p-3">
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="text-[10px] font-bold text-[#28b9dc]">대시보드</div>
+          <div className="mt-0.5 text-base font-black">오늘 예약 3건</div>
+        </div>
+        <div className="rounded-full bg-[#e7faf5] px-2.5 py-1 text-[10px] font-black text-[#168b72]">
+          문자 완료
+        </div>
+      </div>
+      <div className="mt-3 grid gap-2">
+        <div className="flex items-center gap-2 rounded-2xl bg-white p-2.5 shadow-sm">
+          <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-xl bg-[#35bddc] text-[11px] font-black text-white">
+            11:00
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-xs font-black">커트 · Mina</div>
+            <div className="mt-0.5 text-[10px] font-medium text-gray-400">30분</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 rounded-2xl bg-white p-2.5 shadow-sm">
+          <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-xl bg-[#eaf4f5] text-[11px] font-black text-[#477986]">
+            14:30
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-xs font-black">염색 · Yuki</div>
+            <div className="mt-0.5 text-[10px] font-medium text-gray-400">90분</div>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between border-t border-[#e5f0f1] pt-3 text-xs font-black">
+        <span>예약관리</span>
+        <span className="text-[#28b9dc]">전체 보기 →</span>
+      </div>
+    </div>
+  );
+}
 
 export default async function Page() {
   const supabase = await createSupabaseServerClient();
@@ -181,32 +307,27 @@ export default async function Page() {
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-[#e1efed] bg-white p-4 shadow-[0_14px_40px_rgba(82,130,120,0.08)] sm:p-6">
-            <ol className="grid gap-2 sm:grid-cols-2 sm:gap-3">
-              {setupSteps.map((step, index) => (
-                <li
-                  key={step.title}
-                  className="relative flex gap-3 rounded-[20px] bg-[#f7fbfa] p-4"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#28b9dc] text-sm font-black text-white">
+          <ol className="grid gap-4 sm:grid-cols-2 sm:gap-5">
+            {setupSteps.map((step) => (
+              <li
+                key={step.title}
+                className="landing-step overflow-hidden rounded-[28px] border border-[#e1efed] bg-white p-4 shadow-[0_16px_44px_rgba(82,130,120,0.09)] sm:p-5"
+              >
+                <div className="flex gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#28b9dc] text-sm font-black text-white shadow-[0_8px_18px_rgba(40,185,220,0.2)]">
                     {step.number}
                   </div>
                   <div className="min-w-0 pt-0.5">
-                    <h3 className="text-base font-black tracking-[-0.025em]">{step.title}</h3>
+                    <h3 className="text-lg font-black tracking-[-0.03em]">{step.title}</h3>
                     <p className="mt-1 text-sm font-medium leading-5 text-gray-500">{step.description}</p>
                   </div>
-                  {index < setupSteps.length - 1 ? (
-                    <span
-                      aria-hidden="true"
-                      className="absolute -bottom-2 left-[30px] z-10 text-xs font-black text-[#9edfe7] sm:hidden"
-                    >
-                      ↓
-                    </span>
-                  ) : null}
-                </li>
-              ))}
-            </ol>
-          </div>
+                </div>
+                <div className="mt-4 rounded-[24px] border border-[#e4f0ef] bg-[#eef8f5] p-2 shadow-inner">
+                  <StepPreview type={step.preview} />
+                </div>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <section className="mx-auto max-w-3xl pb-14 sm:pb-20">
@@ -254,6 +375,34 @@ export default async function Page() {
           <p className="mt-1 text-xs font-medium text-gray-400">예약을 열면, 고객과 더 가까워집니다.</p>
         </footer>
       </div>
+      <style>{`
+        @keyframes landing-step-reveal {
+          from {
+            opacity: 0;
+            transform: translateY(28px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @supports (animation-timeline: view()) {
+          .landing-step {
+            animation: landing-step-reveal linear both;
+            animation-timeline: view();
+            animation-range: entry 5% cover 28%;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .landing-step {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
+        }
+      `}</style>
     </main>
   );
 }
