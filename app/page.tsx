@@ -9,28 +9,24 @@ const features = [
     label: "8개 언어",
     title: "다국어 예약 화면",
     description: "외국인 고객도 번역된 화면에서 쉽게 예약해요.",
-    color: "from-cyan-400 to-sky-500 shadow-cyan-500/20",
   },
   {
     icon: "SMS",
     label: "자동 안내",
     title: "예약 문자 알림",
     description: "예약이 들어오면 사장님과 고객에게 예약 내용을 문자로 알려드려요.",
-    color: "from-emerald-400 to-teal-500 shadow-emerald-500/20",
   },
   {
     icon: "₩",
     label: "간편 설정",
     title: "서비스와 가격 관리",
     description: "시술명, 가격, 소요 시간을 등록하고 필요한 내용을 한곳에서 관리해요.",
-    color: "from-violet-500 to-indigo-600 shadow-violet-500/20",
   },
   {
     icon: "✓",
     label: "한눈에 확인",
     title: "예약 현황 관리",
     description: "오늘 일정과 고객 정보, 문자 발송 상태를 대시보드에서 바로 확인해요.",
-    color: "from-blue-400 to-blue-600 shadow-blue-500/20",
   },
 ];
 
@@ -40,28 +36,24 @@ const setupSteps = [
     preview: "services",
     title: "서비스 설정",
     description: "시술명, 가격, 소요 시간을 등록해요.",
-    color: "from-emerald-400 to-teal-500 shadow-emerald-500/20",
   },
   {
     number: "2",
     preview: "hours",
     title: "영업시간 설정",
     description: "예약 가능한 요일과 쉬는 시간을 정해요.",
-    color: "from-violet-500 to-indigo-600 shadow-violet-500/20",
   },
   {
     number: "3",
     preview: "link",
     title: "예약 링크 만들기",
     description: "내 가게만의 예약 링크를 바로 만들어요.",
-    color: "from-cyan-400 to-sky-500 shadow-cyan-500/20",
   },
   {
     number: "4",
     preview: "dashboard",
     title: "대시보드 · 예약관리",
     description: "예약 현황, 문자 알림, 고객 정보를 한눈에 확인해요.",
-    color: "from-blue-400 to-blue-600 shadow-blue-500/20",
   },
 ] as const;
 
@@ -130,7 +122,7 @@ function StepPreview({ type }: { type: (typeof setupSteps)[number]["preview"] })
 
   if (type === "link") {
     return (
-      <div className="rounded-[22px] bg-gradient-to-br from-[#ddf7f2] to-[#eefbfc] p-4">
+      <div className="rounded-[22px] bg-white p-4">
         <div className="text-[10px] font-bold text-[#168ca8]">내 예약 링크</div>
         <div className="mt-2 rounded-2xl bg-white p-3 shadow-sm">
           <div className="truncate text-base font-black text-[#245e6b]">timeopen.app/u/yourshop</div>
@@ -198,7 +190,7 @@ export default async function Page() {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#f4f8f3] text-gray-950">
+    <main className="min-h-screen overflow-x-hidden bg-white text-gray-950">
       <div className="mx-auto w-full max-w-5xl px-4 pb-10 pt-4 sm:px-6 sm:pb-16 sm:pt-6">
         <header className="flex items-center justify-between rounded-full border border-white/80 bg-white/85 px-4 py-3 shadow-[0_10px_35px_rgba(82,130,120,0.08)] backdrop-blur sm:px-5">
           <a href="/" className="flex min-h-10 items-center gap-2.5" aria-label="TimeOpen 홈">
@@ -220,20 +212,20 @@ export default async function Page() {
           <div className="pointer-events-none absolute -left-20 bottom-4 h-44 w-44 rounded-full bg-[#fff1cf] blur-3xl" />
 
           <div className="relative mx-auto max-w-3xl text-center">
-            <div className="inline-flex rounded-full border border-[#cceff2] bg-[#ecfbfd] px-3.5 py-2 text-xs font-black text-[#168ca8]">
+            <div className="hero-reveal hero-delay-1 inline-flex rounded-full border border-[#cceff2] bg-[#ecfbfd] px-3.5 py-2 text-xs font-black text-[#168ca8]">
               링크 하나로 시작하는 예약
             </div>
-            <h1 className="mx-auto mt-5 max-w-3xl text-[2.15rem] font-black leading-[1.15] tracking-[-0.055em] sm:text-6xl sm:leading-[1.08]">
-              <span className="block">내 예약 링크를 만들면</span>
-              <span className="mt-1 block text-[1.45rem] sm:mt-0 sm:text-6xl">
-                고객은 로그인 없이 예약해요
+            <h1 className="hero-reveal hero-delay-2 mx-auto mt-5 max-w-3xl text-[2.05rem] font-black leading-[1.15] tracking-[-0.055em] sm:text-6xl sm:leading-[1.08]">
+              <span className="block">내 예약 링크를 만들고</span>
+              <span className="mt-1 block text-[1.4rem] sm:mt-0 sm:text-6xl">
+                고객은 로그인 없이 바로 예약해요
               </span>
             </h1>
-            <p className="mx-auto mt-5 max-w-md text-[15px] font-medium leading-7 text-gray-600 sm:text-lg sm:leading-8">
+            <p className="hero-reveal hero-delay-3 mx-auto mt-5 max-w-md text-[15px] font-medium leading-7 text-gray-600 sm:text-lg sm:leading-8">
               <span className="block">서비스와 영업시간만 설정하면</span>
               <span className="block">예약 링크로 바로 예약을 받을 수 있어요.</span>
             </p>
-            <div className="mx-auto mt-8 max-w-sm">
+            <div className="hero-reveal hero-delay-4 mx-auto mt-8 max-w-sm">
               <a
                 href="/signup"
                 className="flex min-h-14 items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-6 text-base font-black text-white shadow-[0_14px_28px_rgba(14,165,233,0.25)] transition hover:from-cyan-500 hover:to-sky-600"
@@ -258,8 +250,8 @@ export default async function Page() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-3xl">
-          <div className="rounded-[30px] border border-[#dff0ee] bg-[#dff7f3] p-3 shadow-[0_22px_60px_rgba(62,127,120,0.14)] sm:p-5">
+        <section className="hero-reveal hero-delay-5 mx-auto max-w-3xl">
+          <div className="rounded-[30px] border border-[#e2efee] bg-white p-3 shadow-[0_22px_60px_rgba(62,127,120,0.12)] sm:p-5">
             <div className="overflow-hidden rounded-[24px] bg-[#fbfdfd] p-4 sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -323,18 +315,18 @@ export default async function Page() {
             {setupSteps.map((step) => (
               <li
                 key={step.title}
-                className={`landing-step overflow-hidden rounded-[28px] bg-gradient-to-br p-4 shadow-xl sm:p-5 ${step.color}`}
+                className="landing-step overflow-hidden rounded-[28px] border border-[#e1efed] bg-white p-4 shadow-[0_16px_44px_rgba(82,130,120,0.09)] sm:p-5"
               >
                 <div className="flex gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/20 text-sm font-black text-white shadow-sm backdrop-blur">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e8faf8] text-sm font-black text-[#159bb9]">
                     {step.number}
                   </div>
                   <div className="min-w-0 pt-0.5">
-                    <h3 className="text-lg font-black tracking-[-0.03em] text-white">{step.title}</h3>
-                    <p className="mt-1 text-sm font-medium leading-5 text-white/80">{step.description}</p>
+                    <h3 className="text-lg font-black tracking-[-0.03em] text-gray-950">{step.title}</h3>
+                    <p className="mt-1 text-sm font-medium leading-5 text-gray-500">{step.description}</p>
                   </div>
                 </div>
-                <div className="mt-4 rounded-[24px] border border-white/25 bg-white/20 p-2 shadow-inner backdrop-blur-sm">
+                <div className="mt-4 rounded-[24px] border border-[#e4f0ef] bg-[#f3f9f7] p-2 shadow-inner">
                   <StepPreview type={step.preview} />
                 </div>
               </li>
@@ -355,18 +347,18 @@ export default async function Page() {
             {features.map((feature) => (
               <article
                 key={feature.title}
-                className={`rounded-[24px] bg-gradient-to-br p-5 text-white shadow-xl ${feature.color}`}
+                className="rounded-[24px] border border-[#e1efed] bg-white p-5 shadow-[0_12px_34px_rgba(82,130,120,0.08)]"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex h-11 min-w-11 items-center justify-center rounded-xl border border-white/20 bg-white/20 px-2 text-xs font-black text-white shadow-sm backdrop-blur">
+                  <div className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-[#e8faf8] px-2 text-xs font-black text-[#159bb9]">
                     {feature.icon}
                   </div>
-                  <div className="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-[11px] font-black text-white/90 backdrop-blur">
+                  <div className="rounded-full border border-[#d8f0f2] bg-[#f1fbfc] px-3 py-1.5 text-[11px] font-black text-[#168ca8]">
                     {feature.label}
                   </div>
                 </div>
-                <h3 className="mt-5 text-xl font-black tracking-[-0.03em] text-white">{feature.title}</h3>
-                <p className="mt-2 text-sm font-medium leading-6 text-white/80">{feature.description}</p>
+                <h3 className="mt-5 text-xl font-black tracking-[-0.03em] text-gray-950">{feature.title}</h3>
+                <p className="mt-2 text-sm font-medium leading-6 text-gray-500">{feature.description}</p>
               </article>
             ))}
           </div>
@@ -393,10 +385,10 @@ export default async function Page() {
         </footer>
       </div>
       <style>{`
-        @keyframes landing-step-reveal {
+        @keyframes hero-reveal {
           from {
             opacity: 0;
-            transform: translateY(28px);
+            transform: translateY(20px);
           }
           to {
             opacity: 1;
@@ -404,15 +396,64 @@ export default async function Page() {
           }
         }
 
+        @keyframes landing-step-reveal {
+          from {
+            opacity: 0;
+            transform: translateY(24px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .hero-reveal {
+          opacity: 0;
+          animation: hero-reveal 650ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .hero-delay-1 {
+          animation-delay: 80ms;
+        }
+
+        .hero-delay-2 {
+          animation-delay: 170ms;
+        }
+
+        .hero-delay-3 {
+          animation-delay: 260ms;
+        }
+
+        .hero-delay-4 {
+          animation-delay: 350ms;
+        }
+
+        .hero-delay-5 {
+          animation-delay: 460ms;
+        }
+
         @supports (animation-timeline: view()) {
           .landing-step {
-            animation: landing-step-reveal linear both;
+            animation: landing-step-reveal 1ms cubic-bezier(0.22, 1, 0.36, 1) both;
             animation-timeline: view();
-            animation-range: entry 5% cover 28%;
+            animation-range: entry 8% cover 30%;
+          }
+
+          .landing-step:nth-child(2) {
+            animation-range: entry 12% cover 34%;
+          }
+
+          .landing-step:nth-child(3) {
+            animation-range: entry 8% cover 30%;
+          }
+
+          .landing-step:nth-child(4) {
+            animation-range: entry 12% cover 34%;
           }
         }
 
         @media (prefers-reduced-motion: reduce) {
+          .hero-reveal,
           .landing-step {
             animation: none !important;
             opacity: 1 !important;
