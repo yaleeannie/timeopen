@@ -11,7 +11,18 @@ export async function POST(req: Request) {
   const reservationId = body?.reservationId;
   const handle = clean(body?.handle);
 
+  console.log("[notify/booking] request", {
+    reservationId,
+    handle,
+    hasReservationId: Boolean(reservationId),
+    hasHandle: Boolean(handle),
+  });
+
   if (!reservationId || !handle) {
+    console.error("[notify/booking] invalid request body", {
+      hasReservationId: Boolean(reservationId),
+      hasHandle: Boolean(handle),
+    });
     return NextResponse.json(
       { error: "reservationId and handle required" },
       { status: 400 }
@@ -27,9 +38,37 @@ export async function POST(req: Request) {
       p_reservation_id: reservationId,
     }
   );
+  const rowsCount = Array.isArray(data) ? data.length : data ? 1 : 0;
+
+  console.log("[notify/booking] confirmation rpc result", {
+    rowsCount,
+    dataIsNull: data == null,
+    hasError: Boolean(error),
+  });
+
+  if (error) {
+    console.error("[notify/booking] confirmation rpc failed", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      reservationId,
+      handle,
+    });
+    return NextResponse.json(
+      { error: "reservation lookup failed" },
+      { status: 500 }
+    );
+  }
+
   const reservation = Array.isArray(data) ? data[0] ?? null : data;
 
-  if (error || !reservation) {
+  if (!reservation) {
+    console.error("[notify/booking] confirmation not found", {
+      reservationId,
+      handle,
+      rowsCount,
+    });
     return NextResponse.json({ error: "reservation not found" }, { status: 404 });
   }
 

@@ -325,11 +325,28 @@ export default function BookingScreen({ handle }: Props) {
       return;
     }
 
+    console.log("[BookingScreen] notify booking request", {
+      reservationId: rid,
+      handle,
+      hasReservationId: Boolean(rid),
+      hasHandle: Boolean(handle),
+    });
+
     await fetch("/api/notify/booking", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ reservationId: rid, handle }),
-    }).catch(() => {});
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reservationId: rid, handle }),
+    })
+      .then(async (response) => {
+        console.log("[BookingScreen] notify booking response", {
+          status: response.status,
+          ok: response.ok,
+          body: await response.text(),
+        });
+      })
+      .catch((error) => {
+        console.error("[BookingScreen] notify booking request failed", error);
+      });
 
     window.location.href = `/u/${handle}/confirmed?rid=${encodeURIComponent(String(rid))}`;
   }
