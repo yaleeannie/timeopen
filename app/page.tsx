@@ -5,24 +5,32 @@ export const dynamic = "force-dynamic";
 
 const features = [
   {
+    icon: "文",
     label: "8개 언어",
     title: "다국어 예약 화면",
     description: "외국인 고객도 번역된 화면에서 쉽게 예약해요.",
+    color: "from-cyan-400 to-sky-500 shadow-cyan-500/20",
   },
   {
+    icon: "SMS",
     label: "자동 안내",
     title: "예약 문자 알림",
     description: "예약이 들어오면 사장님과 고객에게 예약 내용을 문자로 알려드려요.",
+    color: "from-emerald-400 to-teal-500 shadow-emerald-500/20",
   },
   {
+    icon: "₩",
     label: "간편 설정",
     title: "서비스와 가격 관리",
     description: "시술명, 가격, 소요 시간을 등록하고 필요한 내용을 한곳에서 관리해요.",
+    color: "from-violet-500 to-indigo-600 shadow-violet-500/20",
   },
   {
+    icon: "✓",
     label: "한눈에 확인",
     title: "예약 현황 관리",
     description: "오늘 일정과 고객 정보, 문자 발송 상태를 대시보드에서 바로 확인해요.",
+    color: "from-blue-400 to-blue-600 shadow-blue-500/20",
   },
 ];
 
@@ -32,24 +40,28 @@ const setupSteps = [
     preview: "services",
     title: "서비스 설정",
     description: "시술명, 가격, 소요 시간을 등록해요.",
+    color: "from-emerald-400 to-teal-500 shadow-emerald-500/20",
   },
   {
     number: "2",
     preview: "hours",
     title: "영업시간 설정",
     description: "예약 가능한 요일과 쉬는 시간을 정해요.",
+    color: "from-violet-500 to-indigo-600 shadow-violet-500/20",
   },
   {
     number: "3",
     preview: "link",
     title: "예약 링크 만들기",
     description: "내 가게만의 예약 링크를 바로 만들어요.",
+    color: "from-cyan-400 to-sky-500 shadow-cyan-500/20",
   },
   {
     number: "4",
     preview: "dashboard",
     title: "대시보드 · 예약관리",
     description: "예약 현황, 문자 알림, 고객 정보를 한눈에 확인해요.",
+    color: "from-blue-400 to-blue-600 shadow-blue-500/20",
   },
 ] as const;
 
@@ -224,7 +236,7 @@ export default async function Page() {
             <div className="mx-auto mt-8 max-w-sm">
               <a
                 href="/signup"
-                className="flex min-h-14 items-center justify-center rounded-2xl bg-[#28b9dc] px-6 text-base font-black text-white shadow-[0_14px_28px_rgba(40,185,220,0.24)] transition hover:bg-[#20afd2]"
+                className="flex min-h-14 items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-6 text-base font-black text-white shadow-[0_14px_28px_rgba(14,165,233,0.25)] transition hover:from-cyan-500 hover:to-sky-600"
               >
                 무료로 시작하기
               </a>
@@ -311,18 +323,18 @@ export default async function Page() {
             {setupSteps.map((step) => (
               <li
                 key={step.title}
-                className="landing-step overflow-hidden rounded-[28px] border border-[#e1efed] bg-white p-4 shadow-[0_16px_44px_rgba(82,130,120,0.09)] sm:p-5"
+                className={`landing-step overflow-hidden rounded-[28px] bg-gradient-to-br p-4 shadow-xl sm:p-5 ${step.color}`}
               >
                 <div className="flex gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#28b9dc] text-sm font-black text-white shadow-[0_8px_18px_rgba(40,185,220,0.2)]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/20 text-sm font-black text-white shadow-sm backdrop-blur">
                     {step.number}
                   </div>
                   <div className="min-w-0 pt-0.5">
-                    <h3 className="text-lg font-black tracking-[-0.03em]">{step.title}</h3>
-                    <p className="mt-1 text-sm font-medium leading-5 text-gray-500">{step.description}</p>
+                    <h3 className="text-lg font-black tracking-[-0.03em] text-white">{step.title}</h3>
+                    <p className="mt-1 text-sm font-medium leading-5 text-white/80">{step.description}</p>
                   </div>
                 </div>
-                <div className="mt-4 rounded-[24px] border border-[#e4f0ef] bg-[#eef8f5] p-2 shadow-inner">
+                <div className="mt-4 rounded-[24px] border border-white/25 bg-white/20 p-2 shadow-inner backdrop-blur-sm">
                   <StepPreview type={step.preview} />
                 </div>
               </li>
@@ -343,13 +355,18 @@ export default async function Page() {
             {features.map((feature) => (
               <article
                 key={feature.title}
-                className="rounded-[24px] border border-[#e4efed] bg-white p-5 shadow-[0_10px_30px_rgba(82,130,120,0.07)]"
+                className={`rounded-[24px] bg-gradient-to-br p-5 text-white shadow-xl ${feature.color}`}
               >
-                <div className="inline-flex rounded-full bg-[#e8faf8] px-3 py-1.5 text-xs font-black text-[#1ba6b8]">
-                  {feature.label}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex h-11 min-w-11 items-center justify-center rounded-xl border border-white/20 bg-white/20 px-2 text-xs font-black text-white shadow-sm backdrop-blur">
+                    {feature.icon}
+                  </div>
+                  <div className="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-[11px] font-black text-white/90 backdrop-blur">
+                    {feature.label}
+                  </div>
                 </div>
-                <h3 className="mt-4 text-lg font-black tracking-[-0.025em]">{feature.title}</h3>
-                <p className="mt-2 text-sm font-medium leading-6 text-gray-500">{feature.description}</p>
+                <h3 className="mt-5 text-xl font-black tracking-[-0.03em] text-white">{feature.title}</h3>
+                <p className="mt-2 text-sm font-medium leading-6 text-white/80">{feature.description}</p>
               </article>
             ))}
           </div>
