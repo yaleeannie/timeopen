@@ -90,22 +90,31 @@ export default async function Page() {
               <br />
               쉽게 예약하는 링크
             </h1>
-            <p className="mx-auto mt-5 max-w-xl text-[15px] font-medium leading-7 text-gray-600 sm:text-lg sm:leading-8">
-              서비스와 영업시간을 설정하면 고객은 번역된 예약 화면에서 바로 예약할 수 있어요.
+            <p className="mx-auto mt-5 max-w-md text-[15px] font-medium leading-7 text-gray-600 sm:text-lg sm:leading-8">
+              <span className="block">서비스와 영업시간만 설정하면</span>
+              <span className="block">외국인 고객도 바로 예약할 수 있어요.</span>
             </p>
-            <div className="mx-auto mt-8 grid max-w-sm gap-3 sm:grid-cols-2">
+            <div className="mx-auto mt-8 max-w-sm">
               <a
                 href="/signup"
                 className="flex min-h-14 items-center justify-center rounded-2xl bg-[#28b9dc] px-6 text-base font-black text-white shadow-[0_14px_28px_rgba(40,185,220,0.24)] transition hover:bg-[#20afd2]"
               >
                 무료로 시작하기
               </a>
-              <a
-                href="/login"
-                className="flex min-h-14 items-center justify-center rounded-2xl border border-[#dceef2] bg-white px-6 text-base font-black text-[#287789] shadow-sm transition hover:bg-[#f3fcfd]"
-              >
-                로그인
-              </a>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <a
+                  href="/login"
+                  className="flex min-h-12 items-center justify-center rounded-2xl border border-[#dceef2] bg-white px-4 text-sm font-black text-[#287789] shadow-sm transition hover:bg-[#f3fcfd]"
+                >
+                  로그인
+                </a>
+                <a
+                  href="/signup"
+                  className="flex min-h-12 items-center justify-center rounded-2xl border border-[#bfe8ee] bg-[#ecfbfd] px-4 text-sm font-black text-[#168ca8] shadow-sm transition hover:bg-[#dff7fa]"
+                >
+                  회원가입
+                </a>
+              </div>
             </div>
           </div>
         </section>
