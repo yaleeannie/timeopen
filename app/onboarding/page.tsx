@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { getOwnerContext } from "@/lib/owner/getOwnerContext";
+import { bootstrapOwner } from "@/lib/owner/bootstrapOwner";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -35,11 +36,20 @@ const onboardingSteps = [
 ];
 
 export default async function OnboardingPage() {
-  const { user, organizationId, error } = await getOwnerContext();
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/login");
   }
+
+  const { organizationId, error } = await bootstrapOwner(
+    supabase,
+    { id: user.id, email: user.email },
+    "onboarding"
+  );
 
   if (error || !organizationId) {
     return (
