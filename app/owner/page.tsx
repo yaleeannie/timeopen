@@ -263,7 +263,7 @@ export default async function OwnerPage() {
               <div className="truncate text-sm font-bold text-[#28b9dc]">
                 {nameText || "TimeOpen"}
               </div>
-              <h1 className="mt-1 text-3xl font-black tracking-[-0.04em] text-gray-950">
+              <h1 className="mt-1 text-2xl font-black tracking-[-0.04em] text-gray-950">
                 오늘의 예약
               </h1>
               <p className="mt-1 text-sm leading-5 text-gray-500">
@@ -309,7 +309,7 @@ export default async function OwnerPage() {
                     }`}
                   >
                     <div
-                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-black ${
+                      className={`flex h-14 w-[68px] shrink-0 items-center justify-center rounded-xl text-sm font-black ${
                         reservation.isPast
                           ? "bg-gray-200 text-gray-500"
                           : "bg-[#e8f9fd] text-[#20afd2]"
