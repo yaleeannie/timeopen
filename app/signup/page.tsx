@@ -22,7 +22,7 @@ export default function SignupPage() {
 
   try {
     const supabase = createSupabaseBrowserClient();
-    const redirectTo = `${window.location.origin}/auth/callback?next=/owner`;
+    const redirectTo = `${window.location.origin}/auth/callback?next=/onboarding`;
 
     const { error } = await supabase.auth.signUp({
       email: e,
