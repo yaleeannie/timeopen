@@ -328,7 +328,7 @@ export default function BookingScreen({ handle }: Props) {
     await fetch("/api/notify/booking", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ reservationId: rid }),
+    body: JSON.stringify({ reservationId: rid, handle }),
     }).catch(() => {});
 
     window.location.href = `/u/${handle}/confirmed?rid=${encodeURIComponent(String(rid))}`;

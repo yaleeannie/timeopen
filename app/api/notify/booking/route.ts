@@ -9,64 +9,39 @@ function clean(v: unknown) {
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const reservationId = body?.reservationId;
+  const handle = clean(body?.handle);
 
-  if (!reservationId) {
-    return NextResponse.json({ error: "reservationId required" }, { status: 400 });
+  if (!reservationId || !handle) {
+    return NextResponse.json(
+      { error: "reservationId and handle required" },
+      { status: 400 }
+    );
   }
 
   const supabase = await createSupabaseServerClient();
 
-  const { data: r, error } = await supabase
-    .from("reservations")
-    .select(
-      `
-      id,
-      date,
-      start_time,
-      service_id,
-      customer_name,
-      customer_phone,
-      organizations (
-        handle,
-        location_text,
-        notice_text
-      )
-    `
-    )
-    .eq("id", reservationId)
-    .single();
+  const { data, error } = await supabase.rpc(
+    "get_public_reservation_confirmation",
+    {
+      p_handle: handle,
+      p_reservation_id: reservationId,
+    }
+  );
+  const reservation = Array.isArray(data) ? data[0] ?? null : data;
 
-  if (error || !r) {
+  if (error || !reservation) {
     return NextResponse.json({ error: "reservation not found" }, { status: 404 });
   }
 
-  const org = Array.isArray((r as any).organizations)
-    ? (r as any).organizations[0]
-    : (r as any).organizations;
-
-  const orgName = clean(org?.handle) || "예약";
-  const locationText = clean(org?.location_text);
-  const noticeText = clean(org?.notice_text);
-
-  // ✅ service_id(UUID) -> services.name 조회
-  let serviceName = "예약";
-  if ((r as any).service_id) {
-    const { data: serviceRow } = await supabase
-      .from("services")
-      .select("name")
-      .eq("id", (r as any).service_id)
-      .maybeSingle();
-
-    if (serviceRow?.name) {
-      serviceName = clean(serviceRow.name) || "예약";
-    }
-  }
-
+  const orgName = handle || "예약";
+  const locationText = clean(reservation.location_text);
+  const noticeText = clean(reservation.notice_text);
+  const serviceName = clean(reservation.service_name) || "예약";
   const ownerPhone = process.env.OWNER_PHONE || "";
-  const date = clean(r.date);
-  const time = clean(r.start_time);
-  const customerName = clean(r.customer_name);
-  const customerPhone = clean(r.customer_phone);
+  const date = clean(reservation.reservation_date);
+  const time = clean(reservation.start_time);
+  const customerName = clean(reservation.customer_name);
+  const customerPhone = clean(reservation.customer_phone);
 
   const ownerLines = [
     "[TimeOpen]",
