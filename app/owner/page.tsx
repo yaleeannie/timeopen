@@ -9,6 +9,15 @@ import SummaryPanel from "./SummaryPanel";
 
 const SITE_URL = getSiteUrl();
 
+type SmsLogRow = {
+  reservation_id: string | null;
+  recipient_type: "owner" | "customer";
+  status: "success" | "failed" | "skipped";
+  created_at: string;
+};
+
+type SmsDisplayStatus = "success" | "partial" | "failed" | "none";
+
 function getTodayISO() {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Seoul",
@@ -25,6 +34,66 @@ function getCurrentTimeText() {
     minute: "2-digit",
     hourCycle: "h23",
   }).format(new Date());
+}
+
+function smsStatusLabel(status: SmsDisplayStatus) {
+  switch (status) {
+    case "success":
+      return "문자 완료";
+    case "partial":
+      return "문자 일부 완료";
+    case "failed":
+      return "문자 실패";
+    default:
+      return "문자 없음";
+  }
+}
+
+function smsStatusStyle(status: SmsDisplayStatus) {
+  switch (status) {
+    case "success":
+      return "border-[#99f6e4] bg-[#ccfbf1] text-[#0f766e]";
+    case "partial":
+      return "border-[#fde68a] bg-[#fef3c7] text-[#92400e]";
+    case "failed":
+      return "border-[#fecaca] bg-[#fee2e2] text-[#b91c1c]";
+    default:
+      return "border-gray-200 bg-gray-100 text-gray-500";
+  }
+}
+
+function getSmsDisplayStatus(logs: SmsLogRow[]): SmsDisplayStatus {
+  const latestByRecipient = new Map<SmsLogRow["recipient_type"], SmsLogRow>();
+
+  for (const log of logs) {
+    if (!latestByRecipient.has(log.recipient_type)) {
+      latestByRecipient.set(log.recipient_type, log);
+    }
+  }
+
+  const ownerStatus = latestByRecipient.get("owner")?.status;
+  const customerStatus = latestByRecipient.get("customer")?.status;
+  const statuses = [ownerStatus, customerStatus].filter(Boolean);
+
+  if (statuses.includes("failed")) return "failed";
+  if (ownerStatus === "success" && customerStatus === "success") return "success";
+  if (statuses.includes("success")) return "partial";
+  return "none";
+}
+
+function formatReservationTime(value: unknown, fallback: unknown) {
+  if (value) return String(value).slice(0, 5);
+  if (!fallback) return "";
+
+  const date = new Date(String(fallback));
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Seoul",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
 }
 
 function MenuCard({
@@ -123,27 +192,67 @@ export default async function OwnerPage() {
     .eq("date", todayISO)
     .eq("status", "confirmed");
 
-  const { data: nextReservationRows } = await supabase
+  const { data: todayReservationRows } = await supabase
     .from("reservations")
-    .select("start_time, customer_name")
+    .select("id, start_time, end_time, start_at, end_at, customer_name")
     .eq("organization_id", organizationId)
     .eq("date", todayISO)
     .eq("status", "confirmed")
-    .gte("start_time", getCurrentTimeText())
-    .order("start_time", { ascending: true })
-    .limit(3);
+    .order("start_time", { ascending: true });
 
-  const nextReservation = nextReservationRows?.[0] ?? null;
-  const nextReservationTime = nextReservation?.start_time
-    ? String(nextReservation.start_time).slice(0, 5)
-    : "";
-  const nextReservationCustomer = nextReservation?.customer_name
-    ? String(nextReservation.customer_name)
-    : "";
-  const upcomingReservations = (nextReservationRows ?? []).map((reservation) => ({
-    time: reservation.start_time ? String(reservation.start_time).slice(0, 5) : "시간 미정",
-    customer: reservation.customer_name ? String(reservation.customer_name) : "고객명 미입력",
-  }));
+  const todayReservationIds = (todayReservationRows ?? []).map((reservation) =>
+    String(reservation.id)
+  );
+  let smsLogs: SmsLogRow[] = [];
+
+  if (todayReservationIds.length > 0) {
+    const { data: smsLogRows, error: smsLogErr } = await supabase
+      .from("sms_logs")
+      .select("reservation_id, recipient_type, status, created_at")
+      .eq("organization_id", organizationId)
+      .eq("message_type", "booking_confirm")
+      .in("reservation_id", todayReservationIds)
+      .order("created_at", { ascending: false });
+
+    if (smsLogErr) {
+      console.error("[owner] sms_logs 조회 실패", smsLogErr.message);
+    } else {
+      smsLogs = (smsLogRows ?? []) as SmsLogRow[];
+    }
+  }
+
+  const smsLogsByReservation = smsLogs.reduce((map, log) => {
+    if (!log.reservation_id) return map;
+    const logs = map.get(log.reservation_id) ?? [];
+    logs.push(log);
+    map.set(log.reservation_id, logs);
+    return map;
+  }, new Map<string, SmsLogRow[]>());
+
+  const currentTimeText = getCurrentTimeText();
+  const todayScheduleReservations = (todayReservationRows ?? []).map((reservation) => {
+    const id = String(reservation.id);
+    const start = formatReservationTime(reservation.start_time, reservation.start_at);
+    const end = formatReservationTime(reservation.end_time, reservation.end_at);
+
+    return {
+      id,
+      time: start || "시간 미정",
+      customer: reservation.customer_name
+        ? String(reservation.customer_name)
+        : "고객명 미입력",
+      isPast: Boolean(end && end < currentTimeText),
+      smsStatus: getSmsDisplayStatus(smsLogsByReservation.get(id) ?? []),
+    };
+  });
+
+  const nextReservation =
+    todayScheduleReservations.find(
+      (reservation) =>
+        reservation.time !== "시간 미정" && reservation.time >= currentTimeText
+    ) ?? null;
+  const nextReservationTime = nextReservation?.time ?? "";
+  const nextReservationCustomer = nextReservation?.customer ?? "";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#eef6f8] px-3 py-4 text-gray-900 sm:px-5 sm:py-7">
@@ -155,7 +264,7 @@ export default async function OwnerPage() {
                 {nameText || "TimeOpen"}
               </div>
               <h1 className="mt-1 text-3xl font-black tracking-[-0.04em] text-gray-950">
-                오늘
+                오늘의 예약
               </h1>
               <p className="mt-1 text-sm leading-5 text-gray-500">
                 {todayISO} 예약 현황
@@ -190,13 +299,22 @@ export default async function OwnerPage() {
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-              {upcomingReservations.length > 0 ? (
-                upcomingReservations.map((reservation, index) => (
-                  <div
-                    key={`${reservation.time}-${index}`}
-                    className="flex min-w-0 items-center gap-3 border-b border-gray-100 px-4 py-3.5 last:border-b-0"
+              {todayScheduleReservations.length > 0 ? (
+                todayScheduleReservations.map((reservation) => (
+                  <a
+                    key={reservation.id}
+                    href={`/reservations?date=${todayISO}`}
+                    className={`flex min-w-0 items-center gap-3 border-b border-gray-100 px-4 py-3.5 transition last:border-b-0 hover:bg-gray-50 ${
+                      reservation.isPast ? "bg-gray-50/70 opacity-60" : ""
+                    }`}
                   >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e8f9fd] text-sm font-black text-[#20afd2]">
+                    <div
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-black ${
+                        reservation.isPast
+                          ? "bg-gray-200 text-gray-500"
+                          : "bg-[#e8f9fd] text-[#20afd2]"
+                      }`}
+                    >
                       {reservation.time}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -205,8 +323,15 @@ export default async function OwnerPage() {
                       </div>
                       <div className="mt-0.5 text-sm text-gray-400">확정 예약</div>
                     </div>
+                    <span
+                      className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black ${smsStatusStyle(
+                        reservation.smsStatus
+                      )}`}
+                    >
+                      {smsStatusLabel(reservation.smsStatus)}
+                    </span>
                     <span className="shrink-0 text-gray-300">›</span>
-                  </div>
+                  </a>
                 ))
               ) : (
                 <div className="px-5 py-8 text-center">
