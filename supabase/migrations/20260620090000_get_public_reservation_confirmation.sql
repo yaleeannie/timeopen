@@ -32,7 +32,7 @@ as $$
   join public.organizations as o
     on o.id = r.organization_id
   left join public.services as s
-    on s.id = r.service_id
+    on s.id::text = r.service_id
    and s.organization_id = r.organization_id
   where r.id = p_reservation_id
     and o.handle = lower(btrim(p_handle))
