@@ -5,29 +5,47 @@ export const dynamic = "force-dynamic";
 
 const features = [
   {
-    number: "01",
-    title: "예약 링크 만들기",
-    description: "가게만의 짧은 링크를 만들어 어디서든 고객에게 공유하세요.",
-  },
-  {
-    number: "02",
-    title: "서비스와 가격 관리",
-    description: "메뉴, 소요 시간, 가격을 한곳에서 간편하게 관리할 수 있어요.",
-  },
-  {
-    number: "03",
-    title: "영업시간 설정",
-    description: "요일별 영업시간과 쉬는 시간을 설정하면 가능한 시간만 보여드려요.",
-  },
-  {
-    number: "04",
+    label: "8개 언어",
     title: "다국어 예약 화면",
-    description: "고객의 언어에 맞춘 예약 화면으로 외국인 고객도 쉽게 예약해요.",
+    description: "고객의 언어에 맞는 예약 화면으로 외국인 고객도 어려움 없이 예약해요.",
   },
   {
-    number: "05",
+    label: "자동 안내",
     title: "예약 문자 알림",
     description: "예약이 들어오면 사장님과 고객에게 예약 내용을 문자로 알려드려요.",
+  },
+  {
+    label: "간편 설정",
+    title: "서비스와 가격 관리",
+    description: "시술명, 가격, 소요 시간을 등록하고 필요한 내용을 한곳에서 관리해요.",
+  },
+  {
+    label: "한눈에 확인",
+    title: "예약 현황 관리",
+    description: "오늘 일정과 고객 정보, 문자 발송 상태를 대시보드에서 바로 확인해요.",
+  },
+];
+
+const setupSteps = [
+  {
+    number: "1",
+    title: "서비스 설정",
+    description: "시술명, 가격, 소요 시간을 등록해요.",
+  },
+  {
+    number: "2",
+    title: "영업시간 설정",
+    description: "예약 가능한 요일과 쉬는 시간을 정해요.",
+  },
+  {
+    number: "3",
+    title: "예약 링크 만들기",
+    description: "내 가게만의 예약 링크를 바로 만들어요.",
+  },
+  {
+    number: "4",
+    title: "대시보드 · 예약관리",
+    description: "예약 현황, 문자 알림, 고객 정보를 한눈에 확인해요.",
   },
 ];
 
@@ -59,7 +77,7 @@ export default async function Page() {
           </a>
         </header>
 
-        <section className="relative overflow-hidden rounded-b-[36px] px-1 pb-12 pt-14 sm:px-8 sm:pb-16 sm:pt-20">
+        <section className="relative overflow-hidden rounded-b-[36px] px-1 pb-10 pt-12 sm:px-8 sm:pb-16 sm:pt-20">
           <div className="pointer-events-none absolute -right-16 top-12 h-52 w-52 rounded-full bg-[#d8f7f2] blur-3xl" />
           <div className="pointer-events-none absolute -left-20 bottom-4 h-44 w-44 rounded-full bg-[#fff1cf] blur-3xl" />
 
@@ -73,7 +91,7 @@ export default async function Page() {
               쉽게 예약하는 링크
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-[15px] font-medium leading-7 text-gray-600 sm:text-lg sm:leading-8">
-              서비스, 영업시간, 예약 링크를 만들면 고객은 번역된 예약 화면에서 바로 예약할 수 있어요.
+              서비스와 영업시간을 설정하면 고객은 번역된 예약 화면에서 바로 예약할 수 있어요.
             </p>
             <div className="mx-auto mt-8 grid max-w-sm gap-3 sm:grid-cols-2">
               <a
@@ -132,33 +150,72 @@ export default async function Page() {
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between rounded-2xl bg-[#fff8e8] px-4 py-3">
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-[#fff8e8] px-4 py-3">
                 <span className="text-xs font-bold text-[#97733c]">내 예약 링크</span>
-                <span className="text-sm font-black text-[#735523]">timeopen.app/u/yourshop</span>
+                <span className="truncate text-sm font-black text-[#735523]">/u/yourshop</span>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-3xl py-16 sm:py-24">
-          <div className="mb-7 px-1">
-            <div className="text-sm font-black text-[#28b9dc]">가게 운영에 필요한 것만</div>
+        <section className="mx-auto max-w-3xl py-14 sm:py-20">
+          <div className="mb-7 px-1 text-center">
+            <div className="text-sm font-black text-[#28b9dc]">링크 하나가 만들어지는 과정</div>
             <h2 className="mt-2 text-3xl font-black leading-tight tracking-[-0.045em] sm:text-4xl">
-              예약 준비부터 알림까지
+              설정하고, 공유하면
               <br />
-              한 번에 관리하세요
+              예약 준비가 끝나요
+            </h2>
+            <p className="mx-auto mt-3 max-w-lg text-sm font-medium leading-6 text-gray-500">
+              복잡한 홈페이지 없이 가게 정보만 차례로 입력하세요.
+            </p>
+          </div>
+
+          <div className="rounded-[28px] border border-[#e1efed] bg-white p-4 shadow-[0_14px_40px_rgba(82,130,120,0.08)] sm:p-6">
+            <ol className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+              {setupSteps.map((step, index) => (
+                <li
+                  key={step.title}
+                  className="relative flex gap-3 rounded-[20px] bg-[#f7fbfa] p-4"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#28b9dc] text-sm font-black text-white">
+                    {step.number}
+                  </div>
+                  <div className="min-w-0 pt-0.5">
+                    <h3 className="text-base font-black tracking-[-0.025em]">{step.title}</h3>
+                    <p className="mt-1 text-sm font-medium leading-5 text-gray-500">{step.description}</p>
+                  </div>
+                  {index < setupSteps.length - 1 ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -bottom-2 left-[30px] z-10 text-xs font-black text-[#9edfe7] sm:hidden"
+                    >
+                      ↓
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-3xl pb-14 sm:pb-20">
+          <div className="mb-7 px-1">
+            <div className="text-sm font-black text-[#28b9dc]">TimeOpen으로 할 수 있는 일</div>
+            <h2 className="mt-2 text-3xl font-black leading-tight tracking-[-0.045em] sm:text-4xl">
+              고객의 예약부터
+              <br />
+              사장님의 확인까지
             </h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {features.map((feature, index) => (
+            {features.map((feature) => (
               <article
                 key={feature.title}
-                className={`rounded-[24px] border border-[#e4efed] bg-white p-5 shadow-[0_10px_30px_rgba(82,130,120,0.07)] ${
-                  index === features.length - 1 ? "sm:col-span-2" : ""
-                }`}
+                className="rounded-[24px] border border-[#e4efed] bg-white p-5 shadow-[0_10px_30px_rgba(82,130,120,0.07)]"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8faf8] text-xs font-black text-[#1ba6b8]">
-                  {feature.number}
+                <div className="inline-flex rounded-full bg-[#e8faf8] px-3 py-1.5 text-xs font-black text-[#1ba6b8]">
+                  {feature.label}
                 </div>
                 <h3 className="mt-4 text-lg font-black tracking-[-0.025em]">{feature.title}</h3>
                 <p className="mt-2 text-sm font-medium leading-6 text-gray-500">{feature.description}</p>
