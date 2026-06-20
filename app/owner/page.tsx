@@ -263,11 +263,11 @@ export default async function OwnerPage() {
               <div className="truncate text-sm font-bold text-[#28b9dc]">
                 {nameText || "TimeOpen"}
               </div>
-              <h1 className="mt-1 text-2xl font-black tracking-[-0.04em] text-gray-950">
-                오늘의 예약
+              <h1 className="mt-1 text-3xl font-black tracking-[-0.04em] text-gray-950">
+                대시보드
               </h1>
               <p className="mt-1 text-sm leading-5 text-gray-500">
-                {todayISO} 예약 현황
+                {todayISO} 오늘 예약 현황
               </p>
             </div>
 

@@ -431,9 +431,9 @@ export default async function ReservationsPage({ searchParams }: Props) {
         <div className="px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7">
         <header className="mb-6">
           <a href="/owner" className="mb-3 inline-flex min-h-11 items-center text-sm font-bold text-[#28b9dc]">
-            ← 오늘의 예약
+            ← 대시보드
           </a>
-          <h1 className="text-3xl font-black tracking-[-0.04em]">예약</h1>
+          <h1 className="text-3xl font-black tracking-[-0.04em]">예약관리</h1>
           <p className="mt-1 text-sm leading-5 text-gray-500">날짜별 일정과 고객 정보를 확인하세요.</p>
           <p className="mt-2 text-sm text-gray-400">
             {handle ? `@${handle}` : "예약 일정"} · 전체 {reservationRows.length}건
@@ -598,8 +598,8 @@ export default async function ReservationsPage({ searchParams }: Props) {
           </section>
         )}
         <nav className="mt-7 grid grid-cols-4 gap-1 rounded-2xl border border-[#e5f3f6] bg-white p-2 shadow-sm">
-          <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-[11px] font-bold text-gray-500">오늘의 예약</a>
-          <a href="/reservations" className="flex min-h-11 items-center justify-center rounded-xl bg-[#e8f9fd] text-sm font-black text-[#20afd2]">예약</a>
+          <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">대시보드</a>
+          <a href="/reservations" className="flex min-h-11 items-center justify-center rounded-xl bg-[#e8f9fd] text-sm font-black text-[#20afd2]">예약관리</a>
           <a href="/settings/services" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">서비스</a>
           <a href="/settings/profile" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">설정</a>
         </nav>
