@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 
 export const dynamic = "force-dynamic";
 
@@ -35,13 +35,40 @@ const onboardingSteps = [
 ];
 
 export default async function OnboardingPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, organizationId, error } = await getOwnerContext();
 
   if (!user) {
     redirect("/login");
+  }
+
+  if (error || !organizationId) {
+    return (
+      <main className="flex min-h-screen items-center bg-white px-4 py-8 text-gray-950">
+        <div className="mx-auto w-full max-w-md rounded-[28px] border border-[#e2efee] bg-white p-6 text-center shadow-[0_20px_60px_rgba(80,145,164,0.12)]">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff5e6] text-2xl font-black text-[#b7781f]">
+            !
+          </div>
+          <h1 className="mt-5 text-2xl font-black tracking-[-0.04em]">
+            초기 설정을 준비하지 못했어요.
+          </h1>
+          <p className="mt-2 text-sm font-medium leading-6 text-gray-500">
+            잠시 후 다시 시도해 주세요. 문제가 계속되면 다시 로그인한 뒤 진행해 주세요.
+          </p>
+          <a
+            href="/onboarding"
+            className="mt-6 flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-5 text-sm font-black text-white shadow-[0_12px_24px_rgba(14,165,233,0.2)]"
+          >
+            다시 시도
+          </a>
+          <a
+            href="/login"
+            className="mt-2 flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-bold text-[#168ca8]"
+          >
+            로그인으로 돌아가기
+          </a>
+        </div>
+      </main>
+    );
   }
 
   return (

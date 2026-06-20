@@ -132,28 +132,8 @@ export default async function OwnerPage() {
     redirect("/login");
   }
 
-  if (error) {
-    return (
-      <main className="min-h-screen bg-gray-100 px-5 py-10 sm:px-8">
-        <div className="mx-auto max-w-6xl">
-          <h1 className="mb-3 text-3xl font-black tracking-tight">TimeOpen 관리자</h1>
-          <div className="font-extrabold text-red-700">
-            owner 정보를 불러오지 못했습니다: {error}
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (!organizationId) {
-    return (
-      <main className="min-h-screen bg-gray-100 px-5 py-10 sm:px-8">
-        <div className="mx-auto max-w-6xl">
-          <h1 className="mb-3 text-3xl font-black tracking-tight">TimeOpen 관리자</h1>
-          <div className="font-extrabold text-red-700">organizationId를 찾을 수 없습니다.</div>
-        </div>
-      </main>
-    );
+  if (error || !organizationId) {
+    redirect("/onboarding?setup=retry");
   }
 
   const supabase = await createSupabaseServerClient();

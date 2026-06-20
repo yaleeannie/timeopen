@@ -20,24 +20,8 @@ export default async function AvailabilitySettingsPage() {
     redirect("/login");
   }
 
-  if (error) {
-    return (
-      <Shell>
-        <div style={{ fontWeight: 800, color: "#b00020" }}>
-          owner 정보를 불러오지 못했습니다: {error}
-        </div>
-      </Shell>
-    );
-  }
-
-  if (!organizationId) {
-    return (
-      <Shell>
-        <div style={{ fontWeight: 800, color: "#b00020" }}>
-          owner로 연결된 organization이 없습니다.
-        </div>
-      </Shell>
-    );
+  if (error || !organizationId) {
+    redirect("/onboarding?setup=retry");
   }
 
   return (

@@ -22,7 +22,7 @@ export async function POST() {
 
   const row = Array.isArray(data) ? data[0] : data;
 
-  if (!row?.organization_id || !row?.handle) {
+  if (!row?.organization_id) {
     return NextResponse.json({ error: "bootstrap_owner returned empty" }, { status: 400 });
   }
 

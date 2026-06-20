@@ -29,10 +29,20 @@ export async function getOwnerContext() {
   }
 
   const row = Array.isArray(boot) ? boot[0] : boot;
+  const organizationId = (row?.organization_id as string | null) ?? null;
+
+  if (!organizationId) {
+    return {
+      user,
+      organizationId: null,
+      handle: null,
+      error: "초기 설정 정보를 만들지 못했습니다.",
+    };
+  }
 
   return {
     user,
-    organizationId: (row?.organization_id as string | null) ?? null,
+    organizationId,
     handle: (row?.handle as string | null) ?? null,
     error: null,
   };

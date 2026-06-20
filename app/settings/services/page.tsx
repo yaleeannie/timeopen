@@ -10,7 +10,7 @@ export default async function ServicesSettingsPage() {
   if (!user) redirect("/login");
 
   if (error || !organizationId) {
-    return <main className="min-h-screen bg-[#eef6f8] p-5 font-bold text-red-700">에러 발생</main>;
+    redirect("/onboarding?setup=retry");
   }
 
   return (

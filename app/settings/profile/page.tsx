@@ -13,7 +13,7 @@ export default async function ProfilePage() {
   }
 
   if (error || !organizationId) {
-    return <div className="min-h-screen bg-[#eef6f8] p-5 font-bold text-red-700">오류: {error}</div>;
+    redirect("/onboarding?setup=retry");
   }
 
   const supabase = await createSupabaseServerClient();
