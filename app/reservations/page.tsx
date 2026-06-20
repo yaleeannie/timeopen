@@ -18,6 +18,15 @@ type ReservationRow = {
   customer_phone: string | null;
 };
 
+type SmsLogRow = {
+  reservation_id: string | null;
+  recipient_type: "owner" | "customer";
+  status: "success" | "failed" | "skipped";
+  created_at: string;
+};
+
+type SmsDisplayStatus = "success" | "partial" | "failed" | "none";
+
 type Props = {
   searchParams?: {
     date?: string;
@@ -112,6 +121,67 @@ function statusStyle(status: string | null) {
     background: "#f9fafb",
     borderColor: "#e5e7eb",
   };
+}
+
+function smsStatusLabel(status: SmsDisplayStatus) {
+  switch (status) {
+    case "success":
+      return "문자 완료";
+    case "partial":
+      return "문자 일부 완료";
+    case "failed":
+      return "문자 실패";
+    default:
+      return "문자 없음";
+  }
+}
+
+function smsStatusStyle(status: SmsDisplayStatus) {
+  switch (status) {
+    case "success":
+      return {
+        color: "#0f766e",
+        background: "#ccfbf1",
+        borderColor: "#99f6e4",
+      };
+    case "partial":
+      return {
+        color: "#92400e",
+        background: "#fef3c7",
+        borderColor: "#fde68a",
+      };
+    case "failed":
+      return {
+        color: "#b91c1c",
+        background: "#fee2e2",
+        borderColor: "#fecaca",
+      };
+    default:
+      return {
+        color: "#6b7280",
+        background: "#f3f4f6",
+        borderColor: "#e5e7eb",
+      };
+  }
+}
+
+function getSmsDisplayStatus(logs: SmsLogRow[]): SmsDisplayStatus {
+  const latestByRecipient = new Map<SmsLogRow["recipient_type"], SmsLogRow>();
+
+  for (const log of logs) {
+    if (!latestByRecipient.has(log.recipient_type)) {
+      latestByRecipient.set(log.recipient_type, log);
+    }
+  }
+
+  const ownerStatus = latestByRecipient.get("owner")?.status;
+  const customerStatus = latestByRecipient.get("customer")?.status;
+  const statuses = [ownerStatus, customerStatus].filter(Boolean);
+
+  if (statuses.includes("failed")) return "failed";
+  if (ownerStatus === "success" && customerStatus === "success") return "success";
+  if (statuses.includes("success")) return "partial";
+  return "none";
 }
 
 function displayValue(value: unknown) {
@@ -264,6 +334,33 @@ export default async function ReservationsPage({ searchParams }: Props) {
     );
   }
 
+  const reservationIds = ((rows ?? []) as ReservationRow[]).map((row) => row.id);
+  let smsLogs: SmsLogRow[] = [];
+
+  if (reservationIds.length > 0) {
+    const { data: smsLogRows, error: smsLogErr } = await supabase
+      .from("sms_logs")
+      .select("reservation_id, recipient_type, status, created_at")
+      .eq("organization_id", organizationId)
+      .eq("message_type", "booking_confirm")
+      .in("reservation_id", reservationIds)
+      .order("created_at", { ascending: false });
+
+    if (smsLogErr) {
+      console.error("[reservations] sms_logs 조회 실패", smsLogErr.message);
+    } else {
+      smsLogs = (smsLogRows ?? []) as SmsLogRow[];
+    }
+  }
+
+  const smsLogsByReservation = smsLogs.reduce((map, log) => {
+    if (!log.reservation_id) return map;
+    const logs = map.get(log.reservation_id) ?? [];
+    logs.push(log);
+    map.set(log.reservation_id, logs);
+    return map;
+  }, new Map<string, SmsLogRow[]>());
+
   const serviceNameMap = new Map(
     (services ?? []).map((s: any) => [String(s.id), String(s.name)])
   );
@@ -286,6 +383,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
         start,
         end,
         serviceName: formatServiceName(row.service_id),
+        smsStatus: getSmsDisplayStatus(smsLogsByReservation.get(row.id) ?? []),
       };
     })
     .sort((a, b) => {
@@ -432,7 +530,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
         ) : (
           <section>
             <div className="grid gap-3">
-              {selectedReservations.map(({ row, start, end, serviceName }) => (
+              {selectedReservations.map(({ row, start, end, serviceName, smsStatus }) => (
                 <article
                   key={row.id}
                   className="min-w-0 rounded-2xl border border-[#e5f3f6] bg-white p-4 shadow-sm"
@@ -453,19 +551,32 @@ export default async function ReservationsPage({ searchParams }: Props) {
                       </div>
                     </div>
 
-                    <span
-                      style={{
-                        flexShrink: 0,
-                        border: "1px solid",
-                        borderRadius: 999,
-                        padding: "3px 7px",
-                        fontSize: 11,
-                        fontWeight: 800,
-                        ...statusStyle(row.status),
-                      }}
-                    >
-                      {formatStatus(row.status)}
-                    </span>
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <span
+                        style={{
+                          border: "1px solid",
+                          borderRadius: 999,
+                          padding: "3px 7px",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          ...statusStyle(row.status),
+                        }}
+                      >
+                        {formatStatus(row.status)}
+                      </span>
+                      <span
+                        style={{
+                          border: "1px solid",
+                          borderRadius: 999,
+                          padding: "3px 7px",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          ...smsStatusStyle(smsStatus),
+                        }}
+                      >
+                        {smsStatusLabel(smsStatus)}
+                      </span>
+                    </div>
                   </div>
 
                   {row.status === "confirmed" ? (
