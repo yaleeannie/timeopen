@@ -1,9 +1,114 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { sendSms } from "@/lib/notify/sendSms";
+import {
+  sendSms,
+  SmsSendError,
+  type SmsSendResult,
+} from "@/lib/notify/sendSms";
 
 function clean(v: unknown) {
   return typeof v === "string" ? v.trim() : "";
+}
+
+type RecipientType = "owner" | "customer";
+type SmsLogStatus = "success" | "failed" | "skipped";
+
+function getCountryCode(phone: string) {
+  const supportedCodes = ["+82", "+81", "+1", "+66", "+86"];
+  return supportedCodes.find((code) => phone.startsWith(code)) ?? null;
+}
+
+function getProviderMessageId(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+
+  const record = payload as Record<string, unknown>;
+  for (const key of ["messageId", "message_id", "groupId", "group_id"]) {
+    const value = record[key];
+    if (typeof value === "string" && value) return value;
+  }
+
+  for (const value of Object.values(record)) {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = getProviderMessageId(item);
+        if (found) return found;
+      }
+    } else if (value && typeof value === "object") {
+      const found = getProviderMessageId(value);
+      if (found) return found;
+    }
+  }
+
+  return null;
+}
+
+function sanitizeProviderPayload(payload: unknown): unknown {
+  if (Array.isArray(payload)) {
+    return payload.map(sanitizeProviderPayload);
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return payload;
+  }
+
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(payload as Record<string, unknown>)) {
+    if (
+      ["text", "content", "apiKey", "apiSecret", "authorization"].includes(key)
+    ) {
+      continue;
+    }
+    result[key] = sanitizeProviderPayload(value);
+  }
+  return result;
+}
+
+async function saveSmsLog(params: {
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
+  handle: string;
+  reservationId: string;
+  recipientType: RecipientType;
+  toPhone: string;
+  status: SmsLogStatus;
+  messageLength: number;
+  result?: SmsSendResult;
+  errorMessage?: string;
+}) {
+  try {
+    const { error } = await params.supabase.rpc("log_sms_attempt", {
+      p_handle: params.handle,
+      p_reservation_id: params.reservationId,
+      p_recipient_type: params.recipientType,
+      p_message_type: "booking_confirm",
+      p_to_phone: params.toPhone || null,
+      p_country_code: getCountryCode(params.toPhone),
+      p_status: params.status,
+      p_provider: "solapi",
+      p_provider_message_id: params.result
+        ? getProviderMessageId(params.result.responsePayload)
+        : null,
+      p_provider_status_code: params.result?.statusCode ?? null,
+      p_error_message: params.errorMessage ?? null,
+      p_request_payload: { message_length: params.messageLength },
+      p_response_payload: params.result
+        ? sanitizeProviderPayload(params.result.responsePayload)
+        : null,
+    });
+
+    if (error) {
+      console.error("[notify/booking] sms log save failed", {
+        recipientType: params.recipientType,
+        status: params.status,
+        message: error.message,
+      });
+    }
+  } catch (error) {
+    console.error("[notify/booking] sms log save exception", {
+      recipientType: params.recipientType,
+      status: params.status,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 export async function POST(req: Request) {
@@ -126,25 +231,89 @@ export async function POST(req: Request) {
   console.log("[notify/booking] serviceName =", serviceName);
 
   // ✅ 판매자 문자 따로
-  try {
-    if (ownerPhone) {
+  if (ownerPhone) {
+    try {
       console.log("[notify/booking] owner sms start");
-      await sendSms(ownerPhone, ownerMsg);
+      const result = await sendSms(ownerPhone, ownerMsg);
       console.log("[notify/booking] owner sms done");
+      await saveSmsLog({
+        supabase,
+        handle,
+        reservationId,
+        recipientType: "owner",
+        toPhone: ownerPhone,
+        status: "success",
+        messageLength: ownerMsg.length,
+        result,
+      });
+    } catch (e) {
+      console.error("[notify/booking] owner sms failed", e);
+      await saveSmsLog({
+        supabase,
+        handle,
+        reservationId,
+        recipientType: "owner",
+        toPhone: ownerPhone,
+        status: "failed",
+        messageLength: ownerMsg.length,
+        result: e instanceof SmsSendError ? e.result : undefined,
+        errorMessage: e instanceof Error ? e.message : String(e),
+      });
     }
-  } catch (e) {
-    console.error("[notify/booking] owner sms failed", e);
+  } else {
+    await saveSmsLog({
+      supabase,
+      handle,
+      reservationId,
+      recipientType: "owner",
+      toPhone: "",
+      status: "skipped",
+      messageLength: ownerMsg.length,
+      errorMessage: "OWNER_PHONE is empty",
+    });
   }
 
   // ✅ 고객 문자 따로
-  try {
-    if (customerPhone) {
+  if (customerPhone) {
+    try {
       console.log("[notify/booking] guest sms start");
-      await sendSms(customerPhone, guestMsg);
+      const result = await sendSms(customerPhone, guestMsg);
       console.log("[notify/booking] guest sms done");
+      await saveSmsLog({
+        supabase,
+        handle,
+        reservationId,
+        recipientType: "customer",
+        toPhone: customerPhone,
+        status: "success",
+        messageLength: guestMsg.length,
+        result,
+      });
+    } catch (e) {
+      console.error("[notify/booking] guest sms failed", e);
+      await saveSmsLog({
+        supabase,
+        handle,
+        reservationId,
+        recipientType: "customer",
+        toPhone: customerPhone,
+        status: "failed",
+        messageLength: guestMsg.length,
+        result: e instanceof SmsSendError ? e.result : undefined,
+        errorMessage: e instanceof Error ? e.message : String(e),
+      });
     }
-  } catch (e) {
-    console.error("[notify/booking] guest sms failed", e);
+  } else {
+    await saveSmsLog({
+      supabase,
+      handle,
+      reservationId,
+      recipientType: "customer",
+      toPhone: "",
+      status: "skipped",
+      messageLength: guestMsg.length,
+      errorMessage: "customer phone is empty",
+    });
   }
 
   return NextResponse.json({ ok: true });
