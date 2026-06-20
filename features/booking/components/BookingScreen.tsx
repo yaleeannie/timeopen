@@ -72,6 +72,14 @@ function formatISODate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+const wonNumberFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 0,
+});
+
+function formatWon(price: number) {
+  return `₩${wonNumberFormatter.format(price)}`;
+}
+
 export default function BookingScreen({ handle }: Props) {
   const { locale, t } = usePublicBookingI18n();
   const [step, setStep] = useState<BookingStep>("service");
@@ -116,16 +124,6 @@ export default function BookingScreen({ handle }: Props) {
   () => services.find((s) => s.id === serviceId) ?? null,
   [services, serviceId]
   );
-  const priceFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency: "KRW",
-        maximumFractionDigits: 0,
-      }),
-    [locale]
-  );
-
   const currentKey = useMemo(() => {
     if (!organizationId || !dateISO || !serviceId) return null;
     return `${organizationId}_${dateISO}_${serviceId}`;
@@ -420,7 +418,7 @@ export default function BookingScreen({ handle }: Props) {
                   </div>
                   <div className={`mt-2 text-[13px] leading-5 ${active ? "text-white/85" : "text-gray-500"}`}>
                     {item.duration_min ? t("minutes", { count: item.duration_min }) : ""}
-                    {item.price != null ? ` · ${priceFormatter.format(item.price)}` : ""}
+                    {item.price != null ? ` · ${formatWon(item.price)}` : ""}
                   </div>
                 </button>
               );
