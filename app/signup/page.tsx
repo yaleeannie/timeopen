@@ -9,6 +9,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string>("");
   const [sent, setSent] = useState(false);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
 
   async function onSignup() {
   const e = email.trim().toLowerCase();
@@ -19,15 +20,18 @@ export default function SignupPage() {
 
   setLoading(true);
   setMsg("");
+  setAlreadyRegistered(false);
 
   try {
     const supabase = createSupabaseBrowserClient();
-    const redirectTo = `${window.location.origin}/auth/callback?next=/onboarding`;
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    callbackUrl.searchParams.set("next", "/onboarding");
+    callbackUrl.searchParams.set("flow", "signup");
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: e,
       password: pw,
-      options: { emailRedirectTo: redirectTo },
+      options: { emailRedirectTo: callbackUrl.toString() },
     });
 
     if (error) {
@@ -40,12 +44,21 @@ export default function SignupPage() {
         m.includes("user already") ||
         m.includes("exists")
       ) {
-        setMsg("이미 가입된 이메일입니다. 로그인하거나 비밀번호 재설정을 진행해 주세요.");
-        setSent(true); // 아래 안내 UI 재사용
+        setAlreadyRegistered(true);
+        setMsg("이미 가입된 이메일이에요. 로그인해 주세요.");
+        setSent(true);
         return;
       }
 
       setMsg(error.message);
+      return;
+    }
+
+    // Supabase 설정에 따라 기존 가입자는 오류 대신 identities가 빈 사용자로 반환될 수 있습니다.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      setAlreadyRegistered(true);
+      setMsg("이미 가입된 이메일이에요. 로그인해 주세요.");
+      setSent(true);
       return;
     }
 
@@ -72,10 +85,20 @@ export default function SignupPage() {
 
           {sent ? (
             <div className="text-sm font-bold leading-6 text-gray-900">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#eafaf6] text-2xl font-black text-[#22a988]">✓</div>
-              <div className="text-center text-base font-black">가입 확인 메일을 보냈습니다.</div>
+              <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full text-2xl font-black ${
+                alreadyRegistered
+                  ? "bg-[#fff5e6] text-[#b7781f]"
+                  : "bg-[#eafaf6] text-[#22a988]"
+              }`}>
+                {alreadyRegistered ? "!" : "✓"}
+              </div>
+              <div className="text-center text-base font-black">
+                {alreadyRegistered ? "이미 가입된 이메일이에요." : "가입 확인 메일을 보냈습니다."}
+              </div>
               <div className="mt-2 text-center text-sm font-medium leading-6 text-gray-500">
-                메일이 안 오면 이미 가입된 이메일일 수 있어요. 아래에서 로그인하거나 비밀번호 재설정을 해주세요.
+                {alreadyRegistered
+                  ? "기존 계정으로 로그인하거나 비밀번호를 재설정해 주세요."
+                  : "메일에서 확인 링크를 누르면 로그인 과정 없이 온보딩으로 이동합니다."}
               </div>
 
               {msg ? (
