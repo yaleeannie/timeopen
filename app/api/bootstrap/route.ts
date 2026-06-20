@@ -1,6 +1,7 @@
 // app/api/bootstrap/route.ts
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { bootstrapOwner } from "@/lib/owner/bootstrapOwner";
 
 export async function POST() {
   const supabase = await createSupabaseServerClient();
@@ -11,20 +12,35 @@ export async function POST() {
   } = await supabase.auth.getUser();
 
   if (userErr || !user) {
+    console.error("[api/bootstrap] user lookup failed", {
+      hasUserId: Boolean(user?.id),
+      message: userErr?.message ?? "not authenticated",
+    });
     return NextResponse.json({ error: "not authenticated" }, { status: 401 });
   }
 
-  const { data, error } = await supabase.rpc("bootstrap_owner");
+  const result = await bootstrapOwner(
+    supabase,
+    { id: user.id, email: user.email },
+    "api/bootstrap"
+  );
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  if (result.error || !result.organizationId) {
+    console.error("[api/bootstrap] bootstrap failed", {
+      userId: user.id,
+      error: result.error,
+    });
+    return NextResponse.json(
+      { error: result.error ?? "bootstrap_owner returned empty" },
+      { status: 400 }
+    );
   }
 
-  const row = Array.isArray(data) ? data[0] : data;
-
-  if (!row?.organization_id) {
-    return NextResponse.json({ error: "bootstrap_owner returned empty" }, { status: 400 });
-  }
-
-  return NextResponse.json({ ok: true, data: row });
+  return NextResponse.json({
+    ok: true,
+    data: {
+      organization_id: result.organizationId,
+      handle: result.handle,
+    },
+  });
 }

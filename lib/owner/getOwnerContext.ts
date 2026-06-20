@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { bootstrapOwner } from "@/lib/owner/bootstrapOwner";
 
 export async function getOwnerContext() {
   const supabase = await createSupabaseServerClient();
@@ -17,33 +18,16 @@ export async function getOwnerContext() {
     };
   }
 
-  const { data: boot, error: bootErr } = await supabase.rpc("bootstrap_owner");
-
-  if (bootErr) {
-    return {
-      user,
-      organizationId: null,
-      handle: null,
-      error: bootErr.message,
-    };
-  }
-
-  const row = Array.isArray(boot) ? boot[0] : boot;
-  const organizationId = (row?.organization_id as string | null) ?? null;
-
-  if (!organizationId) {
-    return {
-      user,
-      organizationId: null,
-      handle: null,
-      error: "초기 설정 정보를 만들지 못했습니다.",
-    };
-  }
+  const { organizationId, handle, error } = await bootstrapOwner(
+    supabase,
+    { id: user.id, email: user.email },
+    "getOwnerContext"
+  );
 
   return {
     user,
     organizationId,
-    handle: (row?.handle as string | null) ?? null,
-    error: null,
+    handle,
+    error,
   };
 }
