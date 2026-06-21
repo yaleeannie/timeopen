@@ -54,6 +54,13 @@ const STEP_COPY = [
   },
 ];
 
+const INTRO_STEPS = [
+  "매장 정보",
+  "서비스 설정",
+  "영업시간 설정",
+  "예약 링크 만들기",
+];
+
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "저장 중 오류가 발생했습니다.";
 }
@@ -82,6 +89,7 @@ export default function OnboardingFlow({
   initialAvailability,
 }: Props) {
   const router = useRouter();
+  const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -118,6 +126,12 @@ export default function OnboardingFlow({
 
   function skipStep() {
     moveTo(Math.min(step + 1, 3));
+  }
+
+  function goBack() {
+    if (step > 0) {
+      moveTo(step - 1);
+    }
   }
 
   function toggleWeekday(value: number) {
@@ -216,6 +230,66 @@ export default function OnboardingFlow({
   const inputClass =
     "min-h-12 w-full rounded-2xl border border-[#dcecef] bg-white px-4 py-3 text-base text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-[#4fcbe6] focus:ring-4 focus:ring-cyan-50";
   const labelClass = "mb-2 block text-sm font-black text-gray-700";
+
+  if (!started) {
+    return (
+      <main className="min-h-screen bg-[#eef7f8] px-3 py-4 text-gray-950 sm:px-5 sm:py-8">
+        <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-[30px] bg-[#fbfdfd] shadow-[0_24px_70px_rgba(57,112,126,0.16)] sm:min-h-[760px] sm:rounded-[38px]">
+          <div className="px-5 pb-4 pt-6 sm:px-7 sm:pt-8">
+            <div className="text-sm font-black text-[#1aa9c7]">TimeOpen 시작하기</div>
+          </div>
+
+          <section className="flex flex-1 flex-col px-5 pb-5 sm:px-7 sm:pb-7">
+            <header className="pb-6 pt-5">
+              <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-[#5bd8f2] to-[#24b8df] text-2xl font-black text-white shadow-[0_14px_30px_rgba(40,185,220,0.24)]">
+                T
+              </div>
+              <h1 className="mt-6 text-3xl font-black leading-tight tracking-[-0.045em]">
+                예약 링크를 만들
+                <br />
+                준비를 해볼까요?
+              </h1>
+              <p className="mt-3 text-sm font-medium leading-6 text-gray-500">
+                매장 정보, 서비스, 영업시간만 설정하면 고객이 로그인 없이 예약할 수
+                있어요.
+              </p>
+            </header>
+
+            <ol className="grid gap-3 rounded-[28px] border border-[#e1eef0] bg-white p-4 shadow-[0_14px_34px_rgba(70,126,139,0.08)]">
+              {INTRO_STEPS.map((title, index) => (
+                <li
+                  key={title}
+                  className="flex min-h-14 items-center gap-3 rounded-2xl bg-[#f7fbfc] px-4"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#e6f8fb] text-sm font-black text-[#168ca8]">
+                    {index + 1}
+                  </span>
+                  <span className="text-sm font-black text-gray-800">{title}</span>
+                </li>
+              ))}
+            </ol>
+
+            <div className="mt-auto pt-7">
+              <button
+                type="button"
+                onClick={() => setStarted(true)}
+                className="min-h-14 w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-4 text-base font-black text-white shadow-[0_14px_28px_rgba(14,165,233,0.22)]"
+              >
+                시작하기
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/owner")}
+                className="mt-2 min-h-11 w-full rounded-xl px-4 text-sm font-bold text-gray-400"
+              >
+                건너뛰고 대시보드로
+              </button>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#eef7f8] px-3 py-4 text-gray-950 sm:px-5 sm:py-8">
@@ -431,34 +505,38 @@ export default function OnboardingFlow({
 
           <div className="mt-auto pt-6">
             {step < 3 ? (
-              <div className="grid grid-cols-[0.8fr_1.2fr] gap-3">
+              <div>
+                <div className={`grid gap-3 ${step > 0 ? "grid-cols-[0.8fr_1.2fr]" : ""}`}>
+                  {step > 0 ? (
+                    <button
+                      type="button"
+                      onClick={goBack}
+                      disabled={saving}
+                      className="min-h-14 rounded-2xl border border-[#dcecef] bg-white px-4 text-sm font-black text-gray-500 disabled:opacity-50"
+                    >
+                      이전
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={saveCurrentStep}
+                    disabled={saving}
+                    className="min-h-14 rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-4 text-base font-black text-white shadow-[0_14px_28px_rgba(14,165,233,0.22)] disabled:opacity-50"
+                  >
+                    {saving ? "저장 중..." : "다음"}
+                  </button>
+                </div>
                 <button
                   type="button"
                   onClick={skipStep}
                   disabled={saving}
-                  className="min-h-14 rounded-2xl border border-[#dcecef] bg-white px-4 text-sm font-black text-gray-500 disabled:opacity-50"
+                  className="mt-2 min-h-10 w-full rounded-xl px-4 text-sm font-bold text-gray-400 disabled:opacity-50"
                 >
-                  건너뛰기
-                </button>
-                <button
-                  type="button"
-                  onClick={saveCurrentStep}
-                  disabled={saving}
-                  className="min-h-14 rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-4 text-base font-black text-white shadow-[0_14px_28px_rgba(14,165,233,0.22)] disabled:opacity-50"
-                >
-                  {saving ? "저장 중..." : "다음"}
+                  이 단계 건너뛰기
                 </button>
               </div>
             ) : (
               <div className="grid gap-3">
-                <button
-                  type="button"
-                  onClick={() => finish("preview")}
-                  disabled={saving}
-                  className="min-h-14 rounded-2xl border border-[#bfe7ed] bg-[#effbfc] px-4 text-base font-black text-[#168ca8] disabled:opacity-50"
-                >
-                  URL 확인하기
-                </button>
                 <button
                   type="button"
                   onClick={() => finish("dashboard")}
@@ -467,6 +545,24 @@ export default function OnboardingFlow({
                 >
                   {saving ? "저장 중..." : "대시보드로 가기"}
                 </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={goBack}
+                    disabled={saving}
+                    className="min-h-11 rounded-xl border border-[#dcecef] bg-white px-3 text-sm font-black text-gray-500 disabled:opacity-50"
+                  >
+                    이전
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => finish("preview")}
+                    disabled={saving}
+                    className="min-h-11 rounded-xl bg-[#effbfc] px-3 text-sm font-black text-[#168ca8] disabled:opacity-50"
+                  >
+                    URL 확인하기
+                  </button>
+                </div>
               </div>
             )}
           </div>
