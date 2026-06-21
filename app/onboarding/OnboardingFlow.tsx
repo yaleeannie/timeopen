@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import TimeSelect from "@/components/TimeSelect";
 import { getBookingUrl } from "@/lib/siteUrl";
 
 type InitialService = {
@@ -560,7 +561,7 @@ export default function OnboardingFlow({
               <div className="grid gap-6">
                 <div>
                   <div className={labelClass}>운영 요일</div>
-                  <div className="grid grid-cols-7 gap-1.5">
+                  <div className="flex flex-wrap gap-1.5">
                     {WEEKDAYS.map(({ value, label }) => {
                       const selected = selectedWeekdays.includes(value);
                       return (
@@ -569,10 +570,10 @@ export default function OnboardingFlow({
                           type="button"
                           aria-pressed={selected}
                           onClick={() => toggleWeekday(value)}
-                          className={`aspect-square min-h-10 rounded-xl text-sm font-black transition ${
+                          className={`min-h-9 min-w-9 rounded-full border px-2.5 text-sm font-black transition ${
                             selected
-                              ? "bg-[#31bfdc] text-white shadow-[0_8px_18px_rgba(49,191,220,0.24)]"
-                              : "bg-[#f1f6f7] text-gray-500"
+                              ? "border-[#31bfdc] bg-[#31bfdc] text-white"
+                              : "border-[#dcecef] bg-white text-gray-500"
                           }`}
                         >
                           {label}
@@ -589,11 +590,11 @@ export default function OnboardingFlow({
                       <span className="mb-1.5 block text-xs font-bold text-gray-500">
                         시작 시간
                       </span>
-                      <input
-                        type="time"
+                      <TimeSelect
                         value={startTime}
-                        onChange={(event) => setStartTime(event.target.value)}
-                        className={inputClass}
+                        onChange={setStartTime}
+                        placeholder="시작 시간"
+                        aria-label="영업시간 시작 시간"
                       />
                     </label>
                     <span className="pb-3 text-sm font-black text-gray-400">~</span>
@@ -601,11 +602,11 @@ export default function OnboardingFlow({
                       <span className="mb-1.5 block text-xs font-bold text-gray-500">
                         종료 시간
                       </span>
-                      <input
-                        type="time"
+                      <TimeSelect
                         value={endTime}
-                        onChange={(event) => setEndTime(event.target.value)}
-                        className={inputClass}
+                        onChange={setEndTime}
+                        placeholder="종료 시간"
+                        aria-label="영업시간 종료 시간"
                       />
                     </label>
                   </div>
@@ -618,11 +619,12 @@ export default function OnboardingFlow({
                       <span className="mb-1.5 block text-xs font-bold text-gray-500">
                         시작 시간
                       </span>
-                      <input
-                        type="time"
+                      <TimeSelect
                         value={breakStartTime}
-                        onChange={(event) => setBreakStartTime(event.target.value)}
-                        className={inputClass}
+                        onChange={setBreakStartTime}
+                        placeholder="시작 시간"
+                        allowEmpty
+                        aria-label="쉬는 시간 시작 시간"
                       />
                     </label>
                     <span className="pb-3 text-sm font-black text-gray-400">~</span>
@@ -630,11 +632,12 @@ export default function OnboardingFlow({
                       <span className="mb-1.5 block text-xs font-bold text-gray-500">
                         종료 시간
                       </span>
-                      <input
-                        type="time"
+                      <TimeSelect
                         value={breakEndTime}
-                        onChange={(event) => setBreakEndTime(event.target.value)}
-                        className={inputClass}
+                        onChange={setBreakEndTime}
+                        placeholder="종료 시간"
+                        allowEmpty
+                        aria-label="쉬는 시간 종료 시간"
                       />
                     </label>
                   </div>

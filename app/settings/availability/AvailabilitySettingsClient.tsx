@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import TimeSelect from "@/components/TimeSelect";
 import { fetchAvailabilityFromDb } from "@/features/availability/fetchAvailabilityFromDb";
 import { weeklyScheduleToFormState } from "@/features/availability/weeklyScheduleToFormState";
 import { WEEKDAYS, type AvailabilityFormState, type WeekdayKey } from "@/features/availability/types";
@@ -47,24 +48,6 @@ function validateDay(day: AvailabilityFormState[WeekdayKey], label: string): str
   return null;
 }
 
-function TimeField({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <input
-      type="time"
-      value={value}
-      step={600}
-      onChange={(event) => onChange(event.target.value)}
-      className="min-h-11 w-full min-w-0 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base font-semibold text-gray-900 outline-none transition focus:border-[#55d4f0] focus:ring-2 focus:ring-cyan-100"
-    />
-  );
-}
-
 function TimeRangeFields({
   title,
   optional,
@@ -89,12 +72,24 @@ function TimeRangeFields({
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <label className="min-w-0">
           <span className="mb-1.5 block text-xs font-bold text-gray-500">시작 시간</span>
-          <TimeField value={start} onChange={onStartChange} />
+          <TimeSelect
+            value={start}
+            onChange={onStartChange}
+            placeholder="시작 시간"
+            allowEmpty={optional}
+            aria-label={`${title} 시작 시간`}
+          />
         </label>
         <span className="mt-5 text-sm font-black text-gray-300">~</span>
         <label className="min-w-0">
           <span className="mb-1.5 block text-xs font-bold text-gray-500">종료 시간</span>
-          <TimeField value={end} onChange={onEndChange} />
+          <TimeSelect
+            value={end}
+            onChange={onEndChange}
+            placeholder="종료 시간"
+            allowEmpty={optional}
+            aria-label={`${title} 종료 시간`}
+          />
         </label>
       </div>
     </div>
@@ -281,25 +276,25 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
               </span>
               <div className="text-sm font-black text-gray-800">운영 요일 선택</div>
             </div>
-            <div className="flex flex-wrap gap-2">
-            {WEEKDAYS.map(({ key, label }) => {
-              const selected = quickWeekdays.includes(key);
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => toggleQuickWeekday(key)}
-                  className={`min-h-10 min-w-11 rounded-full border px-3.5 text-sm font-black transition ${
-                    selected
-                      ? "border-[#31bfdc] bg-[#31bfdc] text-white shadow-[0_7px_16px_rgba(49,191,220,0.22)]"
-                      : "border-[#dcecef] bg-white text-gray-500 hover:border-[#9bdde7]"
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
+            <div className="flex flex-wrap gap-1.5">
+              {WEEKDAYS.map(({ key, label }) => {
+                const selected = quickWeekdays.includes(key);
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => toggleQuickWeekday(key)}
+                    className={`min-h-9 min-w-9 rounded-full border px-2.5 text-sm font-black transition ${
+                      selected
+                        ? "border-[#31bfdc] bg-[#31bfdc] text-white"
+                        : "border-[#dcecef] bg-white text-gray-500 hover:border-[#9bdde7]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
