@@ -45,17 +45,7 @@ export async function POST(req: Request) {
     break_end: string | null;
   }>;
 
-  // 기존 영업시간 삭제
-  const { error: deleteErr } = await supabase
-    .from("organization_availability")
-    .delete()
-    .eq("organization_id", organizationId);
-
-  if (deleteErr) {
-    return NextResponse.json({ error: deleteErr.message }, { status: 400 });
-  }
-
-  // 새 영업시간 저장
+  // 모든 요일을 한 번에 upsert해 저장 실패 시 기존 영업시간이 먼저 삭제되지 않게 한다.
   if (rows.length > 0) {
     const payload = rows.map((r) => ({
       organization_id: organizationId,
@@ -69,7 +59,7 @@ export async function POST(req: Request) {
 
     const { error: insertErr } = await supabase
       .from("organization_availability")
-      .insert(payload);
+      .upsert(payload, { onConflict: "organization_id,weekday" });
 
     if (insertErr) {
       return NextResponse.json({ error: insertErr.message }, { status: 400 });

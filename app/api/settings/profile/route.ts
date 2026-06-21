@@ -19,19 +19,34 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => null);
     const name = typeof body?.name === "string" ? body.name.trim() : "";
+    const hasLocationText = typeof body?.location_text === "string";
+    const hasNoticeText = typeof body?.notice_text === "string";
 
     if (!name) {
       return NextResponse.json(
-        { error: "서비스명을 입력해주세요." },
+        { error: "매장 이름을 입력해주세요." },
         { status: 400 }
       );
     }
 
     const supabase = await createSupabaseServerClient();
+    const updates: {
+      name: string;
+      location_text?: string | null;
+      notice_text?: string | null;
+    } = { name };
+
+    if (hasLocationText) {
+      updates.location_text = body.location_text.trim() || null;
+    }
+
+    if (hasNoticeText) {
+      updates.notice_text = body.notice_text.trim() || null;
+    }
 
     const { error: updateErr } = await supabase
       .from("organizations")
-      .update({ name })
+      .update(updates)
       .eq("id", organizationId);
 
     if (updateErr) {
