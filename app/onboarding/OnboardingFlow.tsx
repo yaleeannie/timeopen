@@ -1,19 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getBookingUrl } from "@/lib/siteUrl";
 
 type InitialService = {
+  id: string;
   name: string;
   durationMin: number;
   price: number | null;
-} | null;
+};
 
-type InitialAvailability = {
-  weekdays: number[];
+type InitialBreak = {
   startTime: string;
   endTime: string;
+};
+
+type InitialAvailability = {
+  weekday: number;
+  isOpen: boolean;
+  startTime: string;
+  endTime: string;
+  breaks: InitialBreak[];
 };
 
 type Props = {
@@ -21,8 +29,30 @@ type Props = {
   initialLocation: string;
   initialNotice: string;
   initialHandle: string;
-  initialService: InitialService;
-  initialAvailability: InitialAvailability;
+  initialServices: InitialService[];
+  initialAvailability: InitialAvailability[];
+};
+
+type ServiceInput = {
+  key: string;
+  id: string | null;
+  name: string;
+  price: string;
+  durationMin: string;
+};
+
+type BreakInput = {
+  key: string;
+  startTime: string;
+  endTime: string;
+};
+
+type AvailabilityDayInput = {
+  weekday: number;
+  isOpen: boolean;
+  startTime: string;
+  endTime: string;
+  breaks: BreakInput[];
 };
 
 const WEEKDAYS = [
@@ -41,7 +71,7 @@ const STEP_COPY = [
     description: "고객에게 보여질 매장 이름과 안내를 설정해요.",
   },
   {
-    title: "첫 서비스를 등록해볼까요?",
+    title: "서비스를 등록해볼까요?",
     description: "고객이 예약할 서비스와 가격, 소요 시간을 입력해요.",
   },
   {
@@ -60,6 +90,41 @@ const INTRO_STEPS = [
   "영업시간 설정",
   "예약 링크 만들기",
 ];
+
+function createEmptyService(key: string): ServiceInput {
+  return {
+    key,
+    id: null,
+    name: "",
+    price: "",
+    durationMin: "",
+  };
+}
+
+function createInitialAvailability(
+  initialAvailability: InitialAvailability[]
+): AvailabilityDayInput[] {
+  const rowsByWeekday = new Map(
+    initialAvailability.map((availability) => [availability.weekday, availability])
+  );
+  const hasSavedRows = initialAvailability.length > 0;
+
+  return WEEKDAYS.map(({ value }) => {
+    const saved = rowsByWeekday.get(value);
+    return {
+      weekday: value,
+      isOpen: saved?.isOpen ?? (!hasSavedRows && value >= 1 && value <= 5),
+      startTime: saved?.startTime ?? "09:00",
+      endTime: saved?.endTime ?? "18:00",
+      breaks:
+        saved?.breaks.map((item, index) => ({
+          key: `break-${value}-${index}`,
+          startTime: item.startTime,
+          endTime: item.endTime,
+        })) ?? [],
+    };
+  });
+}
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "저장 중 오류가 발생했습니다.";
@@ -85,10 +150,12 @@ export default function OnboardingFlow({
   initialLocation,
   initialNotice,
   initialHandle,
-  initialService,
+  initialServices,
   initialAvailability,
 }: Props) {
   const router = useRouter();
+  const nextServiceKey = useRef(initialServices.length + 1);
+  const nextBreakKey = useRef(1);
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -98,19 +165,20 @@ export default function OnboardingFlow({
   const [locationText, setLocationText] = useState(initialLocation);
   const [noticeText, setNoticeText] = useState(initialNotice);
 
-  const [serviceName, setServiceName] = useState(initialService?.name ?? "");
-  const [price, setPrice] = useState(
-    initialService?.price == null ? "" : String(initialService.price)
+  const [services, setServices] = useState<ServiceInput[]>(
+    initialServices.length > 0
+      ? initialServices.map((service, index) => ({
+          key: `service-${index}`,
+          id: service.id,
+          name: service.name,
+          price: service.price == null ? "" : String(service.price),
+          durationMin: service.durationMin ? String(service.durationMin) : "",
+        }))
+      : [createEmptyService("service-0")]
   );
-  const [durationMin, setDurationMin] = useState(
-    initialService?.durationMin ? String(initialService.durationMin) : ""
+  const [availabilityDays, setAvailabilityDays] = useState<AvailabilityDayInput[]>(
+    createInitialAvailability(initialAvailability)
   );
-
-  const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>(
-    initialAvailability.weekdays
-  );
-  const [startTime, setStartTime] = useState(initialAvailability.startTime);
-  const [endTime, setEndTime] = useState(initialAvailability.endTime);
   const [handle, setHandle] = useState(initialHandle);
 
   const bookingUrl = useMemo(
@@ -134,11 +202,72 @@ export default function OnboardingFlow({
     }
   }
 
-  function toggleWeekday(value: number) {
-    setSelectedWeekdays((current) =>
-      current.includes(value)
-        ? current.filter((weekday) => weekday !== value)
-        : [...current, value]
+  function patchService(key: string, patch: Partial<ServiceInput>) {
+    setServices((current) =>
+      current.map((service) => (service.key === key ? { ...service, ...patch } : service))
+    );
+  }
+
+  function addService() {
+    const key = `service-new-${nextServiceKey.current}`;
+    nextServiceKey.current += 1;
+    setServices((current) => [...current, createEmptyService(key)]);
+  }
+
+  function removeService(key: string) {
+    setServices((current) => current.filter((service) => service.key !== key));
+  }
+
+  function patchAvailabilityDay(
+    weekday: number,
+    patch: Partial<AvailabilityDayInput>
+  ) {
+    setAvailabilityDays((current) =>
+      current.map((day) => (day.weekday === weekday ? { ...day, ...patch } : day))
+    );
+  }
+
+  function addBreak(weekday: number) {
+    const key = `break-new-${nextBreakKey.current}`;
+    nextBreakKey.current += 1;
+    setAvailabilityDays((current) =>
+      current.map((day) =>
+        day.weekday === weekday
+          ? {
+              ...day,
+              breaks: [...day.breaks, { key, startTime: "13:00", endTime: "14:00" }],
+            }
+          : day
+      )
+    );
+  }
+
+  function patchBreak(
+    weekday: number,
+    key: string,
+    patch: Partial<BreakInput>
+  ) {
+    setAvailabilityDays((current) =>
+      current.map((day) =>
+        day.weekday === weekday
+          ? {
+              ...day,
+              breaks: day.breaks.map((item) =>
+                item.key === key ? { ...item, ...patch } : item
+              ),
+            }
+          : day
+      )
+    );
+  }
+
+  function removeBreak(weekday: number, key: string) {
+    setAvailabilityDays((current) =>
+      current.map((day) =>
+        day.weekday === weekday
+          ? { ...day, breaks: day.breaks.filter((item) => item.key !== key) }
+          : day
+      )
     );
   }
 
@@ -156,32 +285,89 @@ export default function OnboardingFlow({
       }
 
       if (step === 1) {
-        await postJson("/api/onboarding/service", {
-          name: serviceName,
-          price,
-          durationMin,
+        const nonEmptyServices = services.filter(
+          (service) =>
+            service.name.trim() || service.price.trim() || service.durationMin.trim()
+        );
+
+        if (nonEmptyServices.length === 0) {
+          throw new Error("서비스를 하나 이상 입력하거나 이 단계를 건너뛰어 주세요.");
+        }
+
+        const invalidServiceIndex = nonEmptyServices.findIndex(
+          (service) =>
+            !service.name.trim() ||
+            !service.price.trim() ||
+            !service.durationMin.trim()
+        );
+        if (invalidServiceIndex >= 0) {
+          throw new Error(
+            `${invalidServiceIndex + 1}번째 서비스의 이름, 가격, 소요 시간을 모두 입력해주세요.`
+          );
+        }
+
+        const normalizedNames = nonEmptyServices.map((service) =>
+          service.name.trim().toLocaleLowerCase()
+        );
+        if (new Set(normalizedNames).size !== normalizedNames.length) {
+          throw new Error("같은 이름의 서비스를 중복해서 등록할 수 없습니다.");
+        }
+
+        const result = await postJson("/api/onboarding/service", {
+          services: nonEmptyServices.map((service) => ({
+            id: service.id,
+            name: service.name,
+            price: service.price,
+            durationMin: service.durationMin,
+          })),
         });
+
+        setServices(
+          nonEmptyServices.map((service, index) => ({
+            ...service,
+            id:
+              typeof result?.data?.[index]?.id === "string"
+                ? result.data[index].id
+                : service.id,
+          }))
+        );
       }
 
       if (step === 2) {
-        if (selectedWeekdays.length === 0) {
+        const openDays = availabilityDays.filter((day) => day.isOpen);
+        if (openDays.length === 0) {
           throw new Error("운영 요일을 한 개 이상 선택해주세요.");
         }
 
-        if (!startTime || !endTime || startTime >= endTime) {
-          throw new Error("시작 시간은 종료 시간보다 빨라야 합니다.");
+        for (const day of openDays) {
+          const label = WEEKDAYS.find(({ value }) => value === day.weekday)?.label ?? "";
+          if (!day.startTime || !day.endTime || day.startTime >= day.endTime) {
+            throw new Error(`${label}요일의 시작·종료 시간을 확인해주세요.`);
+          }
+
+          for (const breakTime of day.breaks) {
+            if (
+              !breakTime.startTime ||
+              !breakTime.endTime ||
+              breakTime.startTime >= breakTime.endTime ||
+              breakTime.startTime < day.startTime ||
+              breakTime.endTime > day.endTime
+            ) {
+              throw new Error(`${label}요일의 쉬는 시간을 영업시간 안으로 설정해주세요.`);
+            }
+          }
         }
 
         await postJson("/api/settings/availability", {
-          rows: WEEKDAYS.map(({ value }) => {
-            const isOpen = selectedWeekdays.includes(value);
+          rows: availabilityDays.map((day) => {
+            const firstBreak = day.breaks[0];
             return {
-              weekday: value,
-              is_open: isOpen,
-              work_start: isOpen ? startTime : null,
-              work_end: isOpen ? endTime : null,
-              break_start: null,
-              break_end: null,
+              weekday: day.weekday,
+              is_open: day.isOpen,
+              work_start: day.isOpen ? day.startTime : null,
+              work_end: day.isOpen ? day.endTime : null,
+              break_start: day.isOpen && firstBreak ? firstBreak.startTime : null,
+              break_end: day.isOpen && firstBreak ? firstBreak.endTime : null,
             };
           }),
         });
@@ -361,104 +547,262 @@ export default function OnboardingFlow({
 
             {step === 1 ? (
               <div className="grid gap-5">
-                {initialService ? (
+                {initialServices.length > 0 ? (
                   <div className="rounded-2xl bg-[#eefaf7] px-4 py-3 text-sm font-bold leading-5 text-[#23846d]">
-                    이미 등록된 첫 서비스를 불러왔어요. 저장하면 이 서비스를 수정합니다.
+                    등록된 서비스를 불러왔어요. 내용을 수정하거나 새 서비스를 추가할 수
+                    있어요.
                   </div>
                 ) : null}
-                <label>
-                  <span className={labelClass}>서비스명</span>
-                  <input
-                    value={serviceName}
-                    onChange={(event) => setServiceName(event.target.value)}
-                    placeholder="예: 커트"
-                    className={inputClass}
-                  />
-                </label>
-                <label>
-                  <span className={labelClass}>가격</span>
-                  <div className="relative">
-                    <input
-                      value={price}
-                      onChange={(event) => setPrice(event.target.value.replace(/[^0-9]/g, ""))}
-                      placeholder="30000"
-                      inputMode="numeric"
-                      className={`${inputClass} pr-12`}
-                    />
-                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">
-                      원
-                    </span>
-                  </div>
-                </label>
-                <label>
-                  <span className={labelClass}>소요 시간</span>
-                  <div className="relative">
-                    <input
-                      value={durationMin}
-                      onChange={(event) =>
-                        setDurationMin(event.target.value.replace(/[^0-9]/g, ""))
-                      }
-                      placeholder="30"
-                      inputMode="numeric"
-                      className={`${inputClass} pr-12`}
-                    />
-                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">
-                      분
-                    </span>
-                  </div>
-                </label>
+
+                <div className="grid gap-4">
+                  {services.map((service, index) => (
+                    <div
+                      key={service.key}
+                      className="rounded-[22px] border border-[#e1eef0] bg-[#fbfdfd] p-4"
+                    >
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <h2 className="text-base font-black text-gray-900">
+                          서비스 {index + 1}
+                        </h2>
+                        {services.length > 1 ? (
+                          <button
+                            type="button"
+                            onClick={() => removeService(service.key)}
+                            className="min-h-9 rounded-xl bg-red-50 px-3 text-xs font-black text-red-600"
+                          >
+                            삭제
+                          </button>
+                        ) : null}
+                      </div>
+
+                      <div className="grid gap-4">
+                        <label>
+                          <span className={labelClass}>서비스명</span>
+                          <input
+                            value={service.name}
+                            onChange={(event) =>
+                              patchService(service.key, { name: event.target.value })
+                            }
+                            placeholder="예: 커트"
+                            className={inputClass}
+                          />
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <label>
+                            <span className={labelClass}>가격</span>
+                            <div className="relative">
+                              <input
+                                value={service.price}
+                                onChange={(event) =>
+                                  patchService(service.key, {
+                                    price: event.target.value.replace(/[^0-9]/g, ""),
+                                  })
+                                }
+                                placeholder="30000"
+                                inputMode="numeric"
+                                className={`${inputClass} pr-9`}
+                              />
+                              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
+                                원
+                              </span>
+                            </div>
+                          </label>
+                          <label>
+                            <span className={labelClass}>소요 시간</span>
+                            <div className="relative">
+                              <input
+                                value={service.durationMin}
+                                onChange={(event) =>
+                                  patchService(service.key, {
+                                    durationMin: event.target.value.replace(/[^0-9]/g, ""),
+                                  })
+                                }
+                                placeholder="30"
+                                inputMode="numeric"
+                                className={`${inputClass} pr-9`}
+                              />
+                              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
+                                분
+                              </span>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addService}
+                  className="min-h-12 w-full rounded-2xl border border-dashed border-[#9bdde7] bg-[#f3fcfd] px-4 text-sm font-black text-[#168ca8]"
+                >
+                  + 서비스 추가
+                </button>
               </div>
             ) : null}
 
             {step === 2 ? (
-              <div className="grid gap-6">
-                <div>
-                  <span className={labelClass}>운영 요일</span>
-                  <div className="grid grid-cols-7 gap-1.5">
-                    {WEEKDAYS.map(({ value, label }) => {
-                      const selected = selectedWeekdays.includes(value);
-                      return (
-                        <button
-                          key={value}
-                          type="button"
-                          aria-pressed={selected}
-                          onClick={() => toggleWeekday(value)}
-                          className={`aspect-square min-h-10 rounded-xl text-sm font-black transition ${
-                            selected
-                              ? "bg-[#31bfdc] text-white shadow-[0_8px_18px_rgba(49,191,220,0.24)]"
-                              : "bg-[#f1f6f7] text-gray-500"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <label>
-                    <span className={labelClass}>시작 시간</span>
-                    <input
-                      type="time"
-                      value={startTime}
-                      onChange={(event) => setStartTime(event.target.value)}
-                      className={inputClass}
-                    />
-                  </label>
-                  <label>
-                    <span className={labelClass}>종료 시간</span>
-                    <input
-                      type="time"
-                      value={endTime}
-                      onChange={(event) => setEndTime(event.target.value)}
-                      className={inputClass}
-                    />
-                  </label>
-                </div>
-                <p className="rounded-2xl bg-[#f7fafb] px-4 py-3 text-sm font-medium leading-5 text-gray-500">
-                  선택한 모든 요일에 같은 운영 시간이 적용돼요. 세부 시간과 휴게시간은
-                  나중에 설정에서 바꿀 수 있어요.
+              <div className="grid gap-4">
+                <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold leading-5 text-amber-800">
+                  현재 저장 구조에서는 요일별 첫 번째 쉬는 시간만 저장돼요. 추가한 쉬는
+                  시간은 입력 중 비교할 수 있지만 저장에는 첫 항목만 반영됩니다.
                 </p>
+
+                {availabilityDays.map((day) => {
+                  const weekday = WEEKDAYS.find(({ value }) => value === day.weekday);
+                  return (
+                    <div
+                      key={day.weekday}
+                      className={`rounded-[22px] border p-4 ${
+                        day.isOpen
+                          ? "border-[#cdebf0] bg-[#fbfefe]"
+                          : "border-gray-100 bg-gray-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-lg font-black text-gray-900">
+                            {weekday?.label}요일
+                          </div>
+                          <div className="mt-0.5 text-xs font-bold text-gray-400">
+                            {day.isOpen ? "예약 가능한 날" : "쉬는 날"}
+                          </div>
+                        </div>
+                        <label className="flex min-h-10 items-center gap-2 rounded-xl bg-white px-3 text-sm font-black text-gray-700 shadow-sm">
+                          <input
+                            type="checkbox"
+                            checked={day.isOpen}
+                            onChange={(event) =>
+                              patchAvailabilityDay(day.weekday, {
+                                isOpen: event.target.checked,
+                              })
+                            }
+                            className="h-5 w-5 accent-[#31bfdc]"
+                          />
+                          영업함
+                        </label>
+                      </div>
+
+                      {day.isOpen ? (
+                        <div className="mt-5 grid gap-5">
+                          <div>
+                            <div className={labelClass}>영업시간</div>
+                            <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                              <label>
+                                <span className="mb-1.5 block text-xs font-bold text-gray-500">
+                                  시작 시간
+                                </span>
+                                <input
+                                  type="time"
+                                  value={day.startTime}
+                                  onChange={(event) =>
+                                    patchAvailabilityDay(day.weekday, {
+                                      startTime: event.target.value,
+                                    })
+                                  }
+                                  className={inputClass}
+                                />
+                              </label>
+                              <span className="pb-3 text-sm font-black text-gray-400">~</span>
+                              <label>
+                                <span className="mb-1.5 block text-xs font-bold text-gray-500">
+                                  종료 시간
+                                </span>
+                                <input
+                                  type="time"
+                                  value={day.endTime}
+                                  onChange={(event) =>
+                                    patchAvailabilityDay(day.weekday, {
+                                      endTime: event.target.value,
+                                    })
+                                  }
+                                  className={inputClass}
+                                />
+                              </label>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="mb-2 flex items-center justify-between gap-3">
+                              <div className="text-sm font-black text-gray-700">쉬는 시간</div>
+                              <button
+                                type="button"
+                                onClick={() => addBreak(day.weekday)}
+                                className="min-h-9 rounded-xl bg-[#eef9fb] px-3 text-xs font-black text-[#168ca8]"
+                              >
+                                + 쉬는 시간 추가
+                              </button>
+                            </div>
+
+                            {day.breaks.length > 0 ? (
+                              <div className="grid gap-3">
+                                {day.breaks.map((breakTime, index) => (
+                                  <div
+                                    key={breakTime.key}
+                                    className="rounded-2xl border border-[#e1eef0] bg-white p-3"
+                                  >
+                                    <div className="mb-2 flex items-center justify-between">
+                                      <span className="text-xs font-black text-gray-500">
+                                        쉬는 시간 {index + 1}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          removeBreak(day.weekday, breakTime.key)
+                                        }
+                                        className="text-xs font-black text-red-500"
+                                      >
+                                        삭제
+                                      </button>
+                                    </div>
+                                    <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                                      <label>
+                                        <span className="mb-1.5 block text-xs font-bold text-gray-500">
+                                          쉬는 시간 시작
+                                        </span>
+                                        <input
+                                          type="time"
+                                          value={breakTime.startTime}
+                                          onChange={(event) =>
+                                            patchBreak(day.weekday, breakTime.key, {
+                                              startTime: event.target.value,
+                                            })
+                                          }
+                                          className={inputClass}
+                                        />
+                                      </label>
+                                      <span className="pb-3 text-sm font-black text-gray-400">~</span>
+                                      <label>
+                                        <span className="mb-1.5 block text-xs font-bold text-gray-500">
+                                          쉬는 시간 종료
+                                        </span>
+                                        <input
+                                          type="time"
+                                          value={breakTime.endTime}
+                                          onChange={(event) =>
+                                            patchBreak(day.weekday, breakTime.key, {
+                                              endTime: event.target.value,
+                                            })
+                                          }
+                                          className={inputClass}
+                                        />
+                                      </label>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-gray-400">
+                                등록된 쉬는 시간이 없어요.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             ) : null}
 

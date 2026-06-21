@@ -163,6 +163,53 @@ export default async function OwnerPage() {
   const previewFullLink = finalHandle ? `${SITE_URL}/u/${finalHandle}` : "";
   const canLink = !!finalHandle && finalHandle !== "null";
 
+  const [serviceCountResult, openDayCountResult] = await Promise.all([
+    supabase
+      .from("services")
+      .select("*", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .eq("active", true),
+    supabase
+      .from("organization_availability")
+      .select("*", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .eq("is_open", true),
+  ]);
+  const activeServiceCount = serviceCountResult.error ? null : serviceCountResult.count;
+  const openDayCount = openDayCountResult.error ? null : openDayCountResult.count;
+
+  const incompleteSettings = [
+    activeServiceCount === 0
+      ? {
+          title: "서비스를 등록해 주세요",
+          href: "/settings/services",
+          action: "서비스 설정하기",
+        }
+      : null,
+    openDayCount === 0
+      ? {
+          title: "영업시간을 설정해 주세요",
+          href: "/settings/availability",
+          action: "영업시간 설정하기",
+        }
+      : null,
+    !canLink
+      ? {
+          title: "예약 링크를 만들어 주세요",
+          href: "/settings/profile",
+          action: "예약 링크 만들기",
+        }
+      : null,
+  ].filter(
+    (
+      item
+    ): item is {
+      title: string;
+      href: string;
+      action: string;
+    } => Boolean(item)
+  );
+
   const todayISO = getTodayISO();
 
   const { count: todayReservationCount } = await supabase
@@ -255,6 +302,41 @@ export default async function OwnerPage() {
               <LogoutButton />
             </div>
           </header>
+
+          {incompleteSettings.length > 0 ? (
+            <section
+              className="mb-7 rounded-[24px] border border-[#f3dfaa] bg-gradient-to-br from-[#fffaf0] to-white p-5 shadow-[0_12px_30px_rgba(180,130,40,0.08)]"
+              aria-labelledby="setup-required"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff0c7] text-lg font-black text-[#a96d12]">
+                !
+              </div>
+              <h2
+                id="setup-required"
+                className="mt-4 text-xl font-black tracking-[-0.03em] text-gray-950"
+              >
+                예약을 받기 전에 설정이 필요해요
+              </h2>
+              <p className="mt-2 text-sm font-medium leading-6 text-gray-500">
+                서비스, 영업시간, 예약 링크를 설정하면 고객이 바로 예약할 수 있어요.
+              </p>
+
+              <div className="mt-4 grid gap-2">
+                {incompleteSettings.map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className="flex min-h-12 items-center justify-between gap-3 rounded-2xl border border-[#f0e4c8] bg-white px-4 transition hover:border-[#e6cb8a] hover:bg-[#fffdf8]"
+                  >
+                    <span className="text-sm font-black text-gray-800">{item.title}</span>
+                    <span className="shrink-0 text-xs font-black text-[#b7781f]">
+                      {item.action} →
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <section className="mb-7" aria-label="오늘 요약">
             <SummaryPanel

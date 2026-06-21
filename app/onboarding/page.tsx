@@ -59,24 +59,20 @@ export default async function OnboardingPage() {
       .maybeSingle(),
     supabase
       .from("services")
-      .select("name, duration_min, price")
+      .select("id, name, duration_min, price")
       .eq("organization_id", organizationId)
       .eq("active", true)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle(),
+      .order("created_at", { ascending: true }),
     supabase
       .from("organization_availability")
-      .select("weekday, is_open, work_start, work_end")
+      .select("weekday, is_open, work_start, work_end, break_start, break_end")
       .eq("organization_id", organizationId)
       .order("weekday", { ascending: true }),
   ]);
 
   const organization = organizationResult.data;
-  const service = serviceResult.data;
+  const services = serviceResult.data ?? [];
   const availability = availabilityResult.data ?? [];
-  const openRows = availability.filter((row) => row.is_open);
-  const firstOpenRow = openRows[0];
 
   return (
     <OnboardingFlow
@@ -84,23 +80,27 @@ export default async function OnboardingPage() {
       initialLocation={(organization?.location_text as string | null) ?? ""}
       initialNotice={(organization?.notice_text as string | null) ?? ""}
       initialHandle={(organization?.handle as string | null) ?? handle ?? ""}
-      initialService={
-        service
-          ? {
-              name: String(service.name ?? ""),
-              durationMin: Number(service.duration_min ?? 0),
-              price: service.price == null ? null : Number(service.price),
-            }
-          : null
-      }
-      initialAvailability={{
-        weekdays:
-          availability.length > 0
-            ? openRows.map((row) => Number(row.weekday))
-            : [1, 2, 3, 4, 5],
-        startTime: firstOpenRow?.work_start?.slice(0, 5) ?? "09:00",
-        endTime: firstOpenRow?.work_end?.slice(0, 5) ?? "18:00",
-      }}
+      initialServices={services.map((service) => ({
+        id: String(service.id),
+        name: String(service.name ?? ""),
+        durationMin: Number(service.duration_min ?? 0),
+        price: service.price == null ? null : Number(service.price),
+      }))}
+      initialAvailability={availability.map((row) => ({
+        weekday: Number(row.weekday),
+        isOpen: Boolean(row.is_open),
+        startTime: row.work_start?.slice(0, 5) ?? "09:00",
+        endTime: row.work_end?.slice(0, 5) ?? "18:00",
+        breaks:
+          row.break_start && row.break_end
+            ? [
+                {
+                  startTime: row.break_start.slice(0, 5),
+                  endTime: row.break_end.slice(0, 5),
+                },
+              ]
+            : [],
+      }))}
     />
   );
 }
