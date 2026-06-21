@@ -236,43 +236,33 @@ function toISODate(date: Date) {
   ).padStart(2, "0")}`;
 }
 
-function addDays(dateISO: string, days: number) {
-  const date = parseISODate(dateISO);
-  if (!date) return dateISO;
+function getMonthCalendar(dateISO: string) {
+  const selected = parseISODate(dateISO);
+  if (!selected) return null;
 
-  date.setUTCDate(date.getUTCDate() + days);
-  return toISODate(date);
-}
+  const year = selected.getUTCFullYear();
+  const month = selected.getUTCMonth();
+  const firstDay = new Date(Date.UTC(year, month, 1));
+  const lastDay = new Date(Date.UTC(year, month + 1, 0));
+  const leadingEmptyDays = (firstDay.getUTCDay() + 6) % 7;
+  const dates: Array<string | null> = Array.from(
+    { length: leadingEmptyDays },
+    () => null
+  );
 
-function startOfWeek(dateISO: string) {
-  const date = parseISODate(dateISO);
-  if (!date) return dateISO;
+  for (let day = 1; day <= lastDay.getUTCDate(); day += 1) {
+    dates.push(toISODate(new Date(Date.UTC(year, month, day))));
+  }
 
-  const mondayOffset = (date.getUTCDay() + 6) % 7;
-  date.setUTCDate(date.getUTCDate() - mondayOffset);
-  return toISODate(date);
-}
-
-function formatCalendarMonth(startISO: string, endISO: string) {
-  const start = parseISODate(startISO);
-  const end = parseISODate(endISO);
-  if (!start || !end) return "";
-
-  const startLabel = `${start.getUTCFullYear()}년 ${start.getUTCMonth() + 1}월`;
-  const endLabel = `${end.getUTCFullYear()}년 ${end.getUTCMonth() + 1}월`;
-  return startLabel === endLabel ? startLabel : `${startLabel} – ${endLabel}`;
-}
-
-function formatCalendarDay(dateISO: string) {
-  const date = parseISODate(dateISO);
-  if (!date) return { weekday: "-", day: "-" };
+  while (dates.length % 7 !== 0) {
+    dates.push(null);
+  }
 
   return {
-    weekday: new Intl.DateTimeFormat("ko-KR", {
-      timeZone: "UTC",
-      weekday: "short",
-    }).format(date),
-    day: String(date.getUTCDate()),
+    label: `${year}년 ${month + 1}월`,
+    dates,
+    previousMonth: toISODate(new Date(Date.UTC(year, month - 1, 1))),
+    nextMonth: toISODate(new Date(Date.UTC(year, month + 1, 1))),
   };
 }
 
@@ -408,13 +398,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const todayISO = getSeoulTodayISO();
   const requestedDate = searchParams?.date ?? "";
   const selectedDate = parseISODate(requestedDate) ? requestedDate : todayISO;
-  const calendarStart = startOfWeek(selectedDate);
-  const calendarDates = Array.from({ length: 14 }, (_, index) =>
-    addDays(calendarStart, index)
-  );
-  const calendarEnd = calendarDates[calendarDates.length - 1];
-  const previousWeek = addDays(calendarStart, -7);
-  const nextWeek = addDays(calendarStart, 7);
+  const calendar = getMonthCalendar(selectedDate);
   const reservationCountByDate = reservationRows.reduce((counts, reservation) => {
     if (reservation.date !== "-") {
       counts.set(reservation.date, (counts.get(reservation.date) ?? 0) + 1);
@@ -446,8 +430,8 @@ export default async function ReservationsPage({ searchParams }: Props) {
         >
           <div className="mb-3 flex items-center justify-between gap-3">
             <a
-              href={`/reservations?date=${previousWeek}`}
-              aria-label="이전 주"
+              href={`/reservations?date=${calendar?.previousMonth ?? selectedDate}`}
+              aria-label="이전 달"
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#dceef2] bg-white text-xl font-black text-[#5594a3]"
             >
               ‹
@@ -455,7 +439,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
 
             <div className="min-w-0 text-center">
               <div className="truncate text-base font-black">
-                {formatCalendarMonth(calendarStart, calendarEnd)}
+                {calendar?.label ?? ""}
               </div>
               {selectedDate !== todayISO ? (
                 <a
@@ -470,17 +454,32 @@ export default async function ReservationsPage({ searchParams }: Props) {
             </div>
 
             <a
-              href={`/reservations?date=${nextWeek}`}
-              aria-label="다음 주"
+              href={`/reservations?date=${calendar?.nextMonth ?? selectedDate}`}
+              aria-label="다음 달"
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#dceef2] bg-white text-xl font-black text-[#5594a3]"
             >
               ›
             </a>
           </div>
 
+          <div className="mb-1 grid grid-cols-7 gap-1" aria-hidden="true">
+            {["월", "화", "수", "목", "금", "토", "일"].map((weekday) => (
+              <div
+                key={weekday}
+                className="py-1 text-center text-[11px] font-black text-gray-400"
+              >
+                {weekday}
+              </div>
+            ))}
+          </div>
+
           <div className="grid grid-cols-7 gap-1">
-            {calendarDates.map((dateISO) => {
-              const { weekday, day } = formatCalendarDay(dateISO);
+            {(calendar?.dates ?? []).map((dateISO, index) => {
+              if (!dateISO) {
+                return <div key={`empty-${index}`} className="min-h-[62px]" />;
+              }
+
+              const date = parseISODate(dateISO);
               const count = reservationCountByDate.get(dateISO) ?? 0;
               const selected = dateISO === selectedDate;
               const today = dateISO === todayISO;
@@ -490,7 +489,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
                   key={dateISO}
                   href={`/reservations?date=${dateISO}`}
                   aria-current={selected ? "date" : undefined}
-                  className={`min-w-0 rounded-xl border px-0.5 py-2 text-center ${
+                  className={`flex min-h-[62px] min-w-0 flex-col items-center rounded-xl border px-0.5 py-1.5 text-center ${
                     selected
                       ? "border-[#28b9dc] bg-[#28b9dc] text-white"
                       : today
@@ -498,13 +497,24 @@ export default async function ReservationsPage({ searchParams }: Props) {
                         : "border-transparent bg-white text-gray-700"
                   }`}
                 >
-                  <div className={`text-[10px] font-bold ${selected ? "text-cyan-50" : "text-gray-400"}`}>
-                    {weekday}
+                  <div
+                    className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-black ${
+                      today && !selected ? "bg-[#dff7fb] text-[#168ca8]" : ""
+                    }`}
+                  >
+                    {date?.getUTCDate()}
                   </div>
-                  <div className="mt-0.5 text-sm font-black">{day}</div>
-                  <div className={`mt-0.5 min-h-4 text-[10px] font-black ${selected ? "text-white" : "text-[#28b9dc]"}`}>
-                    {count > 0 ? `${count}건` : "·"}
-                  </div>
+                  {count > 0 ? (
+                    <div
+                      className={`mt-1 rounded-full px-1.5 py-0.5 text-[9px] font-black ${
+                        selected
+                          ? "bg-white/20 text-white"
+                          : "bg-[#e8f9fd] text-[#168ca8]"
+                      }`}
+                    >
+                      {count}건
+                    </div>
+                  ) : null}
                 </a>
               );
             })}
@@ -522,7 +532,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
 
         {selectedReservations.length === 0 ? (
           <div className="rounded-[24px] border border-[#e5f3f6] bg-white px-5 py-10 text-center shadow-sm">
-            <div className="text-base font-black">이 날짜에는 예약이 없습니다</div>
+            <div className="text-base font-black">이 날짜에는 예약이 없어요.</div>
             <div className="mt-2 text-sm leading-6 text-gray-500">
               캘린더에서 다른 날짜를 선택해 예약 일정을 확인해보세요.
             </div>
