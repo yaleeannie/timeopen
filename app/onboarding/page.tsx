@@ -91,15 +91,8 @@ export default async function OnboardingPage() {
         isOpen: Boolean(row.is_open),
         startTime: row.work_start?.slice(0, 5) ?? "09:00",
         endTime: row.work_end?.slice(0, 5) ?? "18:00",
-        breaks:
-          row.break_start && row.break_end
-            ? [
-                {
-                  startTime: row.break_start.slice(0, 5),
-                  endTime: row.break_end.slice(0, 5),
-                },
-              ]
-            : [],
+        breakStartTime: row.break_start?.slice(0, 5) ?? "",
+        breakEndTime: row.break_end?.slice(0, 5) ?? "",
       }))}
     />
   );

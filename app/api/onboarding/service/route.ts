@@ -47,13 +47,6 @@ export async function POST(req: Request) {
     })
   );
 
-  if (services.length === 0) {
-    return NextResponse.json(
-      { error: "서비스를 하나 이상 입력하거나 이 단계를 건너뛰어 주세요." },
-      { status: 400 }
-    );
-  }
-
   for (const [index, service] of services.entries()) {
     if (!service.name) {
       return NextResponse.json(

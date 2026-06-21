@@ -11,17 +11,13 @@ type InitialService = {
   price: number | null;
 };
 
-type InitialBreak = {
-  startTime: string;
-  endTime: string;
-};
-
 type InitialAvailability = {
   weekday: number;
   isOpen: boolean;
   startTime: string;
   endTime: string;
-  breaks: InitialBreak[];
+  breakStartTime: string;
+  breakEndTime: string;
 };
 
 type Props = {
@@ -39,20 +35,6 @@ type ServiceInput = {
   name: string;
   price: string;
   durationMin: string;
-};
-
-type BreakInput = {
-  key: string;
-  startTime: string;
-  endTime: string;
-};
-
-type AvailabilityDayInput = {
-  weekday: number;
-  isOpen: boolean;
-  startTime: string;
-  endTime: string;
-  breaks: BreakInput[];
 };
 
 const WEEKDAYS = [
@@ -101,31 +83,6 @@ function createEmptyService(key: string): ServiceInput {
   };
 }
 
-function createInitialAvailability(
-  initialAvailability: InitialAvailability[]
-): AvailabilityDayInput[] {
-  const rowsByWeekday = new Map(
-    initialAvailability.map((availability) => [availability.weekday, availability])
-  );
-  const hasSavedRows = initialAvailability.length > 0;
-
-  return WEEKDAYS.map(({ value }) => {
-    const saved = rowsByWeekday.get(value);
-    return {
-      weekday: value,
-      isOpen: saved?.isOpen ?? (!hasSavedRows && value >= 1 && value <= 5),
-      startTime: saved?.startTime ?? "09:00",
-      endTime: saved?.endTime ?? "18:00",
-      breaks:
-        saved?.breaks.map((item, index) => ({
-          key: `break-${value}-${index}`,
-          startTime: item.startTime,
-          endTime: item.endTime,
-        })) ?? [],
-    };
-  });
-}
-
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "저장 중 오류가 발생했습니다.";
 }
@@ -155,7 +112,7 @@ export default function OnboardingFlow({
 }: Props) {
   const router = useRouter();
   const nextServiceKey = useRef(initialServices.length + 1);
-  const nextBreakKey = useRef(1);
+  const firstOpenAvailability = initialAvailability.find((row) => row.isOpen);
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -176,8 +133,18 @@ export default function OnboardingFlow({
         }))
       : [createEmptyService("service-0")]
   );
-  const [availabilityDays, setAvailabilityDays] = useState<AvailabilityDayInput[]>(
-    createInitialAvailability(initialAvailability)
+  const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>(
+    initialAvailability.length > 0
+      ? initialAvailability.filter((row) => row.isOpen).map((row) => row.weekday)
+      : [1, 2, 3, 4, 5]
+  );
+  const [startTime, setStartTime] = useState(firstOpenAvailability?.startTime ?? "09:00");
+  const [endTime, setEndTime] = useState(firstOpenAvailability?.endTime ?? "18:00");
+  const [breakStartTime, setBreakStartTime] = useState(
+    firstOpenAvailability?.breakStartTime ?? ""
+  );
+  const [breakEndTime, setBreakEndTime] = useState(
+    firstOpenAvailability?.breakEndTime ?? ""
   );
   const [handle, setHandle] = useState(initialHandle);
 
@@ -218,56 +185,11 @@ export default function OnboardingFlow({
     setServices((current) => current.filter((service) => service.key !== key));
   }
 
-  function patchAvailabilityDay(
-    weekday: number,
-    patch: Partial<AvailabilityDayInput>
-  ) {
-    setAvailabilityDays((current) =>
-      current.map((day) => (day.weekday === weekday ? { ...day, ...patch } : day))
-    );
-  }
-
-  function addBreak(weekday: number) {
-    const key = `break-new-${nextBreakKey.current}`;
-    nextBreakKey.current += 1;
-    setAvailabilityDays((current) =>
-      current.map((day) =>
-        day.weekday === weekday
-          ? {
-              ...day,
-              breaks: [...day.breaks, { key, startTime: "13:00", endTime: "14:00" }],
-            }
-          : day
-      )
-    );
-  }
-
-  function patchBreak(
-    weekday: number,
-    key: string,
-    patch: Partial<BreakInput>
-  ) {
-    setAvailabilityDays((current) =>
-      current.map((day) =>
-        day.weekday === weekday
-          ? {
-              ...day,
-              breaks: day.breaks.map((item) =>
-                item.key === key ? { ...item, ...patch } : item
-              ),
-            }
-          : day
-      )
-    );
-  }
-
-  function removeBreak(weekday: number, key: string) {
-    setAvailabilityDays((current) =>
-      current.map((day) =>
-        day.weekday === weekday
-          ? { ...day, breaks: day.breaks.filter((item) => item.key !== key) }
-          : day
-      )
+  function toggleWeekday(weekday: number) {
+    setSelectedWeekdays((current) =>
+      current.includes(weekday)
+        ? current.filter((value) => value !== weekday)
+        : [...current, weekday]
     );
   }
 
@@ -289,10 +211,6 @@ export default function OnboardingFlow({
           (service) =>
             service.name.trim() || service.price.trim() || service.durationMin.trim()
         );
-
-        if (nonEmptyServices.length === 0) {
-          throw new Error("서비스를 하나 이상 입력하거나 이 단계를 건너뛰어 주세요.");
-        }
 
         const invalidServiceIndex = nonEmptyServices.findIndex(
           (service) =>
@@ -334,40 +252,36 @@ export default function OnboardingFlow({
       }
 
       if (step === 2) {
-        const openDays = availabilityDays.filter((day) => day.isOpen);
-        if (openDays.length === 0) {
+        if (selectedWeekdays.length === 0) {
           throw new Error("운영 요일을 한 개 이상 선택해주세요.");
         }
 
-        for (const day of openDays) {
-          const label = WEEKDAYS.find(({ value }) => value === day.weekday)?.label ?? "";
-          if (!day.startTime || !day.endTime || day.startTime >= day.endTime) {
-            throw new Error(`${label}요일의 시작·종료 시간을 확인해주세요.`);
-          }
+        if (!startTime || !endTime || startTime >= endTime) {
+          throw new Error("영업시간의 시작·종료 시간을 확인해주세요.");
+        }
 
-          for (const breakTime of day.breaks) {
-            if (
-              !breakTime.startTime ||
-              !breakTime.endTime ||
-              breakTime.startTime >= breakTime.endTime ||
-              breakTime.startTime < day.startTime ||
-              breakTime.endTime > day.endTime
-            ) {
-              throw new Error(`${label}요일의 쉬는 시간을 영업시간 안으로 설정해주세요.`);
-            }
-          }
+        const hasBreak = Boolean(breakStartTime || breakEndTime);
+        if (
+          hasBreak &&
+          (!breakStartTime ||
+            !breakEndTime ||
+            breakStartTime >= breakEndTime ||
+            breakStartTime < startTime ||
+            breakEndTime > endTime)
+        ) {
+          throw new Error("쉬는 시간을 영업시간 안으로 설정해주세요.");
         }
 
         await postJson("/api/settings/availability", {
-          rows: availabilityDays.map((day) => {
-            const firstBreak = day.breaks[0];
+          rows: WEEKDAYS.map(({ value }) => {
+            const isOpen = selectedWeekdays.includes(value);
             return {
-              weekday: day.weekday,
-              is_open: day.isOpen,
-              work_start: day.isOpen ? day.startTime : null,
-              work_end: day.isOpen ? day.endTime : null,
-              break_start: day.isOpen && firstBreak ? firstBreak.startTime : null,
-              break_end: day.isOpen && firstBreak ? firstBreak.endTime : null,
+              weekday: value,
+              is_open: isOpen,
+              work_start: isOpen ? startTime : null,
+              work_end: isOpen ? endTime : null,
+              break_start: isOpen && hasBreak ? breakStartTime : null,
+              break_end: isOpen && hasBreak ? breakEndTime : null,
             };
           }),
         });
@@ -564,7 +478,7 @@ export default function OnboardingFlow({
                         <h2 className="text-base font-black text-gray-900">
                           서비스 {index + 1}
                         </h2>
-                        {services.length > 1 ? (
+                        {services.length > 1 || service.id ? (
                           <button
                             type="button"
                             onClick={() => removeService(service.key)}
@@ -643,166 +557,102 @@ export default function OnboardingFlow({
             ) : null}
 
             {step === 2 ? (
-              <div className="grid gap-4">
-                <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold leading-5 text-amber-800">
-                  현재 저장 구조에서는 요일별 첫 번째 쉬는 시간만 저장돼요. 추가한 쉬는
-                  시간은 입력 중 비교할 수 있지만 저장에는 첫 항목만 반영됩니다.
+              <div className="grid gap-6">
+                <div>
+                  <div className={labelClass}>운영 요일</div>
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {WEEKDAYS.map(({ value, label }) => {
+                      const selected = selectedWeekdays.includes(value);
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => toggleWeekday(value)}
+                          className={`aspect-square min-h-10 rounded-xl text-sm font-black transition ${
+                            selected
+                              ? "bg-[#31bfdc] text-white shadow-[0_8px_18px_rgba(49,191,220,0.24)]"
+                              : "bg-[#f1f6f7] text-gray-500"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-[22px] bg-[#f8fbfc] p-4">
+                  <div className={labelClass}>영업시간</div>
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                    <label>
+                      <span className="mb-1.5 block text-xs font-bold text-gray-500">
+                        시작 시간
+                      </span>
+                      <input
+                        type="time"
+                        value={startTime}
+                        onChange={(event) => setStartTime(event.target.value)}
+                        className={inputClass}
+                      />
+                    </label>
+                    <span className="pb-3 text-sm font-black text-gray-400">~</span>
+                    <label>
+                      <span className="mb-1.5 block text-xs font-bold text-gray-500">
+                        종료 시간
+                      </span>
+                      <input
+                        type="time"
+                        value={endTime}
+                        onChange={(event) => setEndTime(event.target.value)}
+                        className={inputClass}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="rounded-[22px] bg-[#f8fbfc] p-4">
+                  <div className={labelClass}>쉬는 시간</div>
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                    <label>
+                      <span className="mb-1.5 block text-xs font-bold text-gray-500">
+                        시작 시간
+                      </span>
+                      <input
+                        type="time"
+                        value={breakStartTime}
+                        onChange={(event) => setBreakStartTime(event.target.value)}
+                        className={inputClass}
+                      />
+                    </label>
+                    <span className="pb-3 text-sm font-black text-gray-400">~</span>
+                    <label>
+                      <span className="mb-1.5 block text-xs font-bold text-gray-500">
+                        종료 시간
+                      </span>
+                      <input
+                        type="time"
+                        value={breakEndTime}
+                        onChange={(event) => setBreakEndTime(event.target.value)}
+                        className={inputClass}
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBreakStartTime("");
+                      setBreakEndTime("");
+                    }}
+                    className="mt-2 min-h-9 text-xs font-bold text-gray-400"
+                  >
+                    쉬는 시간 사용 안 함
+                  </button>
+                </div>
+
+                <p className="rounded-2xl bg-[#f7fafb] px-4 py-3 text-sm font-medium leading-5 text-gray-500">
+                  선택한 모든 요일에 같은 영업시간과 쉬는 시간이 적용돼요.
                 </p>
-
-                {availabilityDays.map((day) => {
-                  const weekday = WEEKDAYS.find(({ value }) => value === day.weekday);
-                  return (
-                    <div
-                      key={day.weekday}
-                      className={`rounded-[22px] border p-4 ${
-                        day.isOpen
-                          ? "border-[#cdebf0] bg-[#fbfefe]"
-                          : "border-gray-100 bg-gray-50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="text-lg font-black text-gray-900">
-                            {weekday?.label}요일
-                          </div>
-                          <div className="mt-0.5 text-xs font-bold text-gray-400">
-                            {day.isOpen ? "예약 가능한 날" : "쉬는 날"}
-                          </div>
-                        </div>
-                        <label className="flex min-h-10 items-center gap-2 rounded-xl bg-white px-3 text-sm font-black text-gray-700 shadow-sm">
-                          <input
-                            type="checkbox"
-                            checked={day.isOpen}
-                            onChange={(event) =>
-                              patchAvailabilityDay(day.weekday, {
-                                isOpen: event.target.checked,
-                              })
-                            }
-                            className="h-5 w-5 accent-[#31bfdc]"
-                          />
-                          영업함
-                        </label>
-                      </div>
-
-                      {day.isOpen ? (
-                        <div className="mt-5 grid gap-5">
-                          <div>
-                            <div className={labelClass}>영업시간</div>
-                            <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-                              <label>
-                                <span className="mb-1.5 block text-xs font-bold text-gray-500">
-                                  시작 시간
-                                </span>
-                                <input
-                                  type="time"
-                                  value={day.startTime}
-                                  onChange={(event) =>
-                                    patchAvailabilityDay(day.weekday, {
-                                      startTime: event.target.value,
-                                    })
-                                  }
-                                  className={inputClass}
-                                />
-                              </label>
-                              <span className="pb-3 text-sm font-black text-gray-400">~</span>
-                              <label>
-                                <span className="mb-1.5 block text-xs font-bold text-gray-500">
-                                  종료 시간
-                                </span>
-                                <input
-                                  type="time"
-                                  value={day.endTime}
-                                  onChange={(event) =>
-                                    patchAvailabilityDay(day.weekday, {
-                                      endTime: event.target.value,
-                                    })
-                                  }
-                                  className={inputClass}
-                                />
-                              </label>
-                            </div>
-                          </div>
-
-                          <div>
-                            <div className="mb-2 flex items-center justify-between gap-3">
-                              <div className="text-sm font-black text-gray-700">쉬는 시간</div>
-                              <button
-                                type="button"
-                                onClick={() => addBreak(day.weekday)}
-                                className="min-h-9 rounded-xl bg-[#eef9fb] px-3 text-xs font-black text-[#168ca8]"
-                              >
-                                + 쉬는 시간 추가
-                              </button>
-                            </div>
-
-                            {day.breaks.length > 0 ? (
-                              <div className="grid gap-3">
-                                {day.breaks.map((breakTime, index) => (
-                                  <div
-                                    key={breakTime.key}
-                                    className="rounded-2xl border border-[#e1eef0] bg-white p-3"
-                                  >
-                                    <div className="mb-2 flex items-center justify-between">
-                                      <span className="text-xs font-black text-gray-500">
-                                        쉬는 시간 {index + 1}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          removeBreak(day.weekday, breakTime.key)
-                                        }
-                                        className="text-xs font-black text-red-500"
-                                      >
-                                        삭제
-                                      </button>
-                                    </div>
-                                    <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-                                      <label>
-                                        <span className="mb-1.5 block text-xs font-bold text-gray-500">
-                                          쉬는 시간 시작
-                                        </span>
-                                        <input
-                                          type="time"
-                                          value={breakTime.startTime}
-                                          onChange={(event) =>
-                                            patchBreak(day.weekday, breakTime.key, {
-                                              startTime: event.target.value,
-                                            })
-                                          }
-                                          className={inputClass}
-                                        />
-                                      </label>
-                                      <span className="pb-3 text-sm font-black text-gray-400">~</span>
-                                      <label>
-                                        <span className="mb-1.5 block text-xs font-bold text-gray-500">
-                                          쉬는 시간 종료
-                                        </span>
-                                        <input
-                                          type="time"
-                                          value={breakTime.endTime}
-                                          onChange={(event) =>
-                                            patchBreak(day.weekday, breakTime.key, {
-                                              endTime: event.target.value,
-                                            })
-                                          }
-                                          className={inputClass}
-                                        />
-                                      </label>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-gray-400">
-                                등록된 쉬는 시간이 없어요.
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
               </div>
             ) : null}
 
@@ -876,7 +726,7 @@ export default function OnboardingFlow({
                   disabled={saving}
                   className="mt-2 min-h-10 w-full rounded-xl px-4 text-sm font-bold text-gray-400 disabled:opacity-50"
                 >
-                  이 단계 건너뛰기
+                  나중에 하기
                 </button>
               </div>
             ) : (

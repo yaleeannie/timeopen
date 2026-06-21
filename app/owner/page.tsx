@@ -161,7 +161,10 @@ export default async function OwnerPage() {
   const finalHandle = (orgRow?.handle as string | null) ?? handle;
   const previewPath = finalHandle ? `/u/${finalHandle}` : "-";
   const previewFullLink = finalHandle ? `${SITE_URL}/u/${finalHandle}` : "";
-  const canLink = !!finalHandle && finalHandle !== "null";
+  const canLink =
+    typeof finalHandle === "string" &&
+    finalHandle.trim().length > 0 &&
+    finalHandle !== "null";
 
   const [serviceCountResult, openDayCountResult] = await Promise.all([
     supabase
@@ -175,8 +178,15 @@ export default async function OwnerPage() {
       .eq("organization_id", organizationId)
       .eq("is_open", true),
   ]);
-  const activeServiceCount = serviceCountResult.error ? null : serviceCountResult.count;
-  const openDayCount = openDayCountResult.error ? null : openDayCountResult.count;
+  if (serviceCountResult.error) {
+    console.error("[owner] active service count failed", serviceCountResult.error.message);
+  }
+  if (openDayCountResult.error) {
+    console.error("[owner] open day count failed", openDayCountResult.error.message);
+  }
+
+  const activeServiceCount = serviceCountResult.count ?? 0;
+  const openDayCount = openDayCountResult.count ?? 0;
 
   const incompleteSettings = [
     activeServiceCount === 0

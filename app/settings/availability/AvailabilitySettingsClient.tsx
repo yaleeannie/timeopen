@@ -29,16 +29,20 @@ function validateDay(day: AvailabilityFormState[WeekdayKey], label: string): str
 
   const ws = timeToMinutes(day.work_start);
   const we = timeToMinutes(day.work_end);
-  if (!(ws < we)) return `${label}: work_start < work_end 여야 합니다.`;
+  if (!(ws < we)) return `${label}요일: 시작 시간은 종료 시간보다 빨라야 합니다.`;
 
   const hasBreak = !!day.break_start || !!day.break_end;
   if (!hasBreak) return null;
-  if (!day.break_start || !day.break_end) return `${label}: break_start/break_end 를 모두 입력하세요.`;
+  if (!day.break_start || !day.break_end) {
+    return `${label}요일: 쉬는 시간의 시작과 종료를 모두 입력해주세요.`;
+  }
 
   const bs = timeToMinutes(day.break_start);
   const be = timeToMinutes(day.break_end);
-  if (!(bs < be)) return `${label}: break_start < break_end 여야 합니다.`;
-  if (bs < ws || be > we) return `${label}: break 는 work 범위 안에서만 허용됩니다.`;
+  if (!(bs < be)) return `${label}요일: 쉬는 시간 시작은 종료보다 빨라야 합니다.`;
+  if (bs < ws || be > we) {
+    return `${label}요일: 쉬는 시간은 영업시간 안으로 설정해주세요.`;
+  }
 
   return null;
 }
@@ -136,13 +140,13 @@ function TimePicker({
       {open && !disabled && (
         <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
-            <div className="text-xs font-semibold text-gray-800">Select time</div>
+            <div className="text-xs font-semibold text-gray-800">시간 선택</div>
             <button
               type="button"
               onClick={() => setOpen(false)}
               className="rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-100"
             >
-              Close
+              닫기
             </button>
           </div>
 
@@ -164,7 +168,7 @@ function TimePicker({
                   }`}
                 >
                   <span className="font-semibold">{t}</span>
-                  {active && <span className="text-xs font-medium opacity-90">Selected</span>}
+                  {active && <span className="text-xs font-medium opacity-90">선택됨</span>}
                 </button>
               );
             })}
@@ -179,7 +183,7 @@ function TimePicker({
               }}
               className="w-full rounded-xl bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-200"
             >
-              Clear
+              선택 해제
             </button>
           </div>
         </div>
@@ -296,15 +300,15 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
                 dayError ? "border-red-200" : "border-gray-200"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-baseline gap-2">
-                  <div className="text-base font-black text-gray-900">{label}</div>
-                  <span className={`text-xs font-bold ${d.open ? "text-[#22a988]" : "text-gray-500"}`}>
-                    {d.open ? "OPEN" : "CLOSED"}
-                  </span>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-lg font-black text-gray-900">{label}요일</div>
+                  <div className={`mt-0.5 text-xs font-bold ${d.open ? "text-[#22a988]" : "text-gray-400"}`}>
+                    {d.open ? "예약 가능한 날" : "쉬는 날"}
+                  </div>
                 </div>
 
-                <label className="flex items-center gap-2 text-sm text-gray-900">
+                <label className="flex min-h-10 items-center gap-2 rounded-xl bg-[#f4fafb] px-3 text-sm text-gray-900">
                   <input
                     type="checkbox"
                     checked={d.open}
@@ -314,53 +318,61 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
                     }}
                     className="h-5 w-5 accent-[#28b9dc]"
                   />
-                  <span className="font-semibold">{d.open ? "open" : "closed"}</span>
+                  <span className="font-black">영업함</span>
                 </label>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <div className="text-xs font-bold text-gray-800">work_start</div>
-                  <TimePicker
-                    value={d.work_start}
-                    disabled={!d.open}
-                    onChange={(v) => patch(key, { work_start: v })}
-                    placeholder="09:00"
-                  />
-                </div>
+              {d.open ? (
+                <div className="mt-5 grid gap-5">
+                  <div>
+                    <div className="mb-2 text-sm font-black text-gray-700">영업시간</div>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                      <div className="space-y-2">
+                        <div className="text-xs font-bold text-gray-500">시작 시간</div>
+                        <TimePicker
+                          value={d.work_start}
+                          onChange={(v) => patch(key, { work_start: v })}
+                          placeholder="09:00"
+                        />
+                      </div>
+                      <span className="pb-3 text-sm font-black text-gray-400">~</span>
+                      <div className="space-y-2">
+                        <div className="text-xs font-bold text-gray-500">종료 시간</div>
+                        <TimePicker
+                          value={d.work_end}
+                          onChange={(v) => patch(key, { work_end: v })}
+                          placeholder="18:00"
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <div className="text-xs font-bold text-gray-800">work_end</div>
-                  <TimePicker
-                    value={d.work_end}
-                    disabled={!d.open}
-                    onChange={(v) => patch(key, { work_end: v })}
-                    placeholder="18:00"
-                  />
+                  <div>
+                    <div className="mb-2 text-sm font-black text-gray-700">
+                      쉬는 시간 <span className="font-medium text-gray-400">(선택)</span>
+                    </div>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                      <div className="space-y-2">
+                        <div className="text-xs font-bold text-gray-500">시작 시간</div>
+                        <TimePicker
+                          value={d.break_start}
+                          onChange={(v) => patch(key, { break_start: v })}
+                          placeholder="13:00"
+                        />
+                      </div>
+                      <span className="pb-3 text-sm font-black text-gray-400">~</span>
+                      <div className="space-y-2">
+                        <div className="text-xs font-bold text-gray-500">종료 시간</div>
+                        <TimePicker
+                          value={d.break_end}
+                          onChange={(v) => patch(key, { break_end: v })}
+                          placeholder="14:00"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <div className="text-xs font-bold text-gray-800">break_start (optional)</div>
-                  <TimePicker
-                    value={d.break_start}
-                    disabled={!d.open}
-                    onChange={(v) => patch(key, { break_start: v })}
-                    placeholder="13:00"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="text-xs font-bold text-gray-800">break_end (optional)</div>
-                  <TimePicker
-                    value={d.break_end}
-                    disabled={!d.open}
-                    onChange={(v) => patch(key, { break_end: v })}
-                    placeholder="14:00"
-                  />
-                </div>
-              </div>
+              ) : null}
 
               {dayError && (
                 <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
@@ -390,7 +402,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
           disabled={saving}
           className="min-h-11 w-full rounded-xl bg-[#28b9dc] px-5 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-[#20afd2] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {saving ? "Saving..." : "Save"}
+          {saving ? "저장 중..." : "영업시간 저장"}
         </button>
       </div>
     </div>
