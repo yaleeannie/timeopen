@@ -65,6 +65,42 @@ function TimeField({
   );
 }
 
+function TimeRangeFields({
+  title,
+  optional,
+  start,
+  end,
+  onStartChange,
+  onEndChange,
+}: {
+  title: string;
+  optional?: boolean;
+  start: string;
+  end: string;
+  onStartChange: (value: string) => void;
+  onEndChange: (value: string) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-[#e5f1f3] bg-[#f9fcfd] p-3.5">
+      <div className="mb-3 flex items-baseline gap-1.5">
+        <div className="text-sm font-black text-gray-800">{title}</div>
+        {optional ? <span className="text-xs font-medium text-gray-400">선택</span> : null}
+      </div>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <label className="min-w-0">
+          <span className="mb-1.5 block text-xs font-bold text-gray-500">시작 시간</span>
+          <TimeField value={start} onChange={onStartChange} />
+        </label>
+        <span className="mt-5 text-sm font-black text-gray-300">~</span>
+        <label className="min-w-0">
+          <span className="mb-1.5 block text-xs font-bold text-gray-500">종료 시간</span>
+          <TimeField value={end} onChange={onEndChange} />
+        </label>
+      </div>
+    </div>
+  );
+}
+
 /* ------------------ form state -> api rows ------------------ */
 function toApiRows(state: AvailabilityFormState) {
   const map: Record<WeekdayKey, number> = {
@@ -224,17 +260,28 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
 
   return (
     <div className="min-w-0 space-y-5">
-      <section className="rounded-[24px] border border-[#cdebf0] bg-gradient-to-br from-[#f1fcfd] to-white p-4 shadow-sm">
-        <h2 className="text-lg font-black tracking-[-0.025em] text-gray-950">
-          빠르게 적용하기
-        </h2>
-        <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
-          여러 요일에 같은 영업시간과 쉬는 시간을 한 번에 적용할 수 있어요.
-        </p>
+      <section className="overflow-hidden rounded-[26px] border border-[#cdebf0] bg-white shadow-[0_14px_34px_rgba(70,126,139,0.08)]">
+        <div className="bg-gradient-to-br from-[#eafafd] via-[#f4fcfd] to-white px-5 pb-5 pt-5">
+          <div className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-black text-[#168ca8] shadow-sm">
+            한 번에 설정
+          </div>
+          <h2 className="mt-3 text-xl font-black tracking-[-0.03em] text-gray-950">
+            빠르게 적용하기
+          </h2>
+          <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
+            여러 요일에 같은 영업시간과 쉬는 시간을 한 번에 적용할 수 있어요.
+          </p>
+        </div>
 
-        <div className="mt-5">
-          <div className="mb-2 text-sm font-black text-gray-700">요일 선택</div>
-          <div className="grid grid-cols-7 gap-1.5">
+        <div className="grid gap-5 px-4 pb-5 pt-4 sm:px-5">
+          <div>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#dff7fb] text-xs font-black text-[#168ca8]">
+                1
+              </span>
+              <div className="text-sm font-black text-gray-800">운영 요일 선택</div>
+            </div>
+            <div className="flex flex-wrap gap-2">
             {WEEKDAYS.map(({ key, label }) => {
               const selected = quickWeekdays.includes(key);
               return (
@@ -243,61 +290,61 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
                   type="button"
                   aria-pressed={selected}
                   onClick={() => toggleQuickWeekday(key)}
-                  className={`aspect-square min-h-10 rounded-xl text-sm font-black transition ${
+                  className={`min-h-10 min-w-11 rounded-full border px-3.5 text-sm font-black transition ${
                     selected
-                      ? "bg-[#31bfdc] text-white shadow-[0_8px_18px_rgba(49,191,220,0.22)]"
-                      : "bg-white text-gray-500"
+                      ? "border-[#31bfdc] bg-[#31bfdc] text-white shadow-[0_7px_16px_rgba(49,191,220,0.22)]"
+                      : "border-[#dcecef] bg-white text-gray-500 hover:border-[#9bdde7]"
                   }`}
                 >
                   {label}
                 </button>
               );
             })}
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-4">
-          <div>
-            <div className="mb-2 text-sm font-black text-gray-700">영업시간</div>
-            <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-              <label>
-                <span className="mb-1.5 block text-xs font-bold text-gray-500">시작 시간</span>
-                <TimeField value={quickStart} onChange={setQuickStart} />
-              </label>
-              <span className="pb-3 text-sm font-black text-gray-400">~</span>
-              <label>
-                <span className="mb-1.5 block text-xs font-bold text-gray-500">종료 시간</span>
-                <TimeField value={quickEnd} onChange={setQuickEnd} />
-              </label>
             </div>
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-black text-gray-700">
-              쉬는 시간 <span className="font-medium text-gray-400">(선택)</span>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#dff7fb] text-xs font-black text-[#168ca8]">
+                2
+              </span>
+              <div className="text-sm font-black text-gray-800">영업시간</div>
             </div>
-            <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-              <label>
-                <span className="mb-1.5 block text-xs font-bold text-gray-500">시작 시간</span>
-                <TimeField value={quickBreakStart} onChange={setQuickBreakStart} />
-              </label>
-              <span className="pb-3 text-sm font-black text-gray-400">~</span>
-              <label>
-                <span className="mb-1.5 block text-xs font-bold text-gray-500">종료 시간</span>
-                <TimeField value={quickBreakEnd} onChange={setQuickBreakEnd} />
-              </label>
-            </div>
+            <TimeRangeFields
+              title="고객이 예약할 수 있는 시간"
+              start={quickStart}
+              end={quickEnd}
+              onStartChange={setQuickStart}
+              onEndChange={setQuickEnd}
+            />
           </div>
-        </div>
 
-        <button
-          type="button"
-          onClick={applyQuickSettings}
-          disabled={saving}
-          className="mt-5 min-h-12 w-full rounded-2xl bg-[#28b9dc] px-4 text-sm font-black text-white shadow-sm disabled:opacity-50"
-        >
-          {saving ? "적용 중..." : "선택한 요일에 일괄 적용"}
-        </button>
+          <div>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#dff7fb] text-xs font-black text-[#168ca8]">
+                3
+              </span>
+              <div className="text-sm font-black text-gray-800">쉬는 시간</div>
+            </div>
+            <TimeRangeFields
+              title="예약을 받지 않는 시간"
+              optional
+              start={quickBreakStart}
+              end={quickBreakEnd}
+              onStartChange={setQuickBreakStart}
+              onEndChange={setQuickBreakEnd}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={applyQuickSettings}
+            disabled={saving}
+            className="min-h-13 w-full rounded-2xl bg-gradient-to-r from-[#37c5df] to-[#20afd2] px-4 py-3.5 text-sm font-black text-white shadow-[0_12px_24px_rgba(32,175,210,0.2)] disabled:opacity-50"
+          >
+            {saving ? "적용 중..." : "선택한 요일에 일괄 적용"}
+          </button>
+        </div>
       </section>
 
       <section>
@@ -316,79 +363,62 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
             const dayError = validateDay(d, label);
 
             return (
-              <div
+              <article
                 key={key}
-                className={`min-w-0 rounded-[20px] border bg-white p-4 shadow-sm ${
+                className={`min-w-0 overflow-hidden rounded-[22px] border bg-white shadow-sm ${
                   dayError ? "border-red-200" : "border-gray-200"
                 }`}
               >
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3 px-4 py-3.5">
                 <div>
                   <div className="text-lg font-black text-gray-900">{label}요일</div>
-                  <div className={`mt-0.5 text-xs font-bold ${d.open ? "text-[#22a988]" : "text-gray-400"}`}>
-                    {d.open ? "예약 가능한 날" : "쉬는 날"}
+                  <div className={`mt-0.5 text-xs font-bold ${d.open ? "text-[#159b83]" : "text-gray-400"}`}>
+                    {d.open
+                      ? `${d.work_start} ~ ${d.work_end}${d.break_start && d.break_end ? ` · 휴식 ${d.break_start} ~ ${d.break_end}` : ""}`
+                      : "쉬는 날"}
                   </div>
                 </div>
 
-                <label className="flex min-h-10 items-center gap-2 rounded-xl bg-[#f4fafb] px-3 text-sm text-gray-900">
-                  <input
-                    type="checkbox"
-                    checked={d.open}
-                    onChange={(e) => {
-                      const open = e.target.checked;
-                      patch(key, { open, ...(open ? {} : { break_start: "", break_end: "" }) });
-                    }}
-                    className="h-5 w-5 accent-[#28b9dc]"
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={d.open}
+                  onClick={() => {
+                    const open = !d.open;
+                    patch(key, { open, ...(open ? {} : { break_start: "", break_end: "" }) });
+                  }}
+                  className={`flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-3 text-xs font-black transition ${
+                    d.open
+                      ? "border-[#9de3d4] bg-[#e9faf6] text-[#16866f]"
+                      : "border-gray-200 bg-gray-50 text-gray-500"
+                  }`}
+                >
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      d.open ? "bg-[#24b795]" : "bg-gray-300"
+                    }`}
                   />
-                  <span className="font-black">영업함</span>
-                </label>
+                  {d.open ? "영업함" : "쉬는 날"}
+                </button>
               </div>
 
               {d.open ? (
-                <div className="mt-4 grid gap-4 border-t border-[#edf4f5] pt-4">
-                  <div>
-                    <div className="mb-2 text-sm font-black text-gray-700">영업시간</div>
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-                      <div className="space-y-2">
-                        <div className="text-xs font-bold text-gray-500">시작 시간</div>
-                        <TimeField
-                          value={d.work_start}
-                          onChange={(v) => patch(key, { work_start: v })}
-                        />
-                      </div>
-                      <span className="pb-3 text-sm font-black text-gray-400">~</span>
-                      <div className="space-y-2">
-                        <div className="text-xs font-bold text-gray-500">종료 시간</div>
-                        <TimeField
-                          value={d.work_end}
-                          onChange={(v) => patch(key, { work_end: v })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="mb-2 text-sm font-black text-gray-700">
-                      쉬는 시간 <span className="font-medium text-gray-400">(선택)</span>
-                    </div>
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-                      <div className="space-y-2">
-                        <div className="text-xs font-bold text-gray-500">시작 시간</div>
-                        <TimeField
-                          value={d.break_start}
-                          onChange={(v) => patch(key, { break_start: v })}
-                        />
-                      </div>
-                      <span className="pb-3 text-sm font-black text-gray-400">~</span>
-                      <div className="space-y-2">
-                        <div className="text-xs font-bold text-gray-500">종료 시간</div>
-                        <TimeField
-                          value={d.break_end}
-                          onChange={(v) => patch(key, { break_end: v })}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                <div className="grid gap-3 border-t border-[#edf4f5] bg-[#fbfdfd] p-3">
+                  <TimeRangeFields
+                    title="영업시간"
+                    start={d.work_start}
+                    end={d.work_end}
+                    onStartChange={(value) => patch(key, { work_start: value })}
+                    onEndChange={(value) => patch(key, { work_end: value })}
+                  />
+                  <TimeRangeFields
+                    title="쉬는 시간"
+                    optional
+                    start={d.break_start}
+                    end={d.break_end}
+                    onStartChange={(value) => patch(key, { break_start: value })}
+                    onEndChange={(value) => patch(key, { break_end: value })}
+                  />
                 </div>
               ) : null}
 
@@ -397,7 +427,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
                   {dayError}
                 </div>
               )}
-              </div>
+              </article>
             );
           })}
         </div>
