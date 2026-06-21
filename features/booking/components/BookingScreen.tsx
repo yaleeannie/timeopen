@@ -10,6 +10,7 @@ import { usePublicBookingI18n } from "./PublicBookingI18n";
 import { fetchServicesByHandle, type ServiceRow } from "@/features/services/fetchServicesByHandle";
 import { buildDailySchedule } from "@/features/availability/buildDailySchedule";
 import { fetchExceptionForDate } from "@/features/availability/fetchExceptionForDate";
+import { fetchHolidayForDate } from "@/features/availability/fetchHolidayForDate";
 import { computeAvailableStartTimes } from "@/features/availability/computeAvailableStartTimes";
 import type { WeeklySchedule } from "@/features/availability/weeklySchedule";
 
@@ -101,6 +102,7 @@ export default function BookingScreen({ handle }: Props) {
   const reqIdRef = useRef(0);
 
   const [noTimesForCurrent, setNoTimesForCurrent] = useState<boolean>(false);
+  const [holidayClosedForCurrent, setHolidayClosedForCurrent] = useState(false);
   const [isTimesLoading, setIsTimesLoading] = useState(false);
   const [timesError, setTimesError] = useState<string>("");
 
@@ -190,15 +192,28 @@ export default function BookingScreen({ handle }: Props) {
 
     setIsTimesLoading(true);
     setNoTimesForCurrent(false);
+    setHolidayClosedForCurrent(false);
     setTimesError("");
 
     try {
-      const [ex, busyRes] = await Promise.all([
+      const [ex, holiday, busyRes] = await Promise.all([
         fetchExceptionForDate({ handle, dateISO: nextDateISO }),
+        fetchHolidayForDate({ handle, dateISO: nextDateISO }),
         fetchBusyFromDb({ handle, dateISO: nextDateISO }),
       ]);
 
       if (reqIdRef.current !== myReq) return;
+
+      if (holiday?.isClosed) {
+        setAvailableTimes([]);
+        setTime(null);
+        setShowEarliestHint(false);
+        earliestHintKeyRef.current = null;
+        computedKeyRef.current = key;
+        setNoTimesForCurrent(true);
+        setHolidayClosedForCurrent(true);
+        return;
+      }
 
       const [y, m, d] = nextDateISO.split("-").map(Number);
       const daily = buildDailySchedule(new Date(y, m - 1, d), weeklySchedule, ex ?? null);
@@ -419,6 +434,7 @@ export default function BookingScreen({ handle }: Props) {
                     setTime(null);
                     setAvailableTimes([]);
                     setNoTimesForCurrent(false);
+                    setHolidayClosedForCurrent(false);
                     setTimesError("");
                     setIsTimesLoading(dateISO != null);
                     setServiceId(item.id);
@@ -456,6 +472,7 @@ export default function BookingScreen({ handle }: Props) {
               setTime(null);
               setAvailableTimes([]);
               setNoTimesForCurrent(false);
+              setHolidayClosedForCurrent(false);
               setTimesError("");
               setIsTimesLoading(serviceId != null);
               setDateISO(next);
@@ -498,8 +515,14 @@ export default function BookingScreen({ handle }: Props) {
               </div>
             ) : noTimesForCurrent && isTimesReadyForCurrent ? (
               <div className="rounded-2xl border border-[#dceef2] bg-white px-4 py-6">
-                <div className="text-sm font-semibold text-gray-900">{t("noTimes")}</div>
-                <div className="mt-1 text-sm text-gray-600">{t("continuousTimeRequired")}</div>
+                <div className="text-sm font-semibold text-gray-900">
+                  {holidayClosedForCurrent ? t("holidayClosed") : t("noTimes")}
+                </div>
+                {!holidayClosedForCurrent ? (
+                  <div className="mt-1 text-sm text-gray-600">
+                    {t("continuousTimeRequired")}
+                  </div>
+                ) : null}
                 <div className="mt-3 text-sm text-gray-400">{t("chooseAnotherDate")}</div>
               </div>
             ) : (
