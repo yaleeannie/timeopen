@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchAvailabilityFromDb } from "@/features/availability/fetchAvailabilityFromDb";
 import { weeklyScheduleToFormState } from "@/features/availability/weeklyScheduleToFormState";
 import { WEEKDAYS, type AvailabilityFormState, type WeekdayKey } from "@/features/availability/types";
@@ -47,148 +47,21 @@ function validateDay(day: AvailabilityFormState[WeekdayKey], label: string): str
   return null;
 }
 
-/* ------------------ time list (10분 단위) ------------------ */
-function pad2(n: number) {
-  return String(n).padStart(2, "0");
-}
-
-function buildTimes(stepMinutes: number) {
-  const out: string[] = [];
-  for (let m = 0; m < 24 * 60; m += stepMinutes) {
-    const hh = Math.floor(m / 60);
-    const mm = m % 60;
-    out.push(`${pad2(hh)}:${pad2(mm)}`);
-  }
-  return out;
-}
-
-const TIMES_10 = buildTimes(10);
-
-/* ------------------ click outside ------------------ */
-function useOnClickOutside<T extends HTMLElement>(handler: () => void) {
-  const ref = useRef<T | null>(null);
-  useEffect(() => {
-    function onDown(e: MouseEvent) {
-      const el = ref.current;
-      if (!el) return;
-      if (e.target instanceof Node && el.contains(e.target)) return;
-      handler();
-    }
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [handler]);
-  return ref;
-}
-
-/* ------------------ icons ------------------ */
-function ClockIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
-      <path
-        d="M12 7v5l3 2"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
-  );
-}
-
-/* ------------------ TimePicker ------------------ */
-function TimePicker({
+function TimeField({
   value,
   onChange,
-  disabled,
-  placeholder,
 }: {
   value: string;
   onChange: (v: string) => void;
-  disabled?: boolean;
-  placeholder: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useOnClickOutside<HTMLDivElement>(() => setOpen(false));
-
-  const selectedIndex = useMemo(() => {
-    if (!value) return 0;
-    const idx = TIMES_10.indexOf(value);
-    return idx >= 0 ? idx : 0;
-  }, [value]);
-
-  useEffect(() => {
-    if (!open) return;
-    const el = rootRef.current?.querySelector<HTMLDivElement>("[data-time-list]");
-    if (!el) return;
-    const rowH = 36;
-    el.scrollTop = Math.max(0, selectedIndex * rowH - rowH * 4);
-  }, [open, selectedIndex, rootRef]);
-
-  const btnCls =
-    "flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-left " +
-    "text-gray-900 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-cyan-100 " +
-    "hover:border-[#55d4f0] disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400";
-
   return (
-    <div ref={rootRef} className="relative">
-      <button type="button" disabled={disabled} onClick={() => setOpen((v) => !v)} className={btnCls}>
-        <span className={`${value ? "text-gray-900" : "text-gray-500"} font-medium`}>{value || placeholder}</span>
-        <ClockIcon className="h-5 w-5 text-gray-600" />
-      </button>
-
-      {open && !disabled && (
-        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
-          <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
-            <div className="text-xs font-semibold text-gray-800">시간 선택</div>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-100"
-            >
-              닫기
-            </button>
-          </div>
-
-          <div data-time-list className="max-h-64 overflow-auto p-1" role="listbox" aria-label="time options">
-            {TIMES_10.map((t) => {
-              const active = t === value;
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  role="option"
-                  aria-selected={active}
-                  onClick={() => {
-                    onChange(t);
-                    setOpen(false);
-                  }}
-                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
-                    active ? "bg-[#28b9dc] text-white" : "text-gray-900 hover:bg-[#eef9fb]"
-                  }`}
-                >
-                  <span className="font-semibold">{t}</span>
-                  {active && <span className="text-xs font-medium opacity-90">선택됨</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="border-t border-gray-100 p-2">
-            <button
-              type="button"
-              onClick={() => {
-                onChange("");
-                setOpen(false);
-              }}
-              className="w-full rounded-xl bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-200"
-            >
-              선택 해제
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    <input
+      type="time"
+      value={value}
+      step={600}
+      onChange={(event) => onChange(event.target.value)}
+      className="min-h-11 w-full min-w-0 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base font-semibold text-gray-900 outline-none transition focus:border-[#55d4f0] focus:ring-2 focus:ring-cyan-100"
+    />
   );
 }
 
@@ -288,7 +161,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
 
   return (
     <div className="min-w-0 space-y-5">
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {WEEKDAYS.map(({ key, label }) => {
           const d = state[key];
           const dayError = validateDay(d, label);
@@ -296,7 +169,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
           return (
             <div
               key={key}
-              className={`min-w-0 rounded-2xl border bg-white p-4 shadow-sm ${
+              className={`min-w-0 rounded-[20px] border bg-white p-4 shadow-sm ${
                 dayError ? "border-red-200" : "border-gray-200"
               }`}
             >
@@ -323,25 +196,23 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
               </div>
 
               {d.open ? (
-                <div className="mt-5 grid gap-5">
+                <div className="mt-4 grid gap-4 border-t border-[#edf4f5] pt-4">
                   <div>
                     <div className="mb-2 text-sm font-black text-gray-700">영업시간</div>
                     <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
                       <div className="space-y-2">
                         <div className="text-xs font-bold text-gray-500">시작 시간</div>
-                        <TimePicker
+                        <TimeField
                           value={d.work_start}
                           onChange={(v) => patch(key, { work_start: v })}
-                          placeholder="09:00"
                         />
                       </div>
                       <span className="pb-3 text-sm font-black text-gray-400">~</span>
                       <div className="space-y-2">
                         <div className="text-xs font-bold text-gray-500">종료 시간</div>
-                        <TimePicker
+                        <TimeField
                           value={d.work_end}
                           onChange={(v) => patch(key, { work_end: v })}
-                          placeholder="18:00"
                         />
                       </div>
                     </div>
@@ -354,19 +225,17 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
                     <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
                       <div className="space-y-2">
                         <div className="text-xs font-bold text-gray-500">시작 시간</div>
-                        <TimePicker
+                        <TimeField
                           value={d.break_start}
                           onChange={(v) => patch(key, { break_start: v })}
-                          placeholder="13:00"
                         />
                       </div>
                       <span className="pb-3 text-sm font-black text-gray-400">~</span>
                       <div className="space-y-2">
                         <div className="text-xs font-bold text-gray-500">종료 시간</div>
-                        <TimePicker
+                        <TimeField
                           value={d.break_end}
                           onChange={(v) => patch(key, { break_end: v })}
-                          placeholder="14:00"
                         />
                       </div>
                     </div>

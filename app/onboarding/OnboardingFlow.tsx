@@ -650,9 +650,10 @@ export default function OnboardingFlow({
                   </button>
                 </div>
 
-                <p className="rounded-2xl bg-[#f7fafb] px-4 py-3 text-sm font-medium leading-5 text-gray-500">
-                  선택한 모든 요일에 같은 영업시간과 쉬는 시간이 적용돼요.
-                </p>
+                <div className="rounded-2xl bg-[#f1fafb] px-4 py-3 text-sm font-medium leading-6 text-[#4f7f89]">
+                  <p>선택한 요일에 같은 영업시간과 쉬는 시간이 적용돼요.</p>
+                  <p>요일별 시간이 다르면 나중에 영업시간 관리에서 따로 수정할 수 있어요.</p>
+                </div>
               </div>
             ) : null}
 
@@ -737,7 +738,7 @@ export default function OnboardingFlow({
                   disabled={saving}
                   className="min-h-14 rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-4 text-base font-black text-white shadow-[0_14px_28px_rgba(14,165,233,0.22)] disabled:opacity-50"
                 >
-                  {saving ? "저장 중..." : "대시보드로 가기"}
+                  {saving ? "저장 중..." : "설정 완료"}
                 </button>
                 <div className="grid grid-cols-2 gap-2">
                   <button
