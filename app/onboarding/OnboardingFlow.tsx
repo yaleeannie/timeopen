@@ -585,7 +585,7 @@ export default function OnboardingFlow({
 
                 <div className="rounded-[22px] bg-[#f8fbfc] p-4">
                   <div className={labelClass}>영업시간</div>
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                  <div className="grid gap-3">
                     <label>
                       <span className="mb-1.5 block text-xs font-bold text-gray-500">
                         시작 시간
@@ -597,7 +597,6 @@ export default function OnboardingFlow({
                         aria-label="영업시간 시작 시간"
                       />
                     </label>
-                    <span className="pb-3 text-sm font-black text-gray-400">~</span>
                     <label>
                       <span className="mb-1.5 block text-xs font-bold text-gray-500">
                         종료 시간
@@ -614,7 +613,7 @@ export default function OnboardingFlow({
 
                 <div className="rounded-[22px] bg-[#f8fbfc] p-4">
                   <div className={labelClass}>쉬는 시간</div>
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                  <div className="grid gap-3">
                     <label>
                       <span className="mb-1.5 block text-xs font-bold text-gray-500">
                         시작 시간
@@ -627,7 +626,6 @@ export default function OnboardingFlow({
                         aria-label="쉬는 시간 시작 시간"
                       />
                     </label>
-                    <span className="pb-3 text-sm font-black text-gray-400">~</span>
                     <label>
                       <span className="mb-1.5 block text-xs font-bold text-gray-500">
                         종료 시간

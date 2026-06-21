@@ -69,7 +69,7 @@ function TimeRangeFields({
         <div className="text-sm font-black text-gray-800">{title}</div>
         {optional ? <span className="text-xs font-medium text-gray-400">선택</span> : null}
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+      <div className="grid gap-3">
         <label className="min-w-0">
           <span className="mb-1.5 block text-xs font-bold text-gray-500">시작 시간</span>
           <TimeSelect
@@ -80,7 +80,6 @@ function TimeRangeFields({
             aria-label={`${title} 시작 시간`}
           />
         </label>
-        <span className="mt-5 text-sm font-black text-gray-300">~</span>
         <label className="min-w-0">
           <span className="mb-1.5 block text-xs font-bold text-gray-500">종료 시간</span>
           <TimeSelect

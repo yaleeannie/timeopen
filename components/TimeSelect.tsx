@@ -1,74 +1,180 @@
-import type { SelectHTMLAttributes } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
+
+type Period = "" | "am" | "pm";
 
 type TimeSelectProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   allowEmpty?: boolean;
-} & Omit<SelectHTMLAttributes<HTMLSelectElement>, "value" | "onChange">;
+  disabled?: boolean;
+  className?: string;
+  "aria-label"?: string;
+};
 
-const TIME_OPTIONS = Array.from({ length: 24 * 6 }, (_, index) => {
-  const hour = Math.floor(index / 6);
-  const minute = (index % 6) * 10;
-  const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-  const period = hour < 12 ? "오전" : "오후";
-  const displayHour = hour % 12 || 12;
+const HOURS = Array.from({ length: 12 }, (_, index) => String(index + 1));
+const MINUTES = ["00", "10", "20", "30", "40", "50"];
+
+function parseTime(value: string) {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+  if (!match) return { period: "" as Period, hour: "", minute: "" };
+
+  const hour24 = Number(match[1]);
+  const minute = match[2];
+  if (hour24 > 23) return { period: "" as Period, hour: "", minute: "" };
 
   return {
-    value,
-    label: `${period} ${String(displayHour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+    period: (hour24 < 12 ? "am" : "pm") as Period,
+    hour: String(hour24 % 12 || 12),
+    minute: MINUTES.includes(minute) ? minute : "",
   };
-});
+}
 
-const VALID_TIME_VALUES = new Set(TIME_OPTIONS.map(({ value }) => value));
+function toTimeValue(period: Period, hour: string, minute: string) {
+  if (!period || !hour || !minute) return null;
+
+  const hour12 = Number(hour);
+  const hour24 =
+    period === "am"
+      ? hour12 === 12
+        ? 0
+        : hour12
+      : hour12 === 12
+        ? 12
+        : hour12 + 12;
+
+  return `${String(hour24).padStart(2, "0")}:${minute}`;
+}
+
+function SelectChevron() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-[#21aeca]"
+    >
+      <path
+        d="m6 8 4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export default function TimeSelect({
   value,
   onChange,
   placeholder = "시간 선택",
   allowEmpty = false,
+  disabled = false,
   className = "",
-  ...selectProps
+  "aria-label": ariaLabel = "시간 선택",
 }: TimeSelectProps) {
-  const hasUnsupportedValue = Boolean(value) && !VALID_TIME_VALUES.has(value);
-  const selectValue = hasUnsupportedValue ? "" : value;
-  const emptyLabel = hasUnsupportedValue
-    ? `현재 ${value} · 새 시간 선택`
-    : allowEmpty
-      ? "선택 안 함"
-      : placeholder;
+  const parsed = parseTime(value);
+  const [period, setPeriod] = useState<Period>(parsed.period);
+  const [hour, setHour] = useState(parsed.hour);
+  const [minute, setMinute] = useState(parsed.minute);
+
+  useEffect(() => {
+    const next = parseTime(value);
+    setPeriod(next.period);
+    setHour(next.hour);
+    setMinute(next.minute);
+  }, [value]);
+
+  function update(nextPeriod: Period, nextHour: string, nextMinute: string) {
+    setPeriod(nextPeriod);
+    setHour(nextHour);
+    setMinute(nextMinute);
+
+    const nextValue = toTimeValue(nextPeriod, nextHour, nextMinute);
+    if (nextValue) onChange(nextValue);
+  }
+
+  function changePeriod(nextPeriod: Period) {
+    if (!nextPeriod) {
+      setPeriod("");
+      setHour("");
+      setMinute("");
+      onChange("");
+      return;
+    }
+
+    update(nextPeriod, hour, minute);
+  }
+
+  const selectClass =
+    "min-h-12 w-full appearance-none rounded-xl border border-[#dcecef] bg-white py-3 pl-2.5 pr-7 text-center text-sm font-black text-gray-900 outline-none transition focus:border-[#4fcbe6] focus:ring-3 focus:ring-cyan-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400";
 
   return (
-    <div className="relative min-w-0">
-      <select
-        {...selectProps}
-        value={selectValue}
-        onChange={(event) => onChange(event.target.value)}
-        className={`min-h-12 w-full appearance-none rounded-2xl border border-[#dcecef] bg-white py-3 pl-3 pr-9 text-sm font-bold text-gray-900 outline-none transition focus:border-[#4fcbe6] focus:ring-4 focus:ring-cyan-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 ${className}`}
-      >
-        <option value="" disabled={!allowEmpty && !hasUnsupportedValue}>
-          {emptyLabel}
-        </option>
-        {TIME_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      title={!value ? placeholder : undefined}
+      className={`grid min-w-0 grid-cols-[1.15fr_1fr_1fr] gap-1.5 ${className}`}
+    >
+      <div className="relative min-w-0">
+        <select
+          value={period}
+          onChange={(event) => changePeriod(event.target.value as Period)}
+          disabled={disabled}
+          aria-label={`${ariaLabel} 오전 오후`}
+          className={selectClass}
+        >
+          <option value="" disabled={!allowEmpty}>
+            {allowEmpty ? "없음" : "구분"}
           </option>
-        ))}
-      </select>
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 20 20"
-        fill="none"
-        className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#21aeca]"
-      >
-        <path
-          d="m6 8 4 4 4-4"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+          <option value="am">오전</option>
+          <option value="pm">오후</option>
+        </select>
+        <SelectChevron />
+      </div>
+
+      <div className="relative min-w-0">
+        <select
+          value={hour}
+          onChange={(event) => update(period, event.target.value, minute)}
+          disabled={disabled}
+          aria-label={`${ariaLabel} 시`}
+          className={selectClass}
+        >
+          <option value="" disabled>
+            시
+          </option>
+          {HOURS.map((option) => (
+            <option key={option} value={option}>
+              {option}시
+            </option>
+          ))}
+        </select>
+        <SelectChevron />
+      </div>
+
+      <div className="relative min-w-0">
+        <select
+          value={minute}
+          onChange={(event) => update(period, hour, event.target.value)}
+          disabled={disabled}
+          aria-label={`${ariaLabel} 분`}
+          className={selectClass}
+        >
+          <option value="" disabled>
+            분
+          </option>
+          {MINUTES.map((option) => (
+            <option key={option} value={option}>
+              {option}분
+            </option>
+          ))}
+        </select>
+        <SelectChevron />
+      </div>
     </div>
   );
 }
