@@ -2,8 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import AvailabilitySettingsClient from "./AvailabilitySettingsClient";
-import HolidaySettingsClient from "./HolidaySettingsClient";
+import AvailabilityManagementClient from "./AvailabilityManagementClient";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 
 export default async function AvailabilitySettingsPage() {
@@ -35,8 +34,7 @@ export default async function AvailabilitySettingsPage() {
         </p>
         <p className="mt-2 truncate text-sm text-gray-400">@{handle ?? "-"}</p>
       </header>
-      <AvailabilitySettingsClient organizationId={organizationId} />
-      <HolidaySettingsClient />
+      <AvailabilityManagementClient organizationId={organizationId} />
       <nav className="mt-7 grid grid-cols-4 gap-1 rounded-2xl border border-[#e5f3f6] bg-white p-2 shadow-sm">
         <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">대시보드</a>
         <a href="/reservations" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">예약관리</a>

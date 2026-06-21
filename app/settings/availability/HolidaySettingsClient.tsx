@@ -102,7 +102,7 @@ export default function HolidaySettingsClient() {
   }
 
   return (
-    <section className="mt-8 border-t border-[#e5f3f6] pt-7" aria-labelledby="holidays-title">
+    <section aria-labelledby="holidays-title">
       <div className="px-1">
         <h2 id="holidays-title" className="text-xl font-black tracking-[-0.03em]">
           휴무일 설정
