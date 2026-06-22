@@ -525,43 +525,52 @@ export default async function ReservationsPage({ searchParams }: Props) {
           <h2 className="min-w-0 text-base font-black">
             {formatDateLabel(selectedDate)}
           </h2>
-          <span className="shrink-0 text-sm font-bold text-gray-500">
+          <span className="brand-chip shrink-0 rounded-full px-2.5 py-1 text-xs font-bold">
             {selectedReservations.length}건
           </span>
         </div>
 
         {selectedReservations.length === 0 ? (
           <div className="glass-card rounded-[24px] px-5 py-10 text-center">
-            <div className="text-base font-black">이 날짜에는 예약이 없어요.</div>
-            <div className="mt-2 text-sm leading-6 text-gray-500">
+            <div className="brand-soft mx-auto flex h-11 w-11 items-center justify-center rounded-2xl text-xl">
+              ◷
+            </div>
+            <div className="mt-3 text-base font-black">이 날짜에는 예약이 없어요.</div>
+            <div className="mt-1 text-sm leading-6 text-gray-500">
               캘린더에서 다른 날짜를 선택해 예약 일정을 확인해보세요.
             </div>
           </div>
         ) : (
-          <section>
-            <div className="grid gap-3">
+          <section aria-label="선택한 날짜 예약">
+            <div className="relative space-y-2.5 before:absolute before:bottom-5 before:left-[35px] before:top-5 before:w-px before:bg-gradient-to-b before:from-[#00d6f7]/15 before:via-[#00c1ff]/60 before:to-[#00c1ff]/15">
               {selectedReservations.map(({ row, start, end, serviceName, smsStatus }) => (
-                <article
+                <div
                   key={row.id}
-                  className="glass-card min-w-0 rounded-2xl p-4"
+                  className="relative grid min-w-0 grid-cols-[70px_1fr] gap-2"
                 >
-                  <div className="flex min-w-0 items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-baseline gap-2">
-                        <div className="shrink-0 text-base font-black tracking-tight">
-                          {formatTimeRange(start, end)}
+                  <div className="relative z-10 pt-4 text-center">
+                    <div className="brand-outline inline-flex min-h-8 items-center rounded-full px-2 text-xs font-black shadow-sm backdrop-blur-xl">
+                      {start}
+                    </div>
+                  </div>
+
+                  <article
+                    className={`glass-card min-w-0 rounded-[20px] p-3.5 ${
+                      row.status === "cancelled" || row.status === "canceled"
+                        ? "opacity-60"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex min-w-0 items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-black text-slate-900">
+                          {displayValue(row.customer_name)}
                         </div>
-                        <div className="min-w-0 truncate text-sm font-bold text-gray-600">
+                        <div className="mt-0.5 truncate text-xs font-bold text-slate-500">
                           {serviceName === "-" ? "서비스 미지정" : serviceName}
                         </div>
                       </div>
 
-                      <div className="mt-2 text-sm font-medium leading-5 text-gray-500 [overflow-wrap:anywhere]">
-                        {displayValue(row.customer_name)} · {displayValue(row.customer_phone)}
-                      </div>
-                    </div>
-
-                    <div className="flex shrink-0 flex-col items-end gap-1.5">
                       <span
                         style={{
                           border: "1px solid",
@@ -573,6 +582,12 @@ export default async function ReservationsPage({ searchParams }: Props) {
                         }}
                       >
                         {formatStatus(row.status)}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
+                      <span className="truncate text-xs font-bold text-slate-400">
+                        {formatTimeRange(start, end)}
                       </span>
                       <span
                         style={{
@@ -587,22 +602,29 @@ export default async function ReservationsPage({ searchParams }: Props) {
                         {smsStatusLabel(smsStatus)}
                       </span>
                     </div>
-                  </div>
 
-                  {row.status === "confirmed" ? (
-                    <div className="mt-3 flex justify-end">
-                      <form action="/api/reservations/cancel" method="post">
-                        <input type="hidden" name="reservationId" value={String(row.id)} />
-                        <button
-                          type="submit"
-                          className="min-h-11 rounded-xl px-3 py-2 text-sm font-bold text-gray-500 underline decoration-gray-300 underline-offset-4"
-                        >
-                          예약 취소
-                        </button>
-                      </form>
+                    <div className="mt-2 flex min-w-0 items-center justify-between gap-2 border-t border-white/70 pt-2">
+                      <span className="min-w-0 truncate text-xs font-medium text-slate-500">
+                        {displayValue(row.customer_phone)}
+                      </span>
+                      {row.status === "confirmed" ? (
+                        <form action="/api/reservations/cancel" method="post">
+                          <input
+                            type="hidden"
+                            name="reservationId"
+                            value={String(row.id)}
+                          />
+                          <button
+                            type="submit"
+                            className="min-h-9 shrink-0 rounded-xl px-2.5 text-xs font-bold text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                          >
+                            예약 취소
+                          </button>
+                        </form>
+                      ) : null}
                     </div>
-                  ) : null}
-                </article>
+                  </article>
+                </div>
               ))}
             </div>
           </section>
