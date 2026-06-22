@@ -4,10 +4,26 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import { getSiteUrl } from "@/lib/siteUrl";
-import LogoutButton from "./LogoutButton";
-import SummaryPanel from "./SummaryPanel";
+import OwnerDashboardClient, {
+  type DashboardReservation,
+  type IncompleteSetting,
+  type ScheduleDate,
+  type SmsDisplayStatus,
+} from "./OwnerDashboardClient";
 
 const SITE_URL = getSiteUrl();
+
+type ReservationRow = {
+  id: string;
+  date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  start_at: string | null;
+  end_at: string | null;
+  status: string | null;
+  service_id: string | null;
+  customer_name: string | null;
+};
 
 type SmsLogRow = {
   reservation_id: string | null;
@@ -16,9 +32,7 @@ type SmsLogRow = {
   created_at: string;
 };
 
-type SmsDisplayStatus = "success" | "partial" | "failed" | "none";
-
-function getTodayISO() {
+function getSeoulTodayISO() {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Seoul",
     year: "numeric",
@@ -27,39 +41,79 @@ function getTodayISO() {
   }).format(new Date());
 }
 
-function getCurrentTimeText() {
+function getSeoulHour() {
+  return Number(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Seoul",
+      hour: "2-digit",
+      hourCycle: "h23",
+    }).format(new Date())
+  );
+}
+
+function greetingForHour(hour: number) {
+  if (hour < 12) return "좋은 아침이에요";
+  if (hour < 18) return "좋은 오후예요";
+  return "오늘도 수고하셨어요";
+}
+
+function parseISODate(dateISO: string) {
+  const [year, month, day] = dateISO.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function toISODate(date: Date) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    date.getUTCDate()
+  ).padStart(2, "0")}`;
+}
+
+function addDays(dateISO: string, days: number) {
+  const date = parseISODate(dateISO);
+  date.setUTCDate(date.getUTCDate() + days);
+  return toISODate(date);
+}
+
+function getWeekRange(todayISO: string) {
+  const today = parseISODate(todayISO);
+  const mondayOffset = (today.getUTCDay() + 6) % 7;
+  return {
+    start: addDays(todayISO, -mondayOffset),
+    end: addDays(todayISO, 6 - mondayOffset),
+  };
+}
+
+function getScheduleDates(todayISO: string): ScheduleDate[] {
+  return Array.from({ length: 7 }, (_, index) => {
+    const iso = addDays(todayISO, index);
+    const date = parseISODate(iso);
+    return {
+      iso,
+      weekday: new Intl.DateTimeFormat("ko-KR", {
+        timeZone: "UTC",
+        weekday: "short",
+      })
+        .format(date)
+        .replace("요일", ""),
+      day: date.getUTCDate(),
+      month: date.getUTCMonth() + 1,
+    };
+  });
+}
+
+function formatReservationTime(value: string | null, fallback: string | null) {
+  if (value) return value.slice(0, 5);
+  if (!fallback) return "";
+
+  const date = new Date(fallback);
+  if (Number.isNaN(date.getTime())) return "";
+
   return new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Seoul",
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
-  }).format(new Date());
-}
-
-function smsStatusLabel(status: SmsDisplayStatus) {
-  switch (status) {
-    case "success":
-      return "문자 완료";
-    case "partial":
-      return "문자 일부 완료";
-    case "failed":
-      return "문자 실패";
-    default:
-      return "문자 없음";
-  }
-}
-
-function smsStatusStyle(status: SmsDisplayStatus) {
-  switch (status) {
-    case "success":
-      return "border-[#99f6e4] bg-[#ccfbf1] text-[#0f766e]";
-    case "partial":
-      return "border-[#fde68a] bg-[#fef3c7] text-[#92400e]";
-    case "failed":
-      return "border-[#fecaca] bg-[#fee2e2] text-[#b91c1c]";
-    default:
-      return "border-gray-200 bg-gray-100 text-gray-500";
-  }
+  }).format(date);
 }
 
 function getSmsDisplayStatus(logs: SmsLogRow[]): SmsDisplayStatus {
@@ -81,103 +135,69 @@ function getSmsDisplayStatus(logs: SmsLogRow[]): SmsDisplayStatus {
   return "none";
 }
 
-function formatReservationTime(value: unknown, fallback: unknown) {
-  if (value) return String(value).slice(0, 5);
-  if (!fallback) return "";
-
-  const date = new Date(String(fallback));
-  if (Number.isNaN(date.getTime())) return "";
-
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Seoul",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).format(date);
-}
-
-function MenuCard({
-  href,
-  title,
-  description,
-  symbol,
-  colorClass,
-}: {
-  href: string;
-  title: string;
-  description: string;
-  symbol: string;
-  colorClass: string;
-}) {
-  return (
-    <a
-      href={href}
-      className={`flex min-h-32 min-w-0 flex-col justify-between rounded-2xl p-4 text-white shadow-sm transition hover:brightness-95 ${colorClass}`}
-    >
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-lg font-black">
-        {symbol}
-      </span>
-      <div>
-        <div className="text-base font-black tracking-tight">{title}</div>
-        <div className="mt-1 text-sm leading-5 text-white/80">{description}</div>
-      </div>
-    </a>
-  );
-}
-
 export default async function OwnerPage() {
   const { user, organizationId, handle, error } = await getOwnerContext();
 
-  if (!user) {
-    redirect("/login");
-  }
-
-  if (error || !organizationId) {
-    redirect("/onboarding?setup=retry");
-  }
+  if (!user) redirect("/login");
+  if (error || !organizationId) redirect("/onboarding?setup=retry");
 
   const supabase = await createSupabaseServerClient();
+  const todayISO = getSeoulTodayISO();
+  const scheduleDates = getScheduleDates(todayISO);
+  const scheduleEndISO = scheduleDates.at(-1)?.iso ?? todayISO;
+  const weekRange = getWeekRange(todayISO);
+  const queryStart = weekRange.start < todayISO ? weekRange.start : todayISO;
+  const queryEnd = weekRange.end > scheduleEndISO ? weekRange.end : scheduleEndISO;
 
-  const { data: orgRow, error: orgErr } = await supabase
-    .from("organizations")
-    .select("name, handle, location_text, notice_text")
-    .eq("id", organizationId)
-    .maybeSingle();
+  const [orgResult, serviceCountResult, openDayCountResult, reservationsResult, servicesResult] =
+    await Promise.all([
+      supabase
+        .from("organizations")
+        .select("name, handle")
+        .eq("id", organizationId)
+        .maybeSingle(),
+      supabase
+        .from("services")
+        .select("*", { count: "exact", head: true })
+        .eq("organization_id", organizationId)
+        .eq("active", true),
+      supabase
+        .from("organization_availability")
+        .select("*", { count: "exact", head: true })
+        .eq("organization_id", organizationId)
+        .eq("is_open", true),
+      supabase
+        .from("reservations")
+        .select(
+          "id, date, start_time, end_time, start_at, end_at, status, service_id, customer_name"
+        )
+        .eq("organization_id", organizationId)
+        .gte("date", queryStart)
+        .lte("date", queryEnd)
+        .order("date", { ascending: true })
+        .order("start_time", { ascending: true }),
+      supabase
+        .from("services")
+        .select("id, name")
+        .eq("organization_id", organizationId),
+    ]);
 
-  if (orgErr) {
+  if (orgResult.error) {
     return (
-      <main className="min-h-screen bg-gray-100 px-5 py-10 sm:px-8">
-        <div className="mx-auto max-w-6xl">
-          <h1 className="mb-3 text-3xl font-black tracking-tight">TimeOpen 관리자</h1>
-          <div className="font-extrabold text-red-700">
-            organizations 조회 오류: {orgErr.message}
-          </div>
+      <main className="min-h-screen bg-[#eef6f8] px-5 py-10">
+        <div className="mx-auto max-w-lg rounded-2xl bg-white p-5 font-bold text-red-700">
+          매장 정보를 불러오지 못했습니다: {orgResult.error.message}
         </div>
       </main>
     );
   }
 
-  const nameText = (orgRow?.name as string | null) ?? "";
-  const finalHandle = (orgRow?.handle as string | null) ?? handle;
-  const previewPath = finalHandle ? `/u/${finalHandle}` : "-";
-  const previewFullLink = finalHandle ? `${SITE_URL}/u/${finalHandle}` : "";
-  const canLink =
-    typeof finalHandle === "string" &&
-    finalHandle.trim().length > 0 &&
-    finalHandle !== "null";
-
-  const [serviceCountResult, openDayCountResult] = await Promise.all([
-    supabase
-      .from("services")
-      .select("*", { count: "exact", head: true })
-      .eq("organization_id", organizationId)
-      .eq("active", true),
-    supabase
-      .from("organization_availability")
-      .select("*", { count: "exact", head: true })
-      .eq("organization_id", organizationId)
-      .eq("is_open", true),
-  ]);
+  if (reservationsResult.error) {
+    console.error("[owner] reservations 조회 실패", reservationsResult.error.message);
+  }
+  if (servicesResult.error) {
+    console.error("[owner] services 조회 실패", servicesResult.error.message);
+  }
   if (serviceCountResult.error) {
     console.error("[owner] active service count failed", serviceCountResult.error.message);
   }
@@ -185,76 +205,42 @@ export default async function OwnerPage() {
     console.error("[owner] open day count failed", openDayCountResult.error.message);
   }
 
-  const activeServiceCount = serviceCountResult.count ?? 0;
-  const openDayCount = openDayCountResult.count ?? 0;
+  const orgRow = orgResult.data;
+  const storeName = (orgRow?.name as string | null)?.trim() || "TimeOpen";
+  const finalHandle = (orgRow?.handle as string | null) ?? handle;
+  const canLink =
+    typeof finalHandle === "string" &&
+    finalHandle.trim().length > 0 &&
+    finalHandle !== "null";
+  const bookingUrl = canLink ? `${SITE_URL}/u/${finalHandle}` : "";
 
-  const incompleteSettings = [
-    activeServiceCount === 0
-      ? {
-          title: "서비스를 등록해 주세요",
-          href: "/settings/services",
-          action: "서비스 설정하기",
-        }
+  const incompleteSettings: IncompleteSetting[] = [
+    (serviceCountResult.count ?? 0) === 0
+      ? { title: "서비스", href: "/settings/services" }
       : null,
-    openDayCount === 0
-      ? {
-          title: "영업시간을 설정해 주세요",
-          href: "/settings/availability",
-          action: "영업시간 설정하기",
-        }
+    (openDayCountResult.count ?? 0) === 0
+      ? { title: "영업시간", href: "/settings/availability" }
       : null,
-    !canLink
-      ? {
-          title: "예약 링크를 만들어 주세요",
-          href: "/settings/profile",
-          action: "예약 링크 만들기",
-        }
-      : null,
-  ].filter(
-    (
-      item
-    ): item is {
-      title: string;
-      href: string;
-      action: string;
-    } => Boolean(item)
-  );
+    !canLink ? { title: "예약 링크", href: "/settings/profile" } : null,
+  ].filter((item): item is IncompleteSetting => Boolean(item));
 
-  const todayISO = getTodayISO();
-
-  const { count: todayReservationCount } = await supabase
-    .from("reservations")
-    .select("*", { count: "exact", head: true })
-    .eq("organization_id", organizationId)
-    .eq("date", todayISO)
-    .eq("status", "confirmed");
-
-  const { data: todayReservationRows } = await supabase
-    .from("reservations")
-    .select("id, start_time, end_time, start_at, end_at, customer_name")
-    .eq("organization_id", organizationId)
-    .eq("date", todayISO)
-    .eq("status", "confirmed")
-    .order("start_time", { ascending: true });
-
-  const todayReservationIds = (todayReservationRows ?? []).map((reservation) =>
-    String(reservation.id)
-  );
+  const reservationRows = (reservationsResult.data ?? []) as ReservationRow[];
+  const reservationIds = reservationRows.map((row) => row.id);
   let smsLogs: SmsLogRow[] = [];
 
-  if (todayReservationIds.length > 0) {
-    const { data: smsLogRows, error: smsLogErr } = await supabase
+  if (reservationIds.length > 0) {
+    const { data, error: smsError } = await supabase
       .from("sms_logs")
       .select("reservation_id, recipient_type, status, created_at")
       .eq("organization_id", organizationId)
       .eq("message_type", "booking_confirm")
-      .in("reservation_id", todayReservationIds)
+      .in("reservation_id", reservationIds)
       .order("created_at", { ascending: false });
 
-    if (smsLogErr) {
-      console.error("[owner] sms_logs 조회 실패", smsLogErr.message);
+    if (smsError) {
+      console.error("[owner] sms_logs 조회 실패", smsError.message);
     } else {
-      smsLogs = (smsLogRows ?? []) as SmsLogRow[];
+      smsLogs = (data ?? []) as SmsLogRow[];
     }
   }
 
@@ -266,197 +252,53 @@ export default async function OwnerPage() {
     return map;
   }, new Map<string, SmsLogRow[]>());
 
-  const currentTimeText = getCurrentTimeText();
-  const todayScheduleReservations = (todayReservationRows ?? []).map((reservation) => {
-    const id = String(reservation.id);
-    const start = formatReservationTime(reservation.start_time, reservation.start_at);
-    const end = formatReservationTime(reservation.end_time, reservation.end_at);
+  const serviceNameMap = new Map(
+    (servicesResult.data ?? []).map((service) => [
+      String(service.id),
+      String(service.name),
+    ])
+  );
 
-    return {
-      id,
-      time: start || "시간 미정",
-      customer: reservation.customer_name
-        ? String(reservation.customer_name)
-        : "고객명 미입력",
-      isPast: Boolean(end && end < currentTimeText),
-      smsStatus: getSmsDisplayStatus(smsLogsByReservation.get(id) ?? []),
-    };
-  });
+  const reservations: DashboardReservation[] = reservationRows.map((row) => ({
+    id: row.id,
+    date: row.date ?? "",
+    start: formatReservationTime(row.start_time, row.start_at) || "시간 미정",
+    end: formatReservationTime(row.end_time, row.end_at),
+    customer: row.customer_name?.trim() || "고객명 미입력",
+    service: row.service_id
+      ? serviceNameMap.get(row.service_id) ?? "서비스 미지정"
+      : "서비스 미지정",
+    status: row.status ?? "confirmed",
+    smsStatus: getSmsDisplayStatus(smsLogsByReservation.get(row.id) ?? []),
+  }));
 
-  const nextReservation =
-    todayScheduleReservations.find(
-      (reservation) =>
-        reservation.time !== "시간 미정" && reservation.time >= currentTimeText
-    ) ?? null;
-  const nextReservationTime = nextReservation?.time ?? "";
-  const nextReservationCustomer = nextReservation?.customer ?? "";
+  const thisWeekReservationCount = reservations.filter(
+    (reservation) =>
+      reservation.date >= weekRange.start &&
+      reservation.date <= weekRange.end &&
+      reservation.status !== "cancelled" &&
+      reservation.status !== "canceled"
+  ).length;
+
+  const todayDateText = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  }).format(new Date());
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#eef6f8] px-3 py-4 text-gray-900 sm:px-5 sm:py-7">
-      <div className="mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] bg-[#fbfdfe] shadow-[0_20px_60px_rgba(80,145,164,0.14)] sm:rounded-[36px]">
-        <div className="px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7">
-          <header className="mb-6 flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="truncate text-sm font-bold text-[#28b9dc]">
-                {nameText || "TimeOpen"}
-              </div>
-              <h1 className="mt-1 text-3xl font-black tracking-[-0.04em] text-gray-950">
-                대시보드
-              </h1>
-              <p className="mt-1 text-sm leading-5 text-gray-500">
-                {todayISO} 오늘 예약 현황
-              </p>
-            </div>
-
-            <div className="shrink-0">
-              <LogoutButton />
-            </div>
-          </header>
-
-          {incompleteSettings.length > 0 ? (
-            <section
-              className="mb-7 rounded-[24px] border border-[#f3dfaa] bg-gradient-to-br from-[#fffaf0] to-white p-5 shadow-[0_12px_30px_rgba(180,130,40,0.08)]"
-              aria-labelledby="setup-required"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff0c7] text-lg font-black text-[#a96d12]">
-                !
-              </div>
-              <h2
-                id="setup-required"
-                className="mt-4 text-xl font-black tracking-[-0.03em] text-gray-950"
-              >
-                예약을 받기 전에 설정이 필요해요
-              </h2>
-              <p className="mt-2 text-sm font-medium leading-6 text-gray-500">
-                서비스, 영업시간, 예약 링크를 설정하면 고객이 바로 예약할 수 있어요.
-              </p>
-
-              <div className="mt-4 grid gap-2">
-                {incompleteSettings.map((item) => (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    className="flex min-h-12 items-center justify-between gap-3 rounded-2xl border border-[#f0e4c8] bg-white px-4 transition hover:border-[#e6cb8a] hover:bg-[#fffdf8]"
-                  >
-                    <span className="text-sm font-black text-gray-800">{item.title}</span>
-                    <span className="shrink-0 text-xs font-black text-[#b7781f]">
-                      {item.action} →
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          <section className="mb-7" aria-label="오늘 요약">
-            <SummaryPanel
-              todayReservationCount={todayReservationCount ?? 0}
-              nextReservationTime={nextReservationTime}
-              nextReservationCustomer={nextReservationCustomer}
-              previewPath={previewPath}
-              previewFullLink={previewFullLink}
-              canLink={canLink}
-              todayISO={todayISO}
-            />
-          </section>
-
-          <section className="mb-7" aria-labelledby="today-schedule">
-            <div className="mb-3 flex items-center justify-between gap-3 px-1">
-              <h2 id="today-schedule" className="text-base font-black tracking-tight">
-                오늘 일정
-              </h2>
-              <a href="/reservations" className="text-sm font-bold text-[#28b9dc]">
-                전체 보기
-              </a>
-            </div>
-
-            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-              {todayScheduleReservations.length > 0 ? (
-                todayScheduleReservations.map((reservation) => (
-                  <a
-                    key={reservation.id}
-                    href={`/reservations?date=${todayISO}`}
-                    className={`flex min-w-0 items-center gap-3 border-b border-gray-100 px-4 py-3.5 transition last:border-b-0 hover:bg-gray-50 ${
-                      reservation.isPast ? "bg-gray-50/70 opacity-60" : ""
-                    }`}
-                  >
-                    <div
-                      className={`flex h-14 w-[68px] shrink-0 items-center justify-center rounded-xl text-sm font-black ${
-                        reservation.isPast
-                          ? "bg-gray-200 text-gray-500"
-                          : "bg-[#e8f9fd] text-[#20afd2]"
-                      }`}
-                    >
-                      {reservation.time}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-extrabold text-gray-900">
-                        {reservation.customer}
-                      </div>
-                      <div className="mt-0.5 text-sm text-gray-400">확정 예약</div>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black ${smsStatusStyle(
-                        reservation.smsStatus
-                      )}`}
-                    >
-                      {smsStatusLabel(reservation.smsStatus)}
-                    </span>
-                    <span className="shrink-0 text-gray-300">›</span>
-                  </a>
-                ))
-              ) : (
-                <div className="px-5 py-8 text-center">
-                  <div className="text-sm font-extrabold text-gray-700">남은 일정이 없습니다</div>
-                  <div className="mt-1 text-sm text-gray-400">오늘 예약을 모두 확인했습니다.</div>
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section aria-labelledby="quick-menu">
-            <div className="mb-3 px-1">
-              <h2 id="quick-menu" className="text-base font-black tracking-tight">
-                빠른 메뉴
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <MenuCard
-                href="/reservations"
-                symbol="✓"
-                colorClass="bg-gradient-to-br from-[#55d4f0] to-[#28b9e3]"
-                title="예약"
-                description="전체 일정 확인"
-              />
-
-              <MenuCard
-                href="/settings/services"
-                symbol="+"
-                colorClass="bg-gradient-to-br from-[#58dfbe] to-[#2fc9a5]"
-                title="서비스"
-                description="메뉴와 가격 관리"
-              />
-
-              <MenuCard
-                href="/settings/availability"
-                symbol="◷"
-                colorClass="bg-gradient-to-br from-[#8a63f4] to-[#653de0]"
-                title="영업시간"
-                description="운영 시간 설정"
-              />
-
-              <MenuCard
-                href="/settings/profile"
-                symbol="···"
-                colorClass="bg-gradient-to-br from-[#61a8fa] to-[#477eea]"
-                title="설정"
-                description="매장 정보 관리"
-              />
-            </div>
-          </section>
-        </div>
-      </div>
-    </main>
+    <OwnerDashboardClient
+      storeName={storeName}
+      greeting={greetingForHour(getSeoulHour())}
+      todayISO={todayISO}
+      todayDateText={todayDateText}
+      scheduleDates={scheduleDates}
+      reservations={reservations}
+      thisWeekReservationCount={thisWeekReservationCount}
+      incompleteSettings={incompleteSettings}
+      bookingUrl={bookingUrl}
+      canLink={canLink}
+    />
   );
 }
