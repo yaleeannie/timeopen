@@ -184,7 +184,7 @@ export default function TimeSelect({
           role="listbox"
           aria-label={`${ariaLabel} 목록`}
           style={panelStyle}
-          className="fixed z-[100] max-h-60 overflow-y-auto overscroll-contain rounded-2xl border border-[#dcecef] bg-white p-1.5 shadow-[0_16px_40px_rgba(61,111,123,0.18)]"
+          className="fixed z-[100] max-h-60 overflow-y-auto overscroll-contain rounded-2xl border border-cyan-100/70 bg-white/95 p-1.5 shadow-[0_16px_40px_rgba(0,145,195,0.16)] backdrop-blur-xl"
         >
           {allowEmpty ? (
             <button
@@ -195,8 +195,8 @@ export default function TimeSelect({
               onClick={() => selectTime("")}
               className={`flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm font-bold transition ${
                 !value
-                  ? "bg-[#e7f9f7] text-[#118873]"
-                  : "text-gray-500 hover:bg-[#effaf8] focus:bg-[#effaf8]"
+                  ? "bg-[#e8faff] text-[#008fbe]"
+                  : "text-gray-500 hover:bg-[#effbff] focus:bg-[#effbff]"
               }`}
             >
               선택 안 함
@@ -220,15 +220,15 @@ export default function TimeSelect({
                 onClick={() => selectTime(option.value)}
                 className={`flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-left text-sm font-bold transition ${
                   selected
-                    ? "bg-[#dff7f4] text-[#0f8b75]"
+                    ? "bg-[#dff8ff] text-[#008fbe]"
                     : active
-                      ? "bg-[#effaf8] text-gray-900"
-                      : "text-gray-700 hover:bg-[#effaf8] focus:bg-[#effaf8]"
+                      ? "bg-[#effbff] text-gray-900"
+                      : "text-gray-700 hover:bg-[#effbff] focus:bg-[#effbff]"
                 }`}
               >
                 <span>{option.label}</span>
                 {selected ? (
-                  <span aria-hidden="true" className="text-base text-[#1aa88c]">
+                  <span aria-hidden="true" className="text-base text-[#00aee8]">
                     ✓
                   </span>
                 ) : null}
@@ -256,8 +256,8 @@ export default function TimeSelect({
         onKeyDown={handleKeyDown}
         className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 text-left text-sm font-bold outline-none transition ${
           open
-            ? "border-[#4fcbe6] ring-4 ring-cyan-50"
-            : "border-[#dcecef] hover:border-[#9bdde7]"
+            ? "border-[#00c1ff] ring-4 ring-cyan-100/60"
+            : "border-cyan-100/80 hover:border-[#65dcff]"
         } disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400`}
       >
         <span className={displayValue ? "text-gray-900" : "text-gray-400"}>

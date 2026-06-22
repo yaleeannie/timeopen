@@ -78,7 +78,7 @@ export function BookingLanguageSelect() {
   const { locale, setLocale, t } = usePublicBookingI18n();
 
   return (
-    <label className="inline-flex items-center gap-2 rounded-full border border-[#dceef2] bg-white px-3 py-2 text-xs font-bold text-[#397582] shadow-sm">
+    <label className="brand-chip inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold shadow-sm">
       <span>{t("language")}</span>
       <select
         value={locale}

@@ -329,20 +329,20 @@ export default function OnboardingFlow({
   }
 
   const inputClass =
-    "min-h-12 w-full rounded-2xl border border-[#dcecef] bg-white px-4 py-3 text-base text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-[#4fcbe6] focus:ring-4 focus:ring-cyan-50";
+    "brand-input min-h-12 w-full rounded-2xl px-4 py-3 text-base placeholder:text-gray-400";
   const labelClass = "mb-2 block text-sm font-black text-gray-700";
 
   if (!started) {
     return (
-      <main className="min-h-screen bg-[#eef7f8] px-3 py-4 text-gray-950 sm:px-5 sm:py-8">
-        <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-[30px] bg-[#fbfdfd] shadow-[0_24px_70px_rgba(57,112,126,0.16)] sm:min-h-[760px] sm:rounded-[38px]">
+      <main className="soft-page-bg px-3 py-4 text-slate-950 sm:px-5 sm:py-8">
+        <div className="glass-shell mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-[30px] sm:min-h-[760px] sm:rounded-[38px]">
           <div className="px-5 pb-4 pt-6 sm:px-7 sm:pt-8">
             <div className="text-sm font-black text-[#1aa9c7]">TimeOpen 시작하기</div>
           </div>
 
           <section className="flex flex-1 flex-col px-5 pb-5 sm:px-7 sm:pb-7">
             <header className="pb-6 pt-5">
-              <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-[#5bd8f2] to-[#24b8df] text-2xl font-black text-white shadow-[0_14px_30px_rgba(40,185,220,0.24)]">
+              <div className="brand-gradient flex h-16 w-16 items-center justify-center rounded-[22px] text-2xl font-black text-white shadow-[0_14px_30px_rgba(0,193,255,0.24)]">
                 T
               </div>
               <h1 className="mt-6 text-3xl font-black leading-tight tracking-[-0.045em]">
@@ -356,7 +356,7 @@ export default function OnboardingFlow({
               </p>
             </header>
 
-            <ol className="grid gap-3 rounded-[28px] border border-[#e1eef0] bg-white p-4 shadow-[0_14px_34px_rgba(70,126,139,0.08)]">
+            <ol className="glass-card grid gap-3 rounded-[28px] p-4">
               {INTRO_STEPS.map((title, index) => (
                 <li
                   key={title}
@@ -374,7 +374,7 @@ export default function OnboardingFlow({
               <button
                 type="button"
                 onClick={() => setStarted(true)}
-                className="min-h-14 w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-4 text-base font-black text-white shadow-[0_14px_28px_rgba(14,165,233,0.22)]"
+                className="brand-button min-h-14 w-full rounded-2xl px-4 text-base font-black"
               >
                 시작하기
               </button>
@@ -393,8 +393,8 @@ export default function OnboardingFlow({
   }
 
   return (
-    <main className="min-h-screen bg-[#eef7f8] px-3 py-4 text-gray-950 sm:px-5 sm:py-8">
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-[30px] bg-[#fbfdfd] shadow-[0_24px_70px_rgba(57,112,126,0.16)] sm:min-h-[760px] sm:rounded-[38px]">
+    <main className="soft-page-bg px-3 py-4 text-slate-950 sm:px-5 sm:py-8">
+      <div className="glass-shell mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-[30px] sm:min-h-[760px] sm:rounded-[38px]">
         <div className="px-5 pb-4 pt-6 sm:px-7 sm:pt-8">
           <div className="flex items-center justify-between">
             <div className="text-sm font-black text-[#1aa9c7]">TimeOpen 시작하기</div>
@@ -408,7 +408,7 @@ export default function OnboardingFlow({
               <div
                 key={index}
                 className={`h-1.5 rounded-full ${
-                  index <= step ? "bg-[#35c3df]" : "bg-[#dcecef]"
+                  index <= step ? "brand-gradient" : "bg-white/70"
                 }`}
               />
             ))}
@@ -425,7 +425,7 @@ export default function OnboardingFlow({
             </p>
           </header>
 
-          <div className="rounded-[26px] border border-[#e1eef0] bg-white p-5 shadow-[0_14px_34px_rgba(70,126,139,0.08)]">
+          <div className="glass-card rounded-[26px] p-5">
             {step === 0 ? (
               <div className="grid gap-5">
                 <label>
@@ -572,7 +572,7 @@ export default function OnboardingFlow({
                           onClick={() => toggleWeekday(value)}
                           className={`min-h-9 min-w-9 rounded-full border px-2.5 text-sm font-black transition ${
                             selected
-                              ? "border-[#31bfdc] bg-[#31bfdc] text-white"
+                              ? "brand-gradient border-transparent text-white"
                               : "border-[#dcecef] bg-white text-gray-500"
                           }`}
                         >
@@ -717,7 +717,7 @@ export default function OnboardingFlow({
                     type="button"
                     onClick={saveCurrentStep}
                     disabled={saving}
-                    className="min-h-14 rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-4 text-base font-black text-white shadow-[0_14px_28px_rgba(14,165,233,0.22)] disabled:opacity-50"
+                    className="brand-button min-h-14 rounded-2xl px-4 text-base font-black disabled:opacity-50"
                   >
                     {saving ? "저장 중..." : "다음"}
                   </button>
@@ -737,7 +737,7 @@ export default function OnboardingFlow({
                   type="button"
                   onClick={() => finish("dashboard")}
                   disabled={saving}
-                  className="min-h-14 rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-4 text-base font-black text-white shadow-[0_14px_28px_rgba(14,165,233,0.22)] disabled:opacity-50"
+                  className="brand-button min-h-14 rounded-2xl px-4 text-base font-black disabled:opacity-50"
                 >
                   {saving ? "저장 중..." : "설정 완료"}
                 </button>

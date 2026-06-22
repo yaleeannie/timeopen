@@ -49,7 +49,7 @@ function statusLabel(status: string) {
 
 function statusStyle(status: string) {
   if (status === "confirmed") {
-    return "border-emerald-200/70 bg-emerald-50/75 text-emerald-700";
+    return "border-cyan-200/70 bg-cyan-50/75 text-[#007fa8]";
   }
   if (status === "cancelled" || status === "canceled") {
     return "border-slate-200/70 bg-slate-100/70 text-slate-500";
@@ -66,7 +66,7 @@ function smsStatusLabel(status: SmsDisplayStatus) {
 
 function smsStatusStyle(status: SmsDisplayStatus) {
   if (status === "success") {
-    return "border-teal-200/70 bg-teal-50/75 text-teal-700";
+    return "border-cyan-200/70 bg-cyan-50/75 text-[#007fa8]";
   }
   if (status === "partial") {
     return "border-amber-200/70 bg-amber-50/75 text-amber-700";
@@ -87,9 +87,9 @@ function QuickLink({
   return (
     <a
       href={href}
-      className="group flex min-h-20 min-w-0 flex-col justify-between rounded-[20px] border border-white/75 bg-white/50 p-3 shadow-[0_10px_28px_rgba(75,112,130,0.08)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-white/70"
+      className="glass-card group flex min-h-20 min-w-0 flex-col justify-between rounded-[20px] p-3 transition hover:-translate-y-0.5 hover:bg-white/80"
     >
-      <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/80 bg-gradient-to-br from-white/85 to-cyan-100/60 text-sm font-black text-[#168ca8] shadow-sm transition group-hover:scale-105">
+      <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/80 bg-gradient-to-br from-white/90 to-[#dff9ff] text-sm font-black text-[#008fbe] shadow-sm transition group-hover:scale-105">
         {icon}
       </span>
       <span className="truncate text-xs font-black text-slate-700">{label}</span>
@@ -142,25 +142,25 @@ export default function OwnerDashboardClient({
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[linear-gradient(145deg,#f1fbf9_0%,#edf5fb_46%,#f5f0fb_100%)] px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
+    <main className="soft-page-bg overflow-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -left-24 -top-16 h-72 w-72 rounded-full bg-cyan-200/45 blur-[80px]"
+        className="pointer-events-none absolute -left-24 -top-16 h-72 w-72 rounded-full bg-[#00d6f7]/20 blur-[80px]"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-28 top-48 h-80 w-80 rounded-full bg-violet-200/35 blur-[90px]"
+        className="pointer-events-none absolute -right-28 top-48 h-80 w-80 rounded-full bg-[#00c1ff]/15 blur-[90px]"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-16 left-1/4 h-64 w-64 rounded-full bg-emerald-200/30 blur-[85px]"
+        className="pointer-events-none absolute bottom-16 left-1/4 h-64 w-64 rounded-full bg-sky-200/30 blur-[85px]"
       />
 
-      <div className="relative mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[32px] border border-white/75 bg-white/35 shadow-[0_28px_80px_rgba(70,105,125,0.14)] backdrop-blur-2xl sm:rounded-[38px]">
+      <div className="glass-shell relative mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[32px] sm:rounded-[38px]">
         <div className="px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7">
           <header className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-sm font-black text-[#1599ad]">{greeting}</div>
+              <div className="text-sm font-black text-[#008fbe]">{greeting}</div>
               <h1 className="mt-1 truncate text-2xl font-black tracking-[-0.035em] text-slate-950">
                 {storeName} 사장님
               </h1>
@@ -175,24 +175,24 @@ export default function OwnerDashboardClient({
             }`}
             aria-label="대시보드 요약"
           >
-            <div className="relative overflow-hidden rounded-[22px] border border-white/75 bg-white/55 p-4 shadow-[0_14px_38px_rgba(62,111,130,0.1)] backdrop-blur-xl">
+            <div className="glass-card relative overflow-hidden rounded-[22px] p-4">
               <div
                 aria-hidden="true"
-                className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-cyan-300/35 blur-2xl"
+                className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[#00d6f7]/25 blur-2xl"
               />
               <div className="relative text-xs font-bold text-slate-500">이번 주 예약</div>
               <div className="relative mt-1 text-2xl font-black text-slate-950">
                 {thisWeekReservationCount}
                 <span className="ml-1 text-sm text-slate-500">건</span>
               </div>
-              <div className="relative mt-2 h-1 w-10 rounded-full bg-gradient-to-r from-cyan-400 to-sky-400" />
+              <div className="brand-gradient relative mt-2 h-1 w-10 rounded-full" />
             </div>
 
             {incompleteSettings.length > 0 ? (
-              <div className="relative overflow-hidden rounded-[22px] border border-white/75 bg-white/50 p-4 shadow-[0_14px_38px_rgba(90,82,125,0.08)] backdrop-blur-xl">
+              <div className="glass-card relative overflow-hidden rounded-[22px] p-4">
                 <div
                   aria-hidden="true"
-                  className="absolute -bottom-10 -right-8 h-28 w-28 rounded-full bg-violet-200/45 blur-2xl"
+                  className="absolute -bottom-10 -right-8 h-28 w-28 rounded-full bg-[#00c1ff]/18 blur-2xl"
                 />
                 <div className="relative text-xs font-bold text-slate-500">미완료 설정</div>
                 <div className="relative mt-1 flex items-baseline gap-1">
@@ -205,10 +205,10 @@ export default function OwnerDashboardClient({
             ) : null}
           </section>
 
-          <section className="mt-2.5 rounded-[20px] border border-white/75 bg-white/45 px-3.5 py-3 shadow-[0_10px_30px_rgba(70,105,125,0.07)] backdrop-blur-xl">
+          <section className="glass-card mt-2.5 rounded-[20px] px-3.5 py-3">
             <div className="flex min-w-0 items-center gap-3">
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-black text-[#168ca8]">예약 링크</div>
+                <div className="text-[11px] font-black text-[#008fbe]">예약 링크</div>
                 <div className="mt-0.5 truncate text-xs font-bold text-slate-500">
                   {canLink ? bookingUrl : "예약 링크 설정이 필요해요"}
                 </div>
@@ -217,14 +217,14 @@ export default function OwnerDashboardClient({
                 <button
                   type="button"
                   onClick={copyBookingLink}
-                  className="min-h-9 shrink-0 rounded-xl border border-white/80 bg-white/65 px-3 text-xs font-black text-[#168ca8] shadow-sm backdrop-blur-md transition hover:bg-white/85"
+                  className="brand-chip min-h-9 shrink-0 rounded-xl px-3 text-xs font-black shadow-sm transition hover:bg-white"
                 >
                   {copyStatus || "복사"}
                 </button>
               ) : (
                 <a
                   href="/settings/profile"
-                  className="flex min-h-9 shrink-0 items-center rounded-xl border border-white/80 bg-white/65 px-3 text-xs font-black text-[#168ca8] shadow-sm backdrop-blur-md"
+                  className="brand-chip flex min-h-9 shrink-0 items-center rounded-xl px-3 text-xs font-black shadow-sm"
                 >
                   만들기
                 </a>
@@ -281,7 +281,7 @@ export default function OwnerDashboardClient({
                     onClick={() => setSelectedDate(date.iso)}
                     className={`flex min-h-[72px] min-w-0 flex-col items-center justify-center rounded-[18px] border backdrop-blur-xl transition ${
                       selected
-                        ? "border-white/70 bg-gradient-to-br from-[#45c9d8] via-[#35bcd3] to-[#5c9ee8] text-white shadow-[0_12px_28px_rgba(45,159,193,0.2)]"
+                        ? "brand-gradient border-white/70 text-white shadow-[0_12px_28px_rgba(0,193,255,0.22)]"
                         : today
                           ? "border-cyan-100/80 bg-white/65 text-slate-800 shadow-[0_8px_22px_rgba(72,128,145,0.07)]"
                           : "border-white/70 bg-white/42 text-slate-600 shadow-[0_8px_22px_rgba(72,128,145,0.05)]"
@@ -318,7 +318,7 @@ export default function OwnerDashboardClient({
 
             {selectedReservations.length === 0 ? (
               <div className="rounded-[24px] border border-white/75 bg-white/45 px-5 py-10 text-center shadow-[0_14px_40px_rgba(70,105,125,0.08)] backdrop-blur-xl">
-                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-white/80 bg-white/55 text-xl text-[#28b9dc] shadow-sm">
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-white/80 bg-white/55 text-xl text-[#00a7df] shadow-sm">
                   ◷
                 </div>
                 <div className="mt-3 text-sm font-black text-slate-800">
@@ -329,7 +329,7 @@ export default function OwnerDashboardClient({
                 </div>
               </div>
             ) : (
-              <div className="relative space-y-2.5 before:absolute before:bottom-5 before:left-[35px] before:top-5 before:w-px before:bg-gradient-to-b before:from-cyan-300/20 before:via-cyan-300/70 before:to-violet-300/20">
+              <div className="relative space-y-2.5 before:absolute before:bottom-5 before:left-[35px] before:top-5 before:w-px before:bg-gradient-to-b before:from-cyan-300/20 before:via-[#00c1ff]/60 before:to-sky-300/20">
                 {selectedReservations.map((reservation) => (
                   <a
                     key={reservation.id}
@@ -337,7 +337,7 @@ export default function OwnerDashboardClient({
                     className="relative grid min-w-0 grid-cols-[70px_1fr] gap-2"
                   >
                     <div className="relative z-10 pt-4 text-center">
-                      <div className="inline-flex min-h-8 items-center rounded-full border border-white/80 bg-white/60 px-2 text-xs font-black text-[#168ca8] shadow-sm backdrop-blur-xl">
+                      <div className="inline-flex min-h-8 items-center rounded-full border border-white/80 bg-white/60 px-2 text-xs font-black text-[#008fbe] shadow-sm backdrop-blur-xl">
                         {reservation.start}
                       </div>
                     </div>

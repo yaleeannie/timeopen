@@ -374,7 +374,7 @@ export default function BookingScreen({ handle }: Props) {
 
   return (
     <div className="space-y-3.5 pb-32">
-      <div className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+      <div className="glass-card rounded-[24px] p-4">
         <div className="flex items-center gap-2">
           {(["service", "datetime", "customer"] as const).map((item, index) => {
             const active = item === step;
@@ -388,7 +388,7 @@ export default function BookingScreen({ handle }: Props) {
                   className={[
                     "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black",
                     active || complete
-                      ? "bg-[#35bddc] text-white"
+                      ? "brand-gradient text-white"
                       : "bg-[#eef8fa] text-[#7aa8b3]",
                   ].join(" ")}
                 >
@@ -416,7 +416,7 @@ export default function BookingScreen({ handle }: Props) {
       </div>
 
       {step === "service" ? (
-      <section className="relative block h-auto min-h-0 w-full overflow-visible rounded-[24px] border border-[#e5f3f6] bg-white p-4 opacity-100 shadow-sm visible">
+      <section className="glass-card relative block h-auto min-h-0 w-full overflow-visible rounded-[24px] p-4 opacity-100 visible">
         <div className="text-sm font-semibold text-gray-900">{t("selectService")}</div>
 
         {services.length > 0 ? (
@@ -442,7 +442,7 @@ export default function BookingScreen({ handle }: Props) {
                   className={[
                     "relative block min-h-[104px] w-full shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none",
                     active
-                      ? "border-transparent bg-[#35bddc] text-white"
+                      ? "brand-gradient border-transparent text-white"
                       : "border-[#dceef2] bg-white text-gray-900 hover:border-[#8ee8f5] hover:bg-[#ecfeff]",
                   ].join(" ")}
                 >
@@ -462,7 +462,7 @@ export default function BookingScreen({ handle }: Props) {
       ) : null}
 
       {step === "datetime" ? (
-      <section className="space-y-4 rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+      <section className="glass-card space-y-4 rounded-[24px] p-4">
         <div className="booking-date-tone [&>div>div:nth-child(2)]:border-0 [&>div>div:nth-child(2)]:p-0">
           <DateChips
             value={dateISO}
@@ -547,7 +547,7 @@ export default function BookingScreen({ handle }: Props) {
 
       {step === "customer" ? (
       <>
-      <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+      <section className="glass-card rounded-[24px] p-4">
         <div className="mb-4 text-base font-black">{t("customerInfo")}</div>
         {/* ✅ Day 1 추가: 고객 정보 입력 */}
         <div>
@@ -556,7 +556,7 @@ export default function BookingScreen({ handle }: Props) {
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder={t("name")}
-            className="mb-4 min-h-11 w-full min-w-0 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+            className="brand-input mb-4 min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
           />
         </div>
 
@@ -567,7 +567,7 @@ export default function BookingScreen({ handle }: Props) {
               value={phoneCountry}
               onChange={(e) => setPhoneCountry(e.target.value as SupportedPhoneCountry)}
               aria-label={t("country")}
-              className="min-h-11 w-[132px] min-w-0 shrink-0 rounded-xl border border-[#dceef2] bg-white px-2.5 py-2.5 text-sm outline-none focus:border-[#55d4f0]"
+              className="brand-input min-h-11 w-[132px] min-w-0 shrink-0 rounded-xl px-2.5 py-2.5 text-sm"
             >
               <option value="KR">{regionNames.of("KR") ?? "KR"} +82</option>
               <option value="JP">{regionNames.of("JP") ?? "JP"} +81</option>
@@ -582,7 +582,7 @@ export default function BookingScreen({ handle }: Props) {
               onChange={(e) => setCustomerPhone(e.target.value)}
               placeholder={t("phone")}
               inputMode="tel"
-              className="min-h-11 min-w-0 flex-1 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+              className="brand-input min-h-11 min-w-0 flex-1 rounded-xl px-3 py-2.5 text-base"
             />
           </div>
         </div>
@@ -595,7 +595,7 @@ export default function BookingScreen({ handle }: Props) {
       </section>
 
       {(orgLocation || orgNotice) ? (
-        <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+        <section className="glass-card rounded-[24px] p-4">
           <div className="mb-4 text-base font-black">{t("visitorGuide")}</div>
           {orgLocation ? (
             <div className="mb-4">
@@ -632,7 +632,7 @@ export default function BookingScreen({ handle }: Props) {
               type="button"
               disabled={!canContinueFromService}
               onClick={() => setStep("datetime")}
-              className="min-h-12 w-full rounded-2xl bg-[#35bddc] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#20aeca] disabled:cursor-not-allowed disabled:bg-[#b8dfe8]"
+              className="brand-button min-h-12 w-full rounded-2xl px-5 text-sm font-black transition disabled:cursor-not-allowed disabled:bg-[#b8dfe8]"
             >
               {t("next")}
             </button>
@@ -641,7 +641,7 @@ export default function BookingScreen({ handle }: Props) {
               type="button"
               disabled={!canContinueFromDatetime}
               onClick={() => setStep("customer")}
-              className="min-h-12 min-w-0 flex-1 rounded-2xl bg-[#35bddc] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#20aeca] disabled:cursor-not-allowed disabled:bg-[#b8dfe8]"
+              className="brand-button min-h-12 min-w-0 flex-1 rounded-2xl px-5 text-sm font-black transition disabled:cursor-not-allowed disabled:bg-[#b8dfe8]"
             >
               {t("next")}
             </button>
@@ -681,8 +681,8 @@ export default function BookingScreen({ handle }: Props) {
         .booking-time-tone button[style*="background:#2F2F2F"],
         .booking-time-tone button[style*="background: #2F2F2F"],
         .booking-time-tone button[style*="background: rgb(47, 47, 47)"] {
-          border-color: #35bddc !important;
-          background: #35bddc !important;
+          border-color: #00c1ff !important;
+          background: linear-gradient(135deg, #00d6f7, #00c1ff) !important;
           color: #ffffff !important;
         }
 

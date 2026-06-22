@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f3fbff;
+  --foreground: #102033;
+  --brand-primary: #00c1ff;
+  --brand-accent: #00d6f7;
+  --brand-soft: #e9faff;
+  --brand-border: rgba(125, 223, 255, 0.48);
 }
 
 @theme inline {
@@ -12,15 +16,72 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer components {
+  .soft-page-bg {
+    position: relative;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 8% 5%, rgba(0, 214, 247, 0.16), transparent 28rem),
+      radial-gradient(circle at 92% 26%, rgba(0, 193, 255, 0.13), transparent 30rem),
+      linear-gradient(145deg, #f4fdff 0%, #eef9ff 52%, #f6faff 100%);
+  }
+
+  .glass-shell {
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    background: rgba(255, 255, 255, 0.46);
+    box-shadow: 0 24px 70px rgba(25, 112, 148, 0.12);
+    backdrop-filter: blur(24px);
+  }
+
+  .glass-card {
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    background: rgba(255, 255, 255, 0.68);
+    box-shadow: 0 12px 34px rgba(25, 112, 148, 0.08);
+    backdrop-filter: blur(18px);
+  }
+
+  .brand-gradient {
+    background: linear-gradient(135deg, var(--brand-accent), var(--brand-primary));
+  }
+
+  .brand-button {
+    background: linear-gradient(135deg, var(--brand-accent), var(--brand-primary));
+    color: white;
+    box-shadow: 0 12px 26px rgba(0, 193, 255, 0.2);
+  }
+
+  .brand-button:hover {
+    filter: brightness(0.98);
+  }
+
+  .brand-chip {
+    border: 1px solid rgba(125, 223, 255, 0.55);
+    background: rgba(235, 251, 255, 0.78);
+    color: #007fa8;
+  }
+
+  .brand-input {
+    border: 1px solid var(--brand-border);
+    background: rgba(255, 255, 255, 0.82);
+    color: #102033;
+  }
+
+  .brand-input:focus {
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 4px rgba(0, 193, 255, 0.1);
+    outline: none;
+  }
+
+  .brand-nav {
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.58);
+    box-shadow: 0 10px 28px rgba(25, 112, 148, 0.07);
+    backdrop-filter: blur(18px);
+  }
 }

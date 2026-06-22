@@ -35,10 +35,10 @@ function TranslationFields({
   const inputClass =
     tone === "cyan"
       ? "border-white/30 bg-white text-gray-900"
-      : "border-gray-200 bg-white text-gray-900 focus:border-[#55d4f0]";
+      : "brand-input";
 
   return (
-    <details className={`rounded-2xl border p-3 ${tone === "cyan" ? "border-white/25 bg-white/10" : "border-[#dceef2] bg-[#f8fcfd]"}`}>
+    <details className={`rounded-2xl border p-3 ${tone === "cyan" ? "border-white/35 bg-white/15" : "glass-card"}`}>
       <summary className={`cursor-pointer text-sm font-black ${labelClass}`}>
         외국어 서비스명
       </summary>
@@ -230,7 +230,7 @@ export default function ServicesEditor({ organizationId }: Props) {
 
   return (
     <section className="min-w-0">
-      <div className="mb-6 rounded-[24px] bg-gradient-to-br from-[#58dfbe] to-[#2fc9a5] p-5 text-white shadow-[0_14px_30px_rgba(47,201,165,0.22)]">
+      <div className="brand-gradient mb-6 rounded-[24px] p-5 text-white shadow-[0_14px_30px_rgba(0,193,255,0.22)]">
         <div className="mb-4 text-lg font-black">새 서비스</div>
         <div className="grid gap-4">
         <div>
@@ -274,14 +274,14 @@ export default function ServicesEditor({ organizationId }: Props) {
         <button
           type="button"
           onClick={addService}
-          className="min-h-11 w-full rounded-xl bg-white px-4 py-2.5 text-sm font-black text-[#22a988] shadow-sm"
+          className="min-h-11 w-full rounded-xl bg-white px-4 py-2.5 text-sm font-black text-[#008fbe] shadow-sm"
         >
           서비스 저장
         </button>
         </div>
       </div>
 
-      {msg ? <div className="mb-4 rounded-xl bg-[#eef9fb] px-4 py-3 text-sm font-bold text-[#287f94] [overflow-wrap:anywhere]">{msg}</div> : null}
+      {msg ? <div className="brand-chip mb-4 rounded-xl px-4 py-3 text-sm font-bold [overflow-wrap:anywhere]">{msg}</div> : null}
 
       <div className="mb-3 flex items-center justify-between px-1">
         <div className="text-base font-black">서비스 목록</div>
@@ -294,7 +294,7 @@ export default function ServicesEditor({ organizationId }: Props) {
           return (
             <div
               key={row.id}
-              className="min-w-0 rounded-2xl border border-[#e5f3f6] bg-white p-4 shadow-sm"
+              className="glass-card min-w-0 rounded-2xl p-4"
             >
               {isEditing ? (
                 <div className="grid gap-4">
@@ -339,7 +339,7 @@ export default function ServicesEditor({ organizationId }: Props) {
                     <button
                       type="button"
                       onClick={() => saveEdit(row.id)}
-                      className="min-h-11 rounded-xl bg-[#28b9dc] px-4 py-2.5 text-sm font-black text-white"
+                      className="brand-button min-h-11 rounded-xl px-4 py-2.5 text-sm font-black"
                     >
                       저장
                     </button>
@@ -359,7 +359,7 @@ export default function ServicesEditor({ organizationId }: Props) {
                     <div className="mt-1 text-sm text-gray-500">
                       {row.duration_min}분 {row.price != null ? `· ${row.price.toLocaleString()}원` : ""}
                     </div>
-                    <div className={`mt-1 text-sm font-bold ${row.active ? "text-[#22a988]" : "text-gray-400"}`}>
+                    <div className={`mt-1 text-sm font-bold ${row.active ? "text-[#008fbe]" : "text-gray-400"}`}>
                       {row.active ? "활성" : "비활성"}
                     </div>
                   </div>

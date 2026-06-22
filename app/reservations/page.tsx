@@ -410,11 +410,11 @@ export default async function ReservationsPage({ searchParams }: Props) {
   )?.[1] ?? [];
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#eef6f8] px-3 py-4 text-gray-900 sm:px-5 sm:py-7">
-      <div className="mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] bg-[#fbfdfe] shadow-[0_20px_60px_rgba(80,145,164,0.14)] sm:rounded-[36px]">
+    <main className="soft-page-bg overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
+      <div className="glass-shell mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] sm:rounded-[36px]">
         <div className="px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7">
         <header className="mb-6">
-          <a href="/owner" className="mb-3 inline-flex min-h-11 items-center text-sm font-bold text-[#28b9dc]">
+          <a href="/owner" className="mb-3 inline-flex min-h-11 items-center text-sm font-bold text-[#00a7df]">
             ← 대시보드
           </a>
           <h1 className="text-3xl font-black tracking-[-0.04em]">예약관리</h1>
@@ -425,7 +425,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
         </header>
 
         <section
-          className="mb-7 rounded-[24px] border border-[#e5f3f6] bg-white p-3 shadow-sm sm:p-4"
+          className="glass-card mb-7 rounded-[24px] p-3 sm:p-4"
           aria-label="예약 날짜 선택"
         >
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -444,7 +444,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
               {selectedDate !== todayISO ? (
                 <a
                   href={`/reservations?date=${todayISO}`}
-                  className="mt-1 inline-block text-sm font-bold text-[#28b9dc]"
+                  className="mt-1 inline-block text-sm font-bold text-[#00a7df]"
                 >
                   오늘로 이동
                 </a>
@@ -491,7 +491,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
                   aria-current={selected ? "date" : undefined}
                   className={`flex min-h-[62px] min-w-0 flex-col items-center rounded-xl border px-0.5 py-1.5 text-center ${
                     selected
-                      ? "border-[#28b9dc] bg-[#28b9dc] text-white"
+                      ? "border-transparent brand-gradient text-white shadow-[0_8px_20px_rgba(0,193,255,0.2)]"
                       : today
                         ? "border-[#bcecf5] bg-[#eefafd] text-gray-700"
                         : "border-transparent bg-white text-gray-700"
@@ -531,7 +531,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
         </div>
 
         {selectedReservations.length === 0 ? (
-          <div className="rounded-[24px] border border-[#e5f3f6] bg-white px-5 py-10 text-center shadow-sm">
+          <div className="glass-card rounded-[24px] px-5 py-10 text-center">
             <div className="text-base font-black">이 날짜에는 예약이 없어요.</div>
             <div className="mt-2 text-sm leading-6 text-gray-500">
               캘린더에서 다른 날짜를 선택해 예약 일정을 확인해보세요.
@@ -543,7 +543,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
               {selectedReservations.map(({ row, start, end, serviceName, smsStatus }) => (
                 <article
                   key={row.id}
-                  className="min-w-0 rounded-2xl border border-[#e5f3f6] bg-white p-4 shadow-sm"
+                  className="glass-card min-w-0 rounded-2xl p-4"
                 >
                   <div className="flex min-w-0 items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -607,9 +607,9 @@ export default async function ReservationsPage({ searchParams }: Props) {
             </div>
           </section>
         )}
-        <nav className="mt-7 grid grid-cols-4 gap-1 rounded-2xl border border-[#e5f3f6] bg-white p-2 shadow-sm">
+        <nav className="brand-nav mt-7 grid grid-cols-4 gap-1 rounded-2xl p-2">
           <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">대시보드</a>
-          <a href="/reservations" className="flex min-h-11 items-center justify-center rounded-xl bg-[#e8f9fd] text-sm font-black text-[#20afd2]">예약관리</a>
+          <a href="/reservations" className="brand-chip flex min-h-11 items-center justify-center rounded-xl text-sm font-black">예약관리</a>
           <a href="/settings/services" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">서비스</a>
           <a href="/settings/profile" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">설정</a>
         </nav>

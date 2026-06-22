@@ -23,8 +23,8 @@ export default async function OnboardingPage() {
 
   if (error || !organizationId) {
     return (
-      <main className="flex min-h-screen items-center bg-white px-4 py-8 text-gray-950">
-        <div className="mx-auto w-full max-w-md rounded-[28px] border border-[#e2efee] bg-white p-6 text-center shadow-[0_20px_60px_rgba(80,145,164,0.12)]">
+      <main className="soft-page-bg flex items-center px-4 py-8 text-slate-950">
+        <div className="glass-card mx-auto w-full max-w-md rounded-[28px] p-6 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff5e6] text-2xl font-black text-[#b7781f]">
             !
           </div>
@@ -36,13 +36,13 @@ export default async function OnboardingPage() {
           </p>
           <a
             href="/onboarding"
-            className="mt-6 flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-5 text-sm font-black text-white shadow-[0_12px_24px_rgba(14,165,233,0.2)]"
+            className="brand-button mt-6 flex min-h-12 w-full items-center justify-center rounded-2xl px-5 text-sm font-black"
           >
             다시 시도
           </a>
           <a
             href="/login"
-            className="mt-2 flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-bold text-[#168ca8]"
+            className="mt-2 flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-bold text-[#008fbe]"
           >
             로그인으로 돌아가기
           </a>

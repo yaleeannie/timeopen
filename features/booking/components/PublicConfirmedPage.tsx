@@ -28,22 +28,22 @@ function PublicConfirmedPageContent(props: Props) {
   const { locale, t } = usePublicBookingI18n();
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#eef6f8] px-3 py-4 text-gray-900 sm:px-5 sm:py-7">
-      <div className="mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] bg-[#fbfdfe] shadow-[0_20px_60px_rgba(80,145,164,0.14)] sm:rounded-[36px]">
+    <main className="soft-page-bg overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
+      <div className="glass-shell mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] sm:rounded-[36px]">
         <div className="px-4 pb-7 pt-6 sm:px-6 sm:pb-9 sm:pt-8">
           <div className="mb-3 flex justify-end">
             <BookingLanguageSelect />
           </div>
           <header className="mb-6 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#58dfbe] to-[#2fc9a5] text-3xl font-black text-white shadow-[0_12px_26px_rgba(47,201,165,0.24)]">
+            <div className="brand-gradient mx-auto flex h-16 w-16 items-center justify-center rounded-full text-3xl font-black text-white shadow-[0_12px_26px_rgba(0,193,255,0.24)]">
               ✓
             </div>
-            <div className="mt-4 text-sm font-bold text-[#22a988]">{t("bookingComplete")}</div>
+            <div className="mt-4 text-sm font-bold text-[#00a7df]">{t("bookingComplete")}</div>
             <h1 className="mt-1 text-3xl font-black tracking-[-0.04em]">{t("bookingConfirmed")}</h1>
             <p className="mt-2 text-sm leading-5 text-gray-500">{t("checkBookingInfo")}</p>
           </header>
 
-          <section className="rounded-[24px] bg-gradient-to-br from-[#5bd8f2] to-[#24b8df] p-5 text-white shadow-[0_14px_30px_rgba(40,185,220,0.22)]">
+          <section className="brand-gradient rounded-[24px] p-5 text-white shadow-[0_14px_30px_rgba(0,193,255,0.22)]">
             <div className="grid grid-cols-2 gap-4">
               <div className="min-w-0">
                 <div className="text-sm font-bold text-cyan-50">{t("reservationDate")}</div>
@@ -71,7 +71,7 @@ function PublicConfirmedPageContent(props: Props) {
             </div>
           </section>
 
-          <section className="mt-4 rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+          <section className="glass-card mt-4 rounded-[24px] p-4">
             <div className="mb-3 text-base font-black">{t("customerInfo")}</div>
             <div className="grid gap-3">
               <div className="flex min-w-0 items-start justify-between gap-4">
@@ -89,16 +89,16 @@ function PublicConfirmedPageContent(props: Props) {
             </div>
           </section>
 
-          <section className="mt-4 rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+          <section className="glass-card mt-4 rounded-[24px] p-4">
             <div className="mb-4 text-base font-black">{t("visitorGuide")}</div>
             <div className="mb-4">
-              <div className="text-sm font-bold text-[#28b9dc]">{t("location")}</div>
+              <div className="text-sm font-bold text-[#00a7df]">{t("location")}</div>
               <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">
                 {props.locationText || "-"}
               </div>
             </div>
             <div>
-              <div className="text-sm font-bold text-[#28b9dc]">{t("bookingNotice")}</div>
+              <div className="text-sm font-bold text-[#00a7df]">{t("bookingNotice")}</div>
               <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">
                 {props.noticeText || "-"}
               </div>
@@ -119,7 +119,7 @@ function PublicConfirmedPageContent(props: Props) {
 
           <Link
             href={`/u/${props.handle}`}
-            className="mt-5 flex min-h-11 w-full items-center justify-center rounded-xl bg-[#28b9dc] px-4 py-3 text-base font-black text-white shadow-sm transition hover:bg-[#20afd2]"
+            className="brand-button mt-5 flex min-h-11 w-full items-center justify-center rounded-xl px-4 py-3 text-base font-black"
           >
             {t("backToBooking")}
           </Link>

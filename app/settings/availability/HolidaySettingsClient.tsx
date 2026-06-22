@@ -112,7 +112,7 @@ export default function HolidaySettingsClient() {
         </p>
       </div>
 
-      <div className="mt-4 rounded-[22px] border border-[#e1eef0] bg-white p-4 shadow-sm">
+      <div className="glass-card mt-4 rounded-[22px] p-4">
         <div className="grid gap-4">
           <label>
             <span className="mb-2 block text-sm font-black text-gray-700">날짜</span>
@@ -120,7 +120,7 @@ export default function HolidaySettingsClient() {
               type="date"
               value={date}
               onChange={(event) => setDate(event.target.value)}
-              className="min-h-12 w-full rounded-2xl border border-[#dcecef] bg-white px-4 py-3 text-base outline-none focus:border-[#4fcbe6] focus:ring-4 focus:ring-cyan-50"
+              className="brand-input min-h-12 w-full rounded-2xl px-4 py-3 text-base"
             />
           </label>
           <label>
@@ -132,14 +132,14 @@ export default function HolidaySettingsClient() {
               onChange={(event) => setNote(event.target.value)}
               placeholder="예: 여름휴가"
               maxLength={200}
-              className="min-h-12 w-full rounded-2xl border border-[#dcecef] bg-white px-4 py-3 text-base outline-none placeholder:text-gray-400 focus:border-[#4fcbe6] focus:ring-4 focus:ring-cyan-50"
+              className="brand-input min-h-12 w-full rounded-2xl px-4 py-3 text-base placeholder:text-gray-400"
             />
           </label>
           <button
             type="button"
             onClick={addHoliday}
             disabled={saving}
-            className="min-h-12 rounded-2xl bg-[#28b9dc] px-4 text-sm font-black text-white disabled:opacity-50"
+            className="brand-button min-h-12 rounded-2xl px-4 text-sm font-black disabled:opacity-50"
           >
             {saving ? "저장 중..." : "+ 휴무일 추가"}
           </button>
@@ -147,21 +147,21 @@ export default function HolidaySettingsClient() {
       </div>
 
       {message ? (
-        <div className="mt-3 rounded-2xl bg-[#f1f9fb] px-4 py-3 text-sm font-bold text-[#397582]">
+        <div className="brand-chip mt-3 rounded-2xl px-4 py-3 text-sm font-bold">
           {message}
         </div>
       ) : null}
 
       <div className="mt-4 grid gap-3">
         {loading ? (
-          <div className="rounded-2xl bg-white px-4 py-5 text-sm font-medium text-gray-400">
+          <div className="glass-card rounded-2xl px-4 py-5 text-sm font-medium text-gray-400">
             휴무일을 불러오는 중...
           </div>
         ) : holidays.length > 0 ? (
           holidays.map((holiday) => (
             <div
               key={holiday.id}
-              className="flex items-center justify-between gap-4 rounded-[20px] border border-[#e5f3f6] bg-white p-4 shadow-sm"
+              className="glass-card flex items-center justify-between gap-4 rounded-[20px] p-4"
             >
               <div className="min-w-0">
                 <div className="font-black text-gray-900">
@@ -182,7 +182,7 @@ export default function HolidaySettingsClient() {
             </div>
           ))
         ) : (
-          <div className="rounded-2xl bg-white px-4 py-5 text-sm font-medium text-gray-400">
+          <div className="glass-card rounded-2xl px-4 py-5 text-sm font-medium text-gray-400">
             등록된 휴무일이 없어요.
           </div>
         )}

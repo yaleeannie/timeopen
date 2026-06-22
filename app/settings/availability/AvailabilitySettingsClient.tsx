@@ -64,7 +64,7 @@ function TimeRangeFields({
   onEndChange: (value: string) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-[#e5f1f3] bg-[#f9fcfd] p-3.5">
+    <div className="glass-card rounded-2xl p-3.5">
       <div className="mb-3 flex items-baseline gap-1.5">
         <div className="text-sm font-black text-gray-800">{title}</div>
         {optional ? <span className="text-xs font-medium text-gray-400">선택</span> : null}
@@ -254,9 +254,9 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
 
   return (
     <div className="min-w-0 space-y-5">
-      <section className="overflow-hidden rounded-[26px] border border-[#cdebf0] bg-white shadow-[0_14px_34px_rgba(70,126,139,0.08)]">
-        <div className="bg-gradient-to-br from-[#eafafd] via-[#f4fcfd] to-white px-5 pb-5 pt-5">
-          <div className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-black text-[#168ca8] shadow-sm">
+      <section className="glass-card overflow-hidden rounded-[26px]">
+        <div className="bg-gradient-to-br from-[#e7fbff]/90 via-white/55 to-white/35 px-5 pb-5 pt-5">
+          <div className="brand-chip inline-flex rounded-full px-3 py-1 text-xs font-black shadow-sm">
             한 번에 설정
           </div>
           <h2 className="mt-3 text-xl font-black tracking-[-0.03em] text-gray-950">
@@ -270,7 +270,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
         <div className="grid gap-5 px-4 pb-5 pt-4 sm:px-5">
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#dff7fb] text-xs font-black text-[#168ca8]">
+              <span className="brand-chip flex h-6 w-6 items-center justify-center rounded-full text-xs font-black">
                 1
               </span>
               <div className="text-sm font-black text-gray-800">운영 요일 선택</div>
@@ -286,7 +286,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
                     onClick={() => toggleQuickWeekday(key)}
                     className={`min-h-9 min-w-9 rounded-full border px-2.5 text-sm font-black transition ${
                       selected
-                        ? "border-[#31bfdc] bg-[#31bfdc] text-white"
+                        ? "brand-gradient border-transparent text-white"
                         : "border-[#dcecef] bg-white text-gray-500 hover:border-[#9bdde7]"
                     }`}
                   >
@@ -299,7 +299,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
 
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#dff7fb] text-xs font-black text-[#168ca8]">
+              <span className="brand-chip flex h-6 w-6 items-center justify-center rounded-full text-xs font-black">
                 2
               </span>
               <div className="text-sm font-black text-gray-800">영업시간</div>
@@ -315,7 +315,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
 
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#dff7fb] text-xs font-black text-[#168ca8]">
+              <span className="brand-chip flex h-6 w-6 items-center justify-center rounded-full text-xs font-black">
                 3
               </span>
               <div className="text-sm font-black text-gray-800">쉬는 시간</div>
@@ -334,7 +334,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
             type="button"
             onClick={applyQuickSettings}
             disabled={saving}
-            className="min-h-13 w-full rounded-2xl bg-gradient-to-r from-[#37c5df] to-[#20afd2] px-4 py-3.5 text-sm font-black text-white shadow-[0_12px_24px_rgba(32,175,210,0.2)] disabled:opacity-50"
+            className="brand-button min-h-13 w-full rounded-2xl px-4 py-3.5 text-sm font-black disabled:opacity-50"
           >
             {saving ? "적용 중..." : "선택한 요일에 일괄 적용"}
           </button>
@@ -359,7 +359,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
             return (
               <article
                 key={key}
-                className={`min-w-0 overflow-hidden rounded-[22px] border bg-white shadow-sm ${
+                className={`glass-card min-w-0 overflow-hidden rounded-[22px] border ${
                   dayError ? "border-red-200" : "border-gray-200"
                 }`}
               >
@@ -383,13 +383,13 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
                   }}
                   className={`flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-3 text-xs font-black transition ${
                     d.open
-                      ? "border-[#9de3d4] bg-[#e9faf6] text-[#16866f]"
+                      ? "border-cyan-200/70 bg-cyan-50/75 text-[#007fa8]"
                       : "border-gray-200 bg-gray-50 text-gray-500"
                   }`}
                 >
                   <span
                     className={`h-2.5 w-2.5 rounded-full ${
-                      d.open ? "bg-[#24b795]" : "bg-gray-300"
+                      d.open ? "bg-[#00c1ff]" : "bg-gray-300"
                     }`}
                   />
                   {d.open ? "영업함" : "쉬는 날"}
@@ -397,7 +397,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
               </div>
 
               {d.open ? (
-                <div className="grid gap-3 border-t border-[#edf4f5] bg-[#fbfdfd] p-3">
+                <div className="grid gap-3 border-t border-white/70 bg-white/25 p-3">
                   <TimeRangeFields
                     title="영업시간"
                     start={d.work_start}
@@ -431,7 +431,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
         <div
           className={`rounded-xl border px-4 py-3 text-sm font-semibold ${
             msg.includes("저장") || msg.includes("적용")
-              ? "border-green-200 bg-green-50 text-green-800"
+              ? "border-cyan-200 bg-cyan-50 text-[#007fa8]"
               : "border-red-200 bg-red-50 text-red-700"
           }`}
         >
@@ -443,7 +443,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
         <button
           onClick={onSave}
           disabled={saving}
-          className="min-h-11 w-full rounded-xl bg-[#28b9dc] px-5 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-[#20afd2] disabled:cursor-not-allowed disabled:opacity-50"
+          className="brand-button min-h-11 w-full rounded-xl px-5 py-2.5 text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? "저장 중..." : "영업시간 저장"}
         </button>

@@ -145,7 +145,7 @@ export default function ProfileEditor({
 
   return (
     <section className="grid min-w-0 gap-5">
-      <div className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+      <div className="glass-card rounded-[24px] p-4">
         <div className="mb-4 text-base font-black">기본 정보</div>
         <div className="mb-5">
         <div className="mb-1.5 text-sm font-bold text-gray-700">서비스명</div>
@@ -153,7 +153,7 @@ export default function ProfileEditor({
           value={shopName}
           onChange={(e) => setShopName(e.target.value)}
           placeholder="예: 지수헤어"
-          className="min-h-11 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+          className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
         />
 
         <div className="mt-3">
@@ -161,7 +161,7 @@ export default function ProfileEditor({
             type="button"
             onClick={onSaveName}
             disabled={loadingName}
-            className="min-h-11 rounded-xl bg-[#28b9dc] px-4 py-2.5 text-sm font-black text-white disabled:opacity-60"
+            className="brand-button min-h-11 rounded-xl px-4 py-2.5 text-sm font-black disabled:opacity-60"
           >
             {loadingName ? "저장 중..." : "서비스명 저장"}
           </button>
@@ -177,7 +177,7 @@ export default function ProfileEditor({
             setHandle(v);
           }}
           placeholder="예: jisu-hair (영어/숫자/-만)"
-          className="min-h-11 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+          className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
         />
 
         <div className="mt-2 text-sm leading-5 text-gray-500">
@@ -188,7 +188,7 @@ export default function ProfileEditor({
           ※ 변경 시 기존 링크는 더 이상 사용되지 않을 수 있어요
         </div>
 
-        <div className="mt-2 text-sm font-bold text-[#28b9dc] [overflow-wrap:anywhere]">
+        <div className="mt-2 text-sm font-bold text-[#008fbe] [overflow-wrap:anywhere]">
           {handle ? getBookingUrl(handle) : "-"}
         </div>
 
@@ -197,7 +197,7 @@ export default function ProfileEditor({
             type="button"
             onClick={onSaveHandle}
             disabled={loadingHandle}
-            className="min-h-11 rounded-xl bg-[#28b9dc] px-3 py-2.5 text-sm font-black text-white disabled:opacity-60"
+            className="brand-button min-h-11 rounded-xl px-3 py-2.5 text-sm font-black disabled:opacity-60"
           >
             {loadingHandle ? "저장 중..." : "예약 링크 저장"}
           </button>
@@ -215,7 +215,7 @@ export default function ProfileEditor({
 
       </div>
 
-      <div className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
+      <div className="glass-card rounded-[24px] p-4">
       <div className="mb-4 text-base font-black">추가 정보</div>
       <div className="mb-1.5 text-sm font-bold text-gray-700">위치 안내 (선택)</div>
       <textarea
@@ -223,7 +223,7 @@ export default function ProfileEditor({
         onChange={(e) => setLocationText(e.target.value)}
         rows={3}
         placeholder="예) 서울시 마포구 ... / 2층"
-        className="mb-4 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+        className="brand-input mb-4 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
       />
 
       <div className="mb-1.5 text-sm font-bold text-gray-700">예약 안내문 (선택)</div>
@@ -232,14 +232,14 @@ export default function ProfileEditor({
         onChange={(e) => setNoticeText(e.target.value)}
         rows={4}
         placeholder="예) 10분 전 도착 부탁드립니다. 지각 시 자동 취소될 수 있어요."
-        className="mb-4 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+        className="brand-input mb-4 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
       />
 
       <button
         type="button"
         onClick={onSaveExtra}
         disabled={loadingExtra}
-        className="min-h-11 w-full rounded-xl bg-[#28b9dc] px-4 py-2.5 text-sm font-black text-white disabled:opacity-60"
+        className="brand-button min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-black disabled:opacity-60"
       >
         {loadingExtra ? "저장 중..." : "추가 정보 저장"}
       </button>
@@ -248,14 +248,14 @@ export default function ProfileEditor({
         <div className={`mt-3 rounded-xl px-4 py-3 text-sm font-bold [overflow-wrap:anywhere] ${
           msg.includes("실패") || msg.includes("오류")
             ? "bg-red-50 text-red-700"
-            : "bg-[#eef9fb] text-[#287f94]"
+            : "brand-chip"
         }`}>
           {msg}
         </div>
       ) : null}
       </div>
 
-      <div className="rounded-[24px] bg-gradient-to-br from-[#61a8fa] to-[#477eea] p-5 text-white shadow-[0_14px_30px_rgba(71,126,234,0.2)]">
+      <div className="brand-gradient rounded-[24px] p-5 text-white shadow-[0_14px_30px_rgba(0,193,255,0.22)]">
       <div className="mb-4 text-base font-black">고객 화면 미리보기</div>
 
       <div className="mb-3">

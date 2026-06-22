@@ -16,7 +16,7 @@ export default function AvailabilityManagementClient({
   return (
     <div>
       <div
-        className="grid grid-cols-2 rounded-2xl border border-[#dceef2] bg-[#eef7f8] p-1"
+        className="grid grid-cols-2 rounded-2xl border border-white/70 bg-white/35 p-1 backdrop-blur-xl"
         role="tablist"
         aria-label="영업시간 관리 메뉴"
       >
@@ -28,7 +28,7 @@ export default function AvailabilityManagementClient({
           onClick={() => setTab("hours")}
           className={`min-h-11 rounded-xl px-4 text-sm font-black transition ${
             tab === "hours"
-              ? "bg-white text-[#168ca8] shadow-sm"
+              ? "bg-white/85 text-[#008fbe] shadow-sm"
               : "text-gray-500"
           }`}
         >
@@ -42,7 +42,7 @@ export default function AvailabilityManagementClient({
           onClick={() => setTab("holidays")}
           className={`min-h-11 rounded-xl px-4 text-sm font-black transition ${
             tab === "holidays"
-              ? "bg-white text-[#168ca8] shadow-sm"
+              ? "bg-white/85 text-[#008fbe] shadow-sm"
               : "text-gray-500"
           }`}
         >
