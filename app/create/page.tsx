@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import AuthShell from "@/components/AuthShell";
 import { createOrganization } from "@/features/organizations/createOrganization";
 
 function normalizeHandle(v: string) {
@@ -48,31 +49,32 @@ export default function CreateOrganizationPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-xl px-4 py-10">
-        <h1 className="text-2xl font-semibold">Create Organization</h1>
+    <AuthShell
+      title="예약 링크를 만들어요"
+      description="고객에게 공유할 매장 전용 주소를 설정해주세요."
+      eyebrow="TimeOpen 시작하기"
+    >
+        <form onSubmit={onSubmit}>
+          <label className="mb-1.5 block text-sm font-bold text-slate-700">Handle</label>
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-3">
-          <label className="block text-sm font-medium">Handle</label>
-
-          <div className="flex items-center gap-2">
+          <div>
             <input
               value={handle}
               onChange={(e) => setHandle(e.target.value)}
               placeholder="e.g. timeopen"
-              className="w-full rounded-md border px-3 py-2"
+              className="brand-input min-h-12 w-full rounded-2xl px-4 py-3 text-base"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
             />
           </div>
 
-          <p className="text-sm text-gray-600">
-            미리보기: <span className="font-mono">/u/{cleanHandle || "handle"}</span>
+          <p className="brand-soft mt-3 rounded-xl px-3 py-2.5 text-sm font-medium">
+            미리보기: <span className="font-mono font-bold">/u/{cleanHandle || "handle"}</span>
           </p>
 
           {errorMsg && (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-bold text-red-700">
               {errorMsg}
             </div>
           )}
@@ -80,12 +82,11 @@ export default function CreateOrganizationPage() {
           <button
             type="submit"
             disabled={!valid || submitting}
-            className="rounded-md bg-black px-4 py-2 text-white disabled:opacity-40"
+            className="brand-button mt-5 min-h-12 w-full rounded-2xl px-4 py-3 text-base font-black disabled:opacity-40"
           >
             {submitting ? "Creating..." : "Create"}
           </button>
         </form>
-      </div>
-    </main>
+    </AuthShell>
   );
 }

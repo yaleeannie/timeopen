@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AuthShell from "@/components/AuthShell";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
@@ -71,24 +72,16 @@ export default function SignupPage() {
 }
 
   return (
-    <main className="flex min-h-screen overflow-x-hidden bg-[#eef6f8] px-3 py-4 text-gray-900 sm:px-5 sm:py-7">
-      <div className="mx-auto flex w-full min-w-0 max-w-lg items-center">
-        <div className="w-full rounded-[28px] bg-[#fbfdfe] px-4 pb-7 pt-8 shadow-[0_20px_60px_rgba(80,145,164,0.14)] sm:rounded-[36px] sm:px-6 sm:pb-9 sm:pt-10">
-          <header className="mb-6 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#5bd8f2] to-[#24b8df] text-2xl font-black text-white shadow-[0_12px_26px_rgba(40,185,220,0.22)]">T</div>
-            <h1 className="mt-5 text-3xl font-black tracking-[-0.04em]">TimeOpen</h1>
-            <p className="mt-1 text-sm text-gray-500">처음 한 번만 이메일을 인증해주세요.</p>
-          </header>
-
-          <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
-            <div className="mb-4 text-lg font-black">회원가입</div>
-
+    <AuthShell
+      title="예약 링크를 만들고 시작해보세요"
+      description="이메일 인증 후 매장 정보와 영업시간을 차례로 설정할 수 있어요."
+    >
           {sent ? (
             <div className="text-sm font-bold leading-6 text-gray-900">
               <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full text-2xl font-black ${
                 alreadyRegistered
                   ? "bg-[#fff5e6] text-[#b7781f]"
-                  : "bg-[#eafaf6] text-[#22a988]"
+                  : "brand-soft"
               }`}>
                 {alreadyRegistered ? "!" : "✓"}
               </div>
@@ -106,12 +99,12 @@ export default function SignupPage() {
               ) : null}
 
               <div className="mt-5 grid gap-2 text-center text-sm">
-                <a href="/login" className="min-h-11 rounded-xl bg-[#28b9dc] px-3 py-3 font-black text-white">
+                <a href="/login" className="brand-button min-h-11 rounded-xl px-3 py-3 font-black">
                   로그인
                 </a>
                 <a
                   href="/forgot-password"
-                  className="min-h-11 rounded-xl border border-[#dceef2] px-3 py-3 font-bold text-[#5594a3]"
+                  className="brand-outline min-h-11 rounded-xl px-3 py-3 font-bold"
                 >
                   비밀번호 재설정
                 </a>
@@ -119,17 +112,17 @@ export default function SignupPage() {
             </div>
           ) : (
             <>
-              <label className="mb-1.5 block text-sm font-bold text-gray-700">이메일</label>
+              <label className="mb-1.5 block text-sm font-bold text-slate-700">이메일</label>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="email@example.com"
                 inputMode="email"
                 autoComplete="email"
-                className="mb-4 min-h-11 w-full min-w-0 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+                className="brand-input mb-4 min-h-12 w-full min-w-0 rounded-2xl px-4 py-3 text-base"
               />
 
-              <label className="mb-1.5 block text-sm font-bold text-gray-700">
+              <label className="mb-1.5 block text-sm font-bold text-slate-700">
                 비밀번호
               </label>
               <input
@@ -138,14 +131,14 @@ export default function SignupPage() {
                 placeholder="비밀번호"
                 type="password"
                 autoComplete="new-password"
-                className="mb-4 min-h-11 w-full min-w-0 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+                className="brand-input mb-5 min-h-12 w-full min-w-0 rounded-2xl px-4 py-3 text-base"
               />
 
               <button
                 type="button"
                 onClick={onSignup}
                 disabled={loading}
-                className="min-h-11 w-full rounded-xl bg-[#28b9dc] px-4 py-3 text-base font-black text-white shadow-sm transition hover:bg-[#20afd2] disabled:cursor-not-allowed disabled:opacity-60"
+                className="brand-button min-h-12 w-full rounded-2xl px-4 py-3 text-base font-black disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "처리 중..." : "가입하기"}
               </button>
@@ -155,15 +148,12 @@ export default function SignupPage() {
               ) : null}
 
               <div className="mt-5 text-center text-sm">
-                <a href="/login" className="flex min-h-11 items-center justify-center rounded-xl border border-[#dceef2] px-3 py-3 font-bold text-[#5594a3]">
+                <a href="/login" className="brand-outline flex min-h-11 items-center justify-center rounded-xl px-3 py-3 font-bold">
                   이미 계정 있어요 → 로그인
                 </a>
               </div>
             </>
           )}
-          </section>
-        </div>
-      </div>
-    </main>
+    </AuthShell>
   );
 }

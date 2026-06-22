@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AuthShell from "@/components/AuthShell";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -50,43 +51,40 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen overflow-x-hidden bg-[#eef6f8] px-3 py-4 text-gray-900 sm:px-5 sm:py-7">
-      <div className="mx-auto flex w-full min-w-0 max-w-lg items-center">
-        <div className="w-full rounded-[28px] bg-[#fbfdfe] px-4 pb-7 pt-8 shadow-[0_20px_60px_rgba(80,145,164,0.14)] sm:rounded-[36px] sm:px-6 sm:pb-9 sm:pt-10">
-          <header className="mb-6 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#5bd8f2] to-[#24b8df] text-2xl font-black text-white shadow-[0_12px_26px_rgba(40,185,220,0.22)]">T</div>
-            <h1 className="mt-5 text-3xl font-black tracking-[-0.04em]">TimeOpen</h1>
-            <p className="mt-1 text-sm text-gray-500">사장님 계정으로 로그인하세요.</p>
-          </header>
-
-          <section className="rounded-[24px] border border-[#e5f3f6] bg-white p-4 shadow-sm">
-            <div className="mb-4 text-lg font-black">로그인</div>
-
-          <label className="mb-1.5 block text-sm font-bold text-gray-700">이메일</label>
+    <AuthShell
+      title="다시 오신 걸 환영해요"
+      description="사장님 계정으로 로그인하고 오늘의 예약 일정을 확인하세요."
+    >
+          <label className="mb-1.5 block text-sm font-bold text-slate-700">이메일</label>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="email@example.com"
             inputMode="email"
             autoComplete="email"
-            className="mb-4 min-h-11 w-full min-w-0 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+            className="brand-input mb-4 min-h-12 w-full min-w-0 rounded-2xl px-4 py-3 text-base"
           />
 
-          <label className="mb-1.5 block text-sm font-bold text-gray-700">비밀번호</label>
+          <div className="mb-1.5 flex items-center justify-between gap-3">
+            <label className="text-sm font-bold text-slate-700">비밀번호</label>
+            <a href="/forgot-password" className="brand-text text-xs font-bold">
+              비밀번호 찾기
+            </a>
+          </div>
           <input
             value={pw}
             onChange={(e) => setPw(e.target.value)}
             placeholder="비밀번호"
             type="password"
             autoComplete="current-password"
-            className="mb-4 min-h-11 w-full min-w-0 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+            className="brand-input mb-5 min-h-12 w-full min-w-0 rounded-2xl px-4 py-3 text-base"
           />
 
           <button
             type="button"
             onClick={onLogin}
             disabled={loading}
-            className="min-h-11 w-full rounded-xl bg-[#28b9dc] px-4 py-3 text-base font-black text-white shadow-sm transition hover:bg-[#20afd2] disabled:cursor-not-allowed disabled:opacity-60"
+            className="brand-button min-h-12 w-full rounded-2xl px-4 py-3 text-base font-black disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "처리 중..." : "로그인"}
           </button>
@@ -97,17 +95,11 @@ export default function LoginPage() {
             </div>
           ) : null}
 
-          <div className="mt-5 grid gap-2 text-center text-sm">
-            <a href="/forgot-password" className="min-h-11 rounded-xl px-3 py-3 font-bold text-[#28b9dc]">
-              비밀번호를 잊었어요
-            </a>
-            <a href="/signup" className="min-h-11 rounded-xl border border-[#dceef2] px-3 py-3 font-bold text-[#5594a3]">
+          <div className="mt-5 text-center text-sm">
+            <a href="/signup" className="brand-outline flex min-h-11 items-center justify-center rounded-xl px-3 py-3 font-bold">
               처음이에요 → 회원가입
             </a>
           </div>
-          </section>
-        </div>
-      </div>
-    </main>
+    </AuthShell>
   );
 }
