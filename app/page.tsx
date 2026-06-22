@@ -3,177 +3,138 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-const features = [
+const coreFeatures = [
   {
-    icon: "文",
-    label: "8개 언어",
-    title: "다국어 예약 화면",
-    description: "외국인 고객도 번역된 화면에서 쉽게 예약해요.",
+    number: "01",
+    title: "로그인 없는 예약 링크",
+    description:
+      "고객은 별도 가입 없이 서비스와 시간을 고르고 바로 예약할 수 있어요.",
   },
   {
-    icon: "SMS",
-    label: "자동 안내",
-    title: "예약 문자 알림",
-    description: "예약이 들어오면 사장님과 고객에게 예약 내용을 문자로 알려드려요.",
+    number: "02",
+    title: "오늘 일정 대시보드",
+    description:
+      "오늘과 앞으로 7일의 예약을 시간순으로 확인하고 필요한 일정에 바로 접근해요.",
   },
   {
-    icon: "₩",
-    label: "간편 설정",
-    title: "서비스와 가격 관리",
-    description: "시술명, 가격, 소요 시간을 등록하고 필요한 내용을 한곳에서 관리해요.",
-  },
-  {
-    icon: "✓",
-    label: "한눈에 확인",
-    title: "예약 현황 관리",
-    description: "오늘 일정과 고객 정보, 문자 발송 상태를 대시보드에서 바로 확인해요.",
+    number: "03",
+    title: "영업시간·휴무일 자동 반영",
+    description:
+      "운영 요일과 휴무일을 설정하면 고객 화면의 예약 가능 시간이 자동으로 달라져요.",
   },
 ];
 
-const setupSteps = [
+const managementFeatures = [
   {
-    number: "1",
-    preview: "services",
-    title: "서비스 설정",
-    description: "시술명, 가격, 소요 시간을 등록해요.",
+    icon: "CAL",
+    title: "월별 예약관리",
+    description: "날짜별 예약 수와 선택한 날짜의 일정을 월간 캘린더에서 확인해요.",
   },
   {
-    number: "2",
-    preview: "hours",
-    title: "영업시간 설정",
-    description: "예약 가능한 요일과 쉬는 시간을 정해요.",
+    icon: "SMS",
+    title: "문자 알림 상태",
+    description: "사장님과 고객에게 전달된 예약 문자 상태를 예약별로 확인해요.",
   },
   {
-    number: "3",
-    preview: "link",
-    title: "예약 링크 만들기",
-    description: "내 가게만의 예약 링크를 바로 만들어요.",
+    icon: "文",
+    title: "다국어 예약 화면",
+    description: "외국인 고객도 익숙한 언어로 서비스를 확인하고 예약할 수 있어요.",
   },
-  {
-    number: "4",
-    preview: "dashboard",
-    title: "대시보드 · 예약관리",
-    description: "예약 현황, 문자 알림, 고객 정보를 한눈에 확인해요.",
-  },
-] as const;
+];
 
-function StepPreview({ type }: { type: (typeof setupSteps)[number]["preview"] }) {
-  if (type === "services") {
-    return (
-      <div className="rounded-[22px] bg-[#f8fbfb] p-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold text-[#00C1FF]">서비스</div>
-            <div className="mt-0.5 text-sm font-black">예약 메뉴</div>
-          </div>
-          <div className="rounded-full bg-[#e8faf8] px-2.5 py-1 text-[10px] font-black text-[#168ca8]">
-            + 추가
-          </div>
-        </div>
-        <div className="mt-3 grid gap-2">
-          <div className="flex items-center justify-between rounded-2xl border border-[#dff0f2] bg-white p-3 shadow-sm">
-            <div>
-              <div className="text-sm font-black">커트</div>
-              <div className="mt-1 text-[11px] font-medium text-gray-400">30분</div>
-            </div>
-            <div className="text-sm font-black text-[#167f97]">₩30,000</div>
-          </div>
-          <div className="flex items-center justify-between rounded-2xl border border-[#dff0f2] bg-white p-3 shadow-sm">
-            <div>
-              <div className="text-sm font-black">염색</div>
-              <div className="mt-1 text-[11px] font-medium text-gray-400">90분</div>
-            </div>
-            <div className="text-sm font-black text-[#167f97]">₩80,000</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (type === "hours") {
-    return (
-      <div className="rounded-[22px] bg-[#f8fbfb] p-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-[10px] font-bold text-[#00C1FF]">영업시간</div>
-            <div className="mt-0.5 text-sm font-black">예약 가능 시간</div>
-          </div>
-          <div className="h-6 w-10 rounded-full bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] p-1">
-            <div className="ml-auto h-4 w-4 rounded-full bg-white shadow-sm" />
-          </div>
-        </div>
-        <div className="mt-3 grid gap-2 text-xs font-bold">
-          <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 shadow-sm">
-            <span className="text-gray-500">월–금</span>
-            <span>10:00 ~ 19:00</span>
-          </div>
-          <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-3 shadow-sm">
-            <span className="text-gray-500">토</span>
-            <span>11:00 ~ 17:00</span>
-          </div>
-          <div className="flex items-center justify-between rounded-2xl bg-[#fff7e5] px-3 py-3 text-[#806329]">
-            <span>점심시간</span>
-            <span>13:00 ~ 14:00</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (type === "link") {
-    return (
-      <div className="rounded-[22px] bg-white p-4">
-        <div className="text-[10px] font-bold text-[#168ca8]">내 예약 링크</div>
-        <div className="mt-2 rounded-2xl bg-white p-3 shadow-sm">
-          <div className="truncate text-base font-black text-[#245e6b]">timeopen.app/u/yourshop</div>
-          <div className="mt-3 flex min-h-10 items-center justify-center rounded-xl bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] text-xs font-black text-white">
-            링크 복사
-          </div>
-        </div>
-        <div className="mt-3 flex items-center gap-2 rounded-2xl bg-white/70 px-3 py-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#e2f8f4] text-xs font-black text-[#168b72]">
-            ✓
-          </div>
-          <div className="text-xs font-bold leading-5 text-[#3e727b]">고객은 로그인 없이 예약해요</div>
-        </div>
-      </div>
-    );
-  }
-
+function DashboardPreview() {
   return (
-    <div className="rounded-[22px] bg-[#f8fbfb] p-3">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-[10px] font-bold text-[#00C1FF]">대시보드</div>
-          <div className="mt-0.5 text-base font-black">오늘 예약 3건</div>
-        </div>
-        <div className="rounded-full bg-[#e7faf5] px-2.5 py-1 text-[10px] font-black text-[#168b72]">
-          문자 완료
-        </div>
-      </div>
-      <div className="mt-3 grid gap-2">
-        <div className="flex items-center gap-2 rounded-2xl bg-white p-2.5 shadow-sm">
-          <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] text-[11px] font-black text-white">
-            11:00
+    <div className="relative mx-auto w-full max-w-md">
+      <div
+        aria-hidden="true"
+        className="absolute -left-10 top-16 h-40 w-40 rounded-full bg-[#00D6F7]/25 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute -right-8 bottom-12 h-44 w-44 rounded-full bg-[#00C1FF]/20 blur-3xl"
+      />
+
+      <div className="glass-shell relative overflow-hidden rounded-[32px] p-4 sm:p-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="brand-text text-xs font-black">좋은 아침이에요</div>
+            <div className="mt-1 text-lg font-black tracking-[-0.03em] text-slate-950">
+              작은 매장 사장님
+            </div>
+            <div className="mt-1 text-xs font-medium text-slate-400">6월 22일 월요일</div>
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-xs font-black">커트 · Mina</div>
-            <div className="mt-0.5 text-[10px] font-medium text-gray-400">30분</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 rounded-2xl bg-white p-2.5 shadow-sm">
-          <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-xl bg-[#eaf4f5] text-[11px] font-black text-[#477986]">
-            14:30
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-xs font-black">염색 · Yuki</div>
-            <div className="mt-0.5 text-[10px] font-medium text-gray-400">90분</div>
+          <div className="brand-chip rounded-full px-3 py-1.5 text-[10px] font-black">
+            오늘
           </div>
         </div>
-      </div>
-      <div className="mt-3 flex items-center justify-between border-t border-[#e5f0f1] pt-3 text-xs font-black">
-        <span>예약관리</span>
-        <span className="text-[#00C1FF]">전체 보기 →</span>
+
+        <div className="mt-4 grid grid-cols-2 gap-2.5">
+          <div className="glass-card relative overflow-hidden rounded-[20px] p-3.5">
+            <div
+              aria-hidden="true"
+              className="absolute -right-5 -top-6 h-20 w-20 rounded-full bg-[#00D6F7]/25 blur-xl"
+            />
+            <div className="relative text-[10px] font-bold text-slate-400">
+              이번 주 예약
+            </div>
+            <div className="relative mt-1 text-2xl font-black text-slate-950">
+              12<span className="ml-1 text-xs text-slate-400">건</span>
+            </div>
+          </div>
+          <div className="glass-card rounded-[20px] p-3.5">
+            <div className="text-[10px] font-bold text-slate-400">예약 링크</div>
+            <div className="mt-1 truncate text-xs font-black text-slate-700">
+              /u/yourshop
+            </div>
+            <div className="brand-outline mt-2 inline-flex rounded-lg px-2.5 py-1 text-[10px] font-black">
+              링크 복사
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 flex items-center justify-between">
+          <div className="text-sm font-black text-slate-900">오늘 일정</div>
+          <div className="text-[10px] font-bold text-slate-400">3건</div>
+        </div>
+
+        <div className="relative mt-3 space-y-2.5 before:absolute before:bottom-5 before:left-[31px] before:top-5 before:w-px before:bg-gradient-to-b before:from-[#00D6F7]/20 before:via-[#00C1FF]/60 before:to-[#00C1FF]/15">
+          {[
+            { time: "09:00", customer: "김민지", service: "커트 · 30분" },
+            { time: "13:30", customer: "박유나", service: "염색 · 90분" },
+          ].map((reservation, index) => (
+            <div
+              key={reservation.time}
+              className="relative grid grid-cols-[62px_1fr] gap-2"
+            >
+              <div className="relative z-10 pt-3 text-center">
+                <div
+                  className={
+                    index === 0
+                      ? "brand-selected inline-flex min-h-7 items-center rounded-full px-2 text-[10px] font-black"
+                      : "brand-outline inline-flex min-h-7 items-center rounded-full px-2 text-[10px] font-black"
+                  }
+                >
+                  {reservation.time}
+                </div>
+              </div>
+              <div className="glass-card rounded-[18px] p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="truncate text-xs font-black text-slate-900">
+                      {reservation.customer}
+                    </div>
+                    <div className="mt-0.5 truncate text-[10px] font-bold text-slate-400">
+                      {reservation.service}
+                    </div>
+                  </div>
+                  <span className="brand-chip shrink-0 rounded-full px-2 py-1 text-[9px] font-black">
+                    확정
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -190,277 +151,203 @@ export default async function Page() {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-white text-gray-950">
-      <div className="mx-auto w-full max-w-5xl px-4 pb-10 pt-4 sm:px-6 sm:pb-16 sm:pt-6">
-        <header className="flex items-center justify-between rounded-full border border-white/80 bg-white/85 px-4 py-3 shadow-[0_10px_35px_rgba(82,130,120,0.08)] backdrop-blur sm:px-5">
+    <main className="soft-page-bg overflow-x-hidden text-slate-950">
+      <div className="mx-auto w-full max-w-6xl px-4 pb-12 pt-4 sm:px-6 sm:pb-20 sm:pt-6">
+        <header className="glass-card flex items-center justify-between rounded-full px-4 py-3 sm:px-5">
           <a href="/" className="flex min-h-10 items-center gap-2.5" aria-label="TimeOpen 홈">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#00D6F7] to-[#00C1FF] text-base font-black text-white shadow-[0_8px_18px_rgba(0,193,255,0.2)]">
+            <span className="brand-gradient flex h-9 w-9 items-center justify-center rounded-xl text-base font-black text-white shadow-[0_8px_18px_rgba(0,193,255,0.2)]">
               T
             </span>
             <span className="text-lg font-black tracking-[-0.04em]">TimeOpen</span>
           </a>
-          <a
-            href="/login"
-            className="flex min-h-10 items-center rounded-full px-4 text-sm font-bold text-[#168ca8] transition hover:bg-[#ecfbfd]"
-          >
-            로그인
-          </a>
+          <nav className="flex items-center gap-1.5">
+            <a
+              href="/login"
+              className="min-h-10 rounded-full px-4 py-2.5 text-sm font-bold text-slate-500 transition hover:bg-white/70 hover:text-[#00A4D9]"
+            >
+              로그인
+            </a>
+            <a
+              href="/signup"
+              className="brand-button hidden min-h-10 items-center rounded-full px-4 text-sm font-black sm:flex"
+            >
+              무료로 시작하기
+            </a>
+          </nav>
         </header>
 
-        <section className="relative overflow-hidden rounded-b-[36px] px-1 pb-10 pt-12 sm:px-8 sm:pb-16 sm:pt-20">
-          <div className="pointer-events-none absolute -right-16 top-12 h-52 w-52 rounded-full bg-[#d8f7f2] blur-3xl" />
-          <div className="pointer-events-none absolute -left-20 bottom-4 h-44 w-44 rounded-full bg-[#fff1cf] blur-3xl" />
+        <section className="relative grid items-center gap-12 pb-20 pt-14 sm:pb-28 sm:pt-24 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-32 top-6 h-72 w-72 rounded-full bg-[#00D6F7]/16 blur-[90px]"
+          />
 
-          <div className="relative mx-auto max-w-3xl text-center">
-            <div className="hero-reveal hero-delay-1 inline-flex rounded-full border border-[#cceff2] bg-[#ecfbfd] px-3.5 py-2 text-xs font-black text-[#168ca8]">
-              링크 하나로 시작하는 예약
+          <div className="relative text-center lg:text-left">
+            <div className="brand-chip inline-flex rounded-full px-3.5 py-2 text-xs font-black">
+              작은 매장을 위한 예약 관리
             </div>
-            <h1 className="hero-reveal hero-delay-2 mx-auto mt-5 max-w-3xl text-[2.05rem] font-black leading-[1.15] tracking-[-0.055em] sm:text-6xl sm:leading-[1.08]">
-              <span className="block">내 예약 링크를 만들고</span>
-              <span className="mt-1 block text-[1.4rem] sm:mt-0 sm:text-6xl">
-                고객은 로그인 없이 바로 예약해요
-              </span>
+            <h1 className="mt-6 text-[2.55rem] font-black leading-[1.08] tracking-[-0.06em] sm:text-6xl lg:text-[4.25rem]">
+              예약 링크 하나로,
+              <br />
+              <span className="brand-text">매장 예약을 더 쉽게</span>
             </h1>
-            <p className="hero-reveal hero-delay-3 mx-auto mt-5 max-w-md text-[15px] font-medium leading-7 text-gray-600 sm:text-lg sm:leading-8">
-              <span className="block">서비스와 영업시간만 설정하면</span>
-              <span className="block">예약 링크로 바로 예약을 받을 수 있어요.</span>
+            <p className="mx-auto mt-6 max-w-xl text-base font-medium leading-7 text-slate-600 sm:text-lg sm:leading-8 lg:mx-0">
+              고객은 로그인 없이 예약하고, 사장님은 오늘 일정과 예약 내역을 한눈에
+              확인해요.
             </p>
-            <div className="hero-reveal hero-delay-4 mx-auto mt-8 max-w-sm">
+
+            <div className="mx-auto mt-8 grid max-w-md gap-3 sm:grid-cols-2 lg:mx-0">
               <a
                 href="/signup"
-                className="flex min-h-14 items-center justify-center rounded-2xl bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] px-6 text-base font-black text-white shadow-[0_14px_28px_rgba(0,193,255,0.25)] transition hover:brightness-95"
+                className="brand-button flex min-h-14 items-center justify-center rounded-2xl px-6 text-base font-black"
               >
                 무료로 시작하기
               </a>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <a
-                  href="/login"
-                  className="flex min-h-12 items-center justify-center rounded-2xl border border-[#dceef2] bg-white px-4 text-sm font-black text-[#287789] shadow-sm transition hover:bg-[#f3fcfd]"
-                >
-                  로그인
-                </a>
-                <a
-                  href="/signup"
-                  className="flex min-h-12 items-center justify-center rounded-2xl border border-[#bfe8ee] bg-[#ecfbfd] px-4 text-sm font-black text-[#168ca8] shadow-sm transition hover:bg-[#dff7fa]"
-                >
-                  회원가입
-                </a>
-              </div>
+              <a
+                href="/signup"
+                className="brand-outline flex min-h-14 items-center justify-center rounded-2xl px-6 text-base font-black"
+              >
+                베타 파트너 문의
+              </a>
             </div>
-          </div>
-        </section>
-
-        <section className="hero-reveal hero-delay-5 mx-auto max-w-3xl">
-          <div className="rounded-[30px] border border-[#e2efee] bg-white p-3 shadow-[0_22px_60px_rgba(62,127,120,0.12)] sm:p-5">
-            <div className="overflow-hidden rounded-[24px] bg-[#fbfdfd] p-4 sm:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-xs font-bold text-[#00C1FF]">오늘의 예약</div>
-                  <div className="mt-1 text-2xl font-black tracking-[-0.04em]">오늘 예약 3건</div>
-                </div>
-                <div className="rounded-full bg-[#e7faf5] px-3 py-1.5 text-xs font-black text-[#168b72]">
-                  운영 중
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-3">
-                <div className="flex items-center gap-3 rounded-2xl border border-[#e5f3f6] bg-white p-3 shadow-sm">
-                  <div className="flex h-14 w-[68px] shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] text-sm font-black text-white">
-                    11:00
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-black">커트 · Mina</div>
-                    <div className="mt-1 text-xs font-medium text-gray-400">30분</div>
-                  </div>
-                  <div className="shrink-0 rounded-full bg-[#e7faf5] px-2.5 py-1.5 text-[11px] font-black text-[#168b72]">
-                    문자 완료
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-2xl border border-[#e5f3f6] bg-white p-3 shadow-sm">
-                  <div className="flex h-14 w-[68px] shrink-0 items-center justify-center rounded-xl bg-[#eef7f8] text-sm font-black text-[#3f7b88]">
-                    14:30
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-black">염색 · Yuki</div>
-                    <div className="mt-1 text-xs font-medium text-gray-400">90분</div>
-                  </div>
-                  <div className="shrink-0 rounded-full bg-[#eef2f3] px-2.5 py-1.5 text-[11px] font-black text-gray-500">
-                    예약 완료
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-[#fff8e8] px-4 py-3">
-                <span className="text-xs font-bold text-[#97733c]">내 예약 링크</span>
-                <span className="truncate text-sm font-black text-[#735523]">/u/yourshop</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-3xl py-14 sm:py-20">
-          <div className="mb-7 px-1 text-center">
-            <div className="text-sm font-black text-[#00C1FF]">링크 하나가 만들어지는 과정</div>
-            <h2 className="mt-2 text-3xl font-black leading-tight tracking-[-0.045em] sm:text-4xl">
-              설정하고, 공유하면
-              <br />
-              예약 준비가 끝나요
-            </h2>
-            <p className="mx-auto mt-3 max-w-lg text-sm font-medium leading-6 text-gray-500">
-              복잡한 홈페이지 없이 가게 정보만 차례로 입력하세요.
+            <p className="mt-4 text-xs font-medium text-slate-400">
+              예약제 매장과 소규모 운영팀을 위한 초기 베타 서비스입니다.
             </p>
           </div>
 
-          <ol className="grid gap-4 sm:grid-cols-2 sm:gap-5">
-            {setupSteps.map((step) => (
-              <li
-                key={step.title}
-                className="landing-step overflow-hidden rounded-[28px] border border-[#e1efed] bg-white p-4 shadow-[0_16px_44px_rgba(82,130,120,0.09)] sm:p-5"
-              >
-                <div className="flex gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e8faf8] text-sm font-black text-[#159bb9]">
-                    {step.number}
-                  </div>
-                  <div className="min-w-0 pt-0.5">
-                    <h3 className="text-lg font-black tracking-[-0.03em] text-gray-950">{step.title}</h3>
-                    <p className="mt-1 text-sm font-medium leading-5 text-gray-500">{step.description}</p>
-                  </div>
-                </div>
-                <div className="mt-4 rounded-[24px] border border-[#e4f0ef] bg-[#f3f9f7] p-2 shadow-inner">
-                  <StepPreview type={step.preview} />
-                </div>
-              </li>
-            ))}
-          </ol>
+          <DashboardPreview />
         </section>
 
-        <section className="mx-auto max-w-3xl pb-14 sm:pb-20">
-          <div className="mb-7 px-1">
-            <div className="text-sm font-black text-[#00C1FF]">TimeOpen으로 할 수 있는 일</div>
+        <section className="pb-20 sm:pb-28">
+          <div className="glass-card relative overflow-hidden rounded-[32px] px-5 py-10 text-center sm:px-10 sm:py-14">
+            <div
+              aria-hidden="true"
+              className="absolute left-1/2 top-0 h-44 w-80 -translate-x-1/2 rounded-full bg-[#00C1FF]/12 blur-3xl"
+            />
+            <div className="relative">
+              <div className="brand-text text-sm font-black">예약 창구가 여러 개인 매장이라면</div>
+              <h2 className="mt-3 text-3xl font-black tracking-[-0.045em] sm:text-4xl">
+                DM, 전화, 카톡 예약이 흩어져 있나요?
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-sm font-medium leading-7 text-slate-500 sm:text-base">
+                TimeOpen은 고객에게 하나의 예약 링크를 제공하고, 들어온 예약을 일정
+                중심으로 모아 작은 매장의 확인 업무를 단순하게 만듭니다.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="pb-20 sm:pb-28">
+          <div className="mb-8 max-w-2xl">
+            <div className="brand-text text-sm font-black">핵심 기능</div>
             <h2 className="mt-2 text-3xl font-black leading-tight tracking-[-0.045em] sm:text-4xl">
-              고객의 예약부터
+              예약을 받고 확인하는
               <br />
-              사장님의 확인까지
+              가장 필요한 흐름부터
             </h2>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {features.map((feature) => (
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {coreFeatures.map((feature) => (
               <article
                 key={feature.title}
-                className="rounded-[24px] border border-[#e1efed] bg-white p-5 shadow-[0_12px_34px_rgba(82,130,120,0.08)]"
+                className="glass-card group rounded-[26px] p-5 transition hover:-translate-y-1 hover:bg-white/80 sm:p-6"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-[#e8faf8] px-2 text-xs font-black text-[#159bb9]">
-                    {feature.icon}
-                  </div>
-                  <div className="rounded-full border border-[#d8f0f2] bg-[#f1fbfc] px-3 py-1.5 text-[11px] font-black text-[#168ca8]">
-                    {feature.label}
-                  </div>
+                <div className="brand-selected flex h-10 w-10 items-center justify-center rounded-xl text-xs font-black">
+                  {feature.number}
                 </div>
-                <h3 className="mt-5 text-xl font-black tracking-[-0.03em] text-gray-950">{feature.title}</h3>
-                <p className="mt-2 text-sm font-medium leading-6 text-gray-500">{feature.description}</p>
+                <h3 className="mt-6 text-xl font-black tracking-[-0.03em]">
+                  {feature.title}
+                </h3>
+                <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
+                  {feature.description}
+                </p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[32px] bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] px-6 py-10 text-center text-white shadow-[0_20px_50px_rgba(0,193,255,0.22)] sm:px-10 sm:py-14">
-          <div className="text-sm font-bold text-white/80">지금 바로 시작해보세요</div>
-          <h2 className="mt-2 text-3xl font-black leading-tight tracking-[-0.045em]">
-            고객이 기다리지 않는
-            <br />
-            내 예약 링크
-          </h2>
-          <a
-            href="/signup"
-            className="mx-auto mt-7 flex min-h-14 max-w-xs items-center justify-center rounded-2xl bg-white px-6 text-base font-black text-[#159bb9] shadow-lg transition hover:bg-[#f4fdff]"
-          >
-            내 예약 링크 만들기
-          </a>
+        <section className="pb-20 sm:pb-28">
+          <div className="grid items-center gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
+            <div>
+              <div className="brand-text text-sm font-black">사장님용 관리 기능</div>
+              <h2 className="mt-2 text-3xl font-black leading-tight tracking-[-0.045em] sm:text-4xl">
+                매일 확인하는 정보는
+                <br />
+                한 화면에 정리해요
+              </h2>
+              <p className="mt-4 text-sm font-medium leading-7 text-slate-500 sm:text-base">
+                예약 현황, 문자 발송 상태, 고객용 다국어 화면을 각각 복잡한 도구 없이
+                TimeOpen 안에서 관리할 수 있어요.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              {managementFeatures.map((feature) => (
+                <article key={feature.title} className="glass-card rounded-[24px] p-5">
+                  <div className="brand-soft inline-flex min-h-9 min-w-9 items-center justify-center rounded-xl px-2 text-[10px] font-black">
+                    {feature.icon}
+                  </div>
+                  <h3 className="mt-5 text-lg font-black tracking-[-0.03em]">
+                    {feature.title}
+                  </h3>
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+                    {feature.description}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
         </section>
 
-        <footer className="py-8 text-center">
-          <div className="text-sm font-black text-[#279db7]">TimeOpen</div>
-          <p className="mt-1 text-xs font-medium text-gray-400">예약을 열면, 고객과 더 가까워집니다.</p>
+        <section className="relative overflow-hidden rounded-[34px] border border-white/70 bg-gradient-to-br from-[#00D6F7] to-[#00C1FF] px-5 py-12 text-center text-white shadow-[0_24px_60px_rgba(0,193,255,0.24)] sm:px-10 sm:py-16">
+          <div
+            aria-hidden="true"
+            className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/25 blur-3xl"
+          />
+          <div className="relative mx-auto max-w-2xl">
+            <div className="text-sm font-black text-white/80">TimeOpen Beta</div>
+            <h2 className="mt-3 text-3xl font-black tracking-[-0.045em] sm:text-4xl">
+              초기 베타 파트너를 모집 중입니다.
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-sm font-medium leading-7 text-white/85 sm:text-base">
+              베타 기간 동안 무료로 사용 가능하며, 정식 출시 후 월 정액제 플랜으로
+              전환될 예정입니다.
+            </p>
+            <div className="mx-auto mt-8 grid max-w-md gap-3 sm:grid-cols-2">
+              <a
+                href="/signup"
+                className="flex min-h-14 items-center justify-center rounded-2xl bg-white px-5 text-base font-black text-[#0098CB] shadow-lg transition hover:bg-[#F2FCFF]"
+              >
+                무료로 시작하기
+              </a>
+              <a
+                href="/signup"
+                className="flex min-h-14 items-center justify-center rounded-2xl border border-white/70 bg-white/15 px-5 text-base font-black text-white backdrop-blur transition hover:bg-white/25"
+              >
+                베타 파트너 문의
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <footer className="flex flex-col items-center justify-between gap-3 py-8 text-center sm:flex-row sm:text-left">
+          <div>
+            <div className="brand-text text-sm font-black">TimeOpen</div>
+            <p className="mt-1 text-xs font-medium text-slate-400">
+              작은 매장의 예약 운영을 더 단순하게.
+            </p>
+          </div>
+          <div className="flex items-center gap-4 text-xs font-bold text-slate-400">
+            <a href="/login" className="transition hover:text-[#00A4D9]">
+              로그인
+            </a>
+            <a href="/signup" className="transition hover:text-[#00A4D9]">
+              회원가입
+            </a>
+          </div>
         </footer>
       </div>
-      <style>{`
-        @keyframes hero-reveal {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes landing-step-reveal {
-          from {
-            opacity: 0;
-            transform: translateY(24px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .hero-reveal {
-          opacity: 0;
-          animation: hero-reveal 650ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-
-        .hero-delay-1 {
-          animation-delay: 80ms;
-        }
-
-        .hero-delay-2 {
-          animation-delay: 170ms;
-        }
-
-        .hero-delay-3 {
-          animation-delay: 260ms;
-        }
-
-        .hero-delay-4 {
-          animation-delay: 350ms;
-        }
-
-        .hero-delay-5 {
-          animation-delay: 460ms;
-        }
-
-        @supports (animation-timeline: view()) {
-          .landing-step {
-            animation: landing-step-reveal 1ms cubic-bezier(0.22, 1, 0.36, 1) both;
-            animation-timeline: view();
-            animation-range: entry 8% cover 30%;
-          }
-
-          .landing-step:nth-child(2) {
-            animation-range: entry 12% cover 34%;
-          }
-
-          .landing-step:nth-child(3) {
-            animation-range: entry 8% cover 30%;
-          }
-
-          .landing-step:nth-child(4) {
-            animation-range: entry 12% cover 34%;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .hero-reveal,
-          .landing-step {
-            animation: none !important;
-            opacity: 1 !important;
-            transform: none !important;
-          }
-        }
-      `}</style>
     </main>
   );
 }
