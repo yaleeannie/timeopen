@@ -18,7 +18,7 @@ export default async function ServicesSettingsPage() {
       <div className="glass-shell mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] sm:rounded-[36px]">
         <div className="px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7">
           <header className="mb-6">
-            <a href="/owner" className="mb-3 inline-flex min-h-11 items-center text-sm font-bold text-[#00a7df]">← 대시보드</a>
+            <a href="/owner" className="brand-text mb-3 inline-flex min-h-11 items-center text-sm font-bold">← 대시보드</a>
             <h1 className="text-3xl font-black tracking-[-0.04em]">서비스 관리</h1>
             <p className="mt-1 text-sm leading-5 text-gray-500">예약 가능한 메뉴와 가격을 관리하세요.</p>
           </header>

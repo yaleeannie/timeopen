@@ -337,7 +337,7 @@ export default function OnboardingFlow({
       <main className="soft-page-bg px-3 py-4 text-slate-950 sm:px-5 sm:py-8">
         <div className="glass-shell mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-[30px] sm:min-h-[760px] sm:rounded-[38px]">
           <div className="px-5 pb-4 pt-6 sm:px-7 sm:pt-8">
-            <div className="text-sm font-black text-[#1aa9c7]">TimeOpen 시작하기</div>
+            <div className="brand-text text-sm font-black">TimeOpen 시작하기</div>
           </div>
 
           <section className="flex flex-1 flex-col px-5 pb-5 sm:px-7 sm:pb-7">
@@ -362,7 +362,7 @@ export default function OnboardingFlow({
                   key={title}
                   className="flex min-h-14 items-center gap-3 rounded-2xl bg-[#f7fbfc] px-4"
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#e6f8fb] text-sm font-black text-[#168ca8]">
+                  <span className="brand-soft flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-black">
                     {index + 1}
                   </span>
                   <span className="text-sm font-black text-gray-800">{title}</span>
@@ -397,8 +397,8 @@ export default function OnboardingFlow({
       <div className="glass-shell mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-[30px] sm:min-h-[760px] sm:rounded-[38px]">
         <div className="px-5 pb-4 pt-6 sm:px-7 sm:pt-8">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-black text-[#1aa9c7]">TimeOpen 시작하기</div>
-            <div className="rounded-full bg-[#e8f9fc] px-3 py-1.5 text-sm font-black text-[#168ca8]">
+            <div className="brand-text text-sm font-black">TimeOpen 시작하기</div>
+            <div className="brand-chip rounded-full px-3 py-1.5 text-sm font-black">
               {step + 1}/4
             </div>
           </div>
@@ -463,7 +463,7 @@ export default function OnboardingFlow({
             {step === 1 ? (
               <div className="grid gap-5">
                 {initialServices.length > 0 ? (
-                  <div className="rounded-2xl bg-[#eefaf7] px-4 py-3 text-sm font-bold leading-5 text-[#23846d]">
+                  <div className="brand-soft rounded-2xl px-4 py-3 text-sm font-bold leading-5">
                     등록된 서비스를 불러왔어요. 내용을 수정하거나 새 서비스를 추가할 수
                     있어요.
                   </div>
@@ -550,7 +550,7 @@ export default function OnboardingFlow({
                 <button
                   type="button"
                   onClick={addService}
-                  className="min-h-12 w-full rounded-2xl border border-dashed border-[#9bdde7] bg-[#f3fcfd] px-4 text-sm font-black text-[#168ca8]"
+                  className="brand-outline min-h-12 w-full rounded-2xl border-dashed px-4 text-sm font-black"
                 >
                   + 서비스 추가
                 </button>
@@ -662,7 +662,7 @@ export default function OnboardingFlow({
               <div className="grid gap-5">
                 <label>
                   <span className={labelClass}>나만의 예약 주소</span>
-                  <div className="flex min-h-12 items-center rounded-2xl border border-[#dcecef] bg-white focus-within:border-[#4fcbe6] focus-within:ring-4 focus-within:ring-cyan-50">
+                  <div className="brand-input flex min-h-12 items-center rounded-2xl focus-within:border-[#00c1ff] focus-within:ring-4 focus-within:ring-[#00c1ff]/10">
                     <span className="shrink-0 pl-4 text-sm font-bold text-gray-400">/u/</span>
                     <input
                       value={handle}
@@ -681,7 +681,7 @@ export default function OnboardingFlow({
                 </label>
 
                 <div className="overflow-hidden rounded-[22px] bg-gradient-to-br from-[#eefcfa] to-[#eef8fd] p-4">
-                  <div className="text-xs font-black text-[#168ca8]">예약 링크 미리보기</div>
+                  <div className="brand-text text-xs font-black">예약 링크 미리보기</div>
                   <div className="mt-2 break-all text-sm font-black leading-6 text-gray-800">
                     {bookingUrl}
                   </div>
@@ -754,7 +754,7 @@ export default function OnboardingFlow({
                     type="button"
                     onClick={() => finish("preview")}
                     disabled={saving}
-                    className="min-h-11 rounded-xl bg-[#effbfc] px-3 text-sm font-black text-[#168ca8] disabled:opacity-50"
+                    className="brand-outline min-h-11 rounded-xl px-3 text-sm font-black disabled:opacity-50"
                   >
                     URL 확인하기
                   </button>

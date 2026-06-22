@@ -102,9 +102,9 @@ function formatDateLabel(dateISO: string) {
 function statusStyle(status: string | null) {
   if (status === "confirmed") {
     return {
-      color: "#166534",
-      background: "#dcfce7",
-      borderColor: "#bbf7d0",
+      color: "#008fc0",
+      background: "rgba(0, 214, 247, 0.10)",
+      borderColor: "rgba(0, 193, 255, 0.42)",
     };
   }
 
@@ -140,9 +140,9 @@ function smsStatusStyle(status: SmsDisplayStatus) {
   switch (status) {
     case "success":
       return {
-        color: "#0f766e",
-        background: "#ccfbf1",
-        borderColor: "#99f6e4",
+        color: "#008fc0",
+        background: "rgba(0, 214, 247, 0.10)",
+        borderColor: "rgba(0, 193, 255, 0.42)",
       };
     case "partial":
       return {
@@ -414,7 +414,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
       <div className="glass-shell mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] sm:rounded-[36px]">
         <div className="px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7">
         <header className="mb-6">
-          <a href="/owner" className="mb-3 inline-flex min-h-11 items-center text-sm font-bold text-[#00a7df]">
+          <a href="/owner" className="brand-text mb-3 inline-flex min-h-11 items-center text-sm font-bold">
             ← 대시보드
           </a>
           <h1 className="text-3xl font-black tracking-[-0.04em]">예약관리</h1>
@@ -432,7 +432,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
             <a
               href={`/reservations?date=${calendar?.previousMonth ?? selectedDate}`}
               aria-label="이전 달"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#dceef2] bg-white text-xl font-black text-[#5594a3]"
+              className="brand-outline flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl font-black"
             >
               ‹
             </a>
@@ -444,7 +444,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
               {selectedDate !== todayISO ? (
                 <a
                   href={`/reservations?date=${todayISO}`}
-                  className="mt-1 inline-block text-sm font-bold text-[#00a7df]"
+                  className="brand-text mt-1 inline-block text-sm font-bold"
                 >
                   오늘로 이동
                 </a>
@@ -456,7 +456,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
             <a
               href={`/reservations?date=${calendar?.nextMonth ?? selectedDate}`}
               aria-label="다음 달"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#dceef2] bg-white text-xl font-black text-[#5594a3]"
+              className="brand-outline flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl font-black"
             >
               ›
             </a>
@@ -491,15 +491,15 @@ export default async function ReservationsPage({ searchParams }: Props) {
                   aria-current={selected ? "date" : undefined}
                   className={`flex min-h-[62px] min-w-0 flex-col items-center rounded-xl border px-0.5 py-1.5 text-center ${
                     selected
-                      ? "border-transparent brand-gradient text-white shadow-[0_8px_20px_rgba(0,193,255,0.2)]"
+                      ? "brand-selected"
                       : today
-                        ? "border-[#bcecf5] bg-[#eefafd] text-gray-700"
+                        ? "brand-border bg-white/75 text-gray-700"
                         : "border-transparent bg-white text-gray-700"
                   }`}
                 >
                   <div
                     className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-black ${
-                      today && !selected ? "bg-[#dff7fb] text-[#168ca8]" : ""
+                      today && !selected ? "brand-soft" : ""
                     }`}
                   >
                     {date?.getUTCDate()}
@@ -509,7 +509,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
                       className={`mt-1 rounded-full px-1.5 py-0.5 text-[9px] font-black ${
                         selected
                           ? "bg-white/20 text-white"
-                          : "bg-[#e8f9fd] text-[#168ca8]"
+                          : "brand-soft"
                       }`}
                     >
                       {count}건

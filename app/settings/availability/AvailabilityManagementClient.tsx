@@ -28,7 +28,7 @@ export default function AvailabilityManagementClient({
           onClick={() => setTab("hours")}
           className={`min-h-11 rounded-xl px-4 text-sm font-black transition ${
             tab === "hours"
-              ? "bg-white/85 text-[#008fbe] shadow-sm"
+              ? "brand-selected shadow-sm"
               : "text-gray-500"
           }`}
         >
@@ -42,7 +42,7 @@ export default function AvailabilityManagementClient({
           onClick={() => setTab("holidays")}
           className={`min-h-11 rounded-xl px-4 text-sm font-black transition ${
             tab === "holidays"
-              ? "bg-white/85 text-[#008fbe] shadow-sm"
+              ? "brand-selected shadow-sm"
               : "text-gray-500"
           }`}
         >

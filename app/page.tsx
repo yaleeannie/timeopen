@@ -63,7 +63,7 @@ function StepPreview({ type }: { type: (typeof setupSteps)[number]["preview"] })
       <div className="rounded-[22px] bg-[#f8fbfb] p-3">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-bold text-[#28b9dc]">서비스</div>
+            <div className="text-[10px] font-bold text-[#00C1FF]">서비스</div>
             <div className="mt-0.5 text-sm font-black">예약 메뉴</div>
           </div>
           <div className="rounded-full bg-[#e8faf8] px-2.5 py-1 text-[10px] font-black text-[#168ca8]">
@@ -95,10 +95,10 @@ function StepPreview({ type }: { type: (typeof setupSteps)[number]["preview"] })
       <div className="rounded-[22px] bg-[#f8fbfb] p-3">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-bold text-[#28b9dc]">영업시간</div>
+            <div className="text-[10px] font-bold text-[#00C1FF]">영업시간</div>
             <div className="mt-0.5 text-sm font-black">예약 가능 시간</div>
           </div>
-          <div className="h-6 w-10 rounded-full bg-[#35bddc] p-1">
+          <div className="h-6 w-10 rounded-full bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] p-1">
             <div className="ml-auto h-4 w-4 rounded-full bg-white shadow-sm" />
           </div>
         </div>
@@ -126,7 +126,7 @@ function StepPreview({ type }: { type: (typeof setupSteps)[number]["preview"] })
         <div className="text-[10px] font-bold text-[#168ca8]">내 예약 링크</div>
         <div className="mt-2 rounded-2xl bg-white p-3 shadow-sm">
           <div className="truncate text-base font-black text-[#245e6b]">timeopen.app/u/yourshop</div>
-          <div className="mt-3 flex min-h-10 items-center justify-center rounded-xl bg-[#35bddc] text-xs font-black text-white">
+          <div className="mt-3 flex min-h-10 items-center justify-center rounded-xl bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] text-xs font-black text-white">
             링크 복사
           </div>
         </div>
@@ -144,7 +144,7 @@ function StepPreview({ type }: { type: (typeof setupSteps)[number]["preview"] })
     <div className="rounded-[22px] bg-[#f8fbfb] p-3">
       <div className="flex items-start justify-between">
         <div>
-          <div className="text-[10px] font-bold text-[#28b9dc]">대시보드</div>
+          <div className="text-[10px] font-bold text-[#00C1FF]">대시보드</div>
           <div className="mt-0.5 text-base font-black">오늘 예약 3건</div>
         </div>
         <div className="rounded-full bg-[#e7faf5] px-2.5 py-1 text-[10px] font-black text-[#168b72]">
@@ -153,7 +153,7 @@ function StepPreview({ type }: { type: (typeof setupSteps)[number]["preview"] })
       </div>
       <div className="mt-3 grid gap-2">
         <div className="flex items-center gap-2 rounded-2xl bg-white p-2.5 shadow-sm">
-          <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-xl bg-[#35bddc] text-[11px] font-black text-white">
+          <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] text-[11px] font-black text-white">
             11:00
           </div>
           <div className="min-w-0 flex-1">
@@ -173,7 +173,7 @@ function StepPreview({ type }: { type: (typeof setupSteps)[number]["preview"] })
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-[#e5f0f1] pt-3 text-xs font-black">
         <span>예약관리</span>
-        <span className="text-[#28b9dc]">전체 보기 →</span>
+        <span className="text-[#00C1FF]">전체 보기 →</span>
       </div>
     </div>
   );
@@ -194,7 +194,7 @@ export default async function Page() {
       <div className="mx-auto w-full max-w-5xl px-4 pb-10 pt-4 sm:px-6 sm:pb-16 sm:pt-6">
         <header className="flex items-center justify-between rounded-full border border-white/80 bg-white/85 px-4 py-3 shadow-[0_10px_35px_rgba(82,130,120,0.08)] backdrop-blur sm:px-5">
           <a href="/" className="flex min-h-10 items-center gap-2.5" aria-label="TimeOpen 홈">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#5bd8f2] to-[#24b8df] text-base font-black text-white shadow-[0_8px_18px_rgba(40,185,220,0.2)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#00D6F7] to-[#00C1FF] text-base font-black text-white shadow-[0_8px_18px_rgba(0,193,255,0.2)]">
               T
             </span>
             <span className="text-lg font-black tracking-[-0.04em]">TimeOpen</span>
@@ -228,7 +228,7 @@ export default async function Page() {
             <div className="hero-reveal hero-delay-4 mx-auto mt-8 max-w-sm">
               <a
                 href="/signup"
-                className="flex min-h-14 items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 px-6 text-base font-black text-white shadow-[0_14px_28px_rgba(14,165,233,0.25)] transition hover:from-cyan-500 hover:to-sky-600"
+                className="flex min-h-14 items-center justify-center rounded-2xl bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] px-6 text-base font-black text-white shadow-[0_14px_28px_rgba(0,193,255,0.25)] transition hover:brightness-95"
               >
                 무료로 시작하기
               </a>
@@ -255,7 +255,7 @@ export default async function Page() {
             <div className="overflow-hidden rounded-[24px] bg-[#fbfdfd] p-4 sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-xs font-bold text-[#28b9dc]">오늘의 예약</div>
+                  <div className="text-xs font-bold text-[#00C1FF]">오늘의 예약</div>
                   <div className="mt-1 text-2xl font-black tracking-[-0.04em]">오늘 예약 3건</div>
                 </div>
                 <div className="rounded-full bg-[#e7faf5] px-3 py-1.5 text-xs font-black text-[#168b72]">
@@ -265,7 +265,7 @@ export default async function Page() {
 
               <div className="mt-5 grid gap-3">
                 <div className="flex items-center gap-3 rounded-2xl border border-[#e5f3f6] bg-white p-3 shadow-sm">
-                  <div className="flex h-14 w-[68px] shrink-0 items-center justify-center rounded-xl bg-[#28b9dc] text-sm font-black text-white">
+                  <div className="flex h-14 w-[68px] shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] text-sm font-black text-white">
                     11:00
                   </div>
                   <div className="min-w-0 flex-1">
@@ -300,7 +300,7 @@ export default async function Page() {
 
         <section className="mx-auto max-w-3xl py-14 sm:py-20">
           <div className="mb-7 px-1 text-center">
-            <div className="text-sm font-black text-[#28b9dc]">링크 하나가 만들어지는 과정</div>
+            <div className="text-sm font-black text-[#00C1FF]">링크 하나가 만들어지는 과정</div>
             <h2 className="mt-2 text-3xl font-black leading-tight tracking-[-0.045em] sm:text-4xl">
               설정하고, 공유하면
               <br />
@@ -336,7 +336,7 @@ export default async function Page() {
 
         <section className="mx-auto max-w-3xl pb-14 sm:pb-20">
           <div className="mb-7 px-1">
-            <div className="text-sm font-black text-[#28b9dc]">TimeOpen으로 할 수 있는 일</div>
+            <div className="text-sm font-black text-[#00C1FF]">TimeOpen으로 할 수 있는 일</div>
             <h2 className="mt-2 text-3xl font-black leading-tight tracking-[-0.045em] sm:text-4xl">
               고객의 예약부터
               <br />
@@ -364,7 +364,7 @@ export default async function Page() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[32px] bg-[#28b9dc] px-6 py-10 text-center text-white shadow-[0_20px_50px_rgba(40,185,220,0.22)] sm:px-10 sm:py-14">
+        <section className="overflow-hidden rounded-[32px] bg-gradient-to-r from-[#00D6F7] to-[#00C1FF] px-6 py-10 text-center text-white shadow-[0_20px_50px_rgba(0,193,255,0.22)] sm:px-10 sm:py-14">
           <div className="text-sm font-bold text-white/80">지금 바로 시작해보세요</div>
           <h2 className="mt-2 text-3xl font-black leading-tight tracking-[-0.045em]">
             고객이 기다리지 않는

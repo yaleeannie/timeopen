@@ -27,7 +27,7 @@ export default async function AvailabilitySettingsPage() {
   return (
     <Shell>
       <header className="mb-6">
-        <a href="/owner" className="mb-3 inline-flex min-h-11 items-center text-sm font-bold text-[#00a7df]">← 대시보드</a>
+        <a href="/owner" className="brand-text mb-3 inline-flex min-h-11 items-center text-sm font-bold">← 대시보드</a>
         <h1 className="text-3xl font-black tracking-[-0.04em]">영업시간 관리</h1>
         <p className="mt-1 text-sm leading-5 text-gray-500">
           요일별로 영업시간과 쉬는 시간을 따로 설정할 수 있어요.

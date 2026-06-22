@@ -42,7 +42,7 @@ export default async function OnboardingPage() {
           </a>
           <a
             href="/login"
-            className="mt-2 flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-bold text-[#008fbe]"
+            className="brand-text mt-2 flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-bold"
           >
             로그인으로 돌아가기
           </a>

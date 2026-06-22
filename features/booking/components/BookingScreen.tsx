@@ -389,7 +389,7 @@ export default function BookingScreen({ handle }: Props) {
                     "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black",
                     active || complete
                       ? "brand-gradient text-white"
-                      : "bg-[#eef8fa] text-[#7aa8b3]",
+                      : "brand-soft",
                   ].join(" ")}
                 >
                   {index + 1}
@@ -397,7 +397,7 @@ export default function BookingScreen({ handle }: Props) {
                 <div
                   className={[
                     "truncate text-xs font-bold",
-                    active ? "text-[#159fbe]" : "text-gray-400",
+                    active ? "brand-text" : "text-gray-400",
                   ].join(" ")}
                 >
                   {item === "service"
@@ -443,7 +443,7 @@ export default function BookingScreen({ handle }: Props) {
                     "relative block min-h-[104px] w-full shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none",
                     active
                       ? "brand-gradient border-transparent text-white"
-                      : "border-[#dceef2] bg-white text-gray-900 hover:border-[#8ee8f5] hover:bg-[#ecfeff]",
+                      : "brand-outline text-gray-900",
                   ].join(" ")}
                 >
                   <div className="text-base font-semibold leading-tight">
@@ -486,7 +486,7 @@ export default function BookingScreen({ handle }: Props) {
             <div
               className="text-right text-[11px] font-bold"
               style={{
-                color: "#20aeca",
+                color: "#00c1ff",
                 opacity: shouldShowEarliestHint ? 1 : 0,
                 transition: "opacity 160ms ease",
                 pointerEvents: "none",
@@ -497,7 +497,7 @@ export default function BookingScreen({ handle }: Props) {
             </div>
           </div>
 
-          <div className="booking-time-tone mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:border-[#dceef2] [&_button]:px-4 [&_button]:font-bold">
+          <div className="booking-time-tone mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:border-[#00c1ff]/40 [&_button]:px-4 [&_button]:font-bold">
             {!serviceId || !dateISO ? (
               <TimePicker
                 times={[]}
@@ -506,7 +506,7 @@ export default function BookingScreen({ handle }: Props) {
                 onChange={() => {}}
               />
             ) : isTimesLoading || !organizationId || !weeklySchedule ? (
-              <div className="rounded-2xl border border-[#dceef2] bg-[#f8fcfd] px-4 py-6 text-sm font-medium text-[#5594a3]">
+              <div className="brand-soft rounded-2xl border border-[#00c1ff]/30 px-4 py-6 text-sm font-medium">
                 {t("loadingTimes")}
               </div>
             ) : timesError ? (
@@ -599,14 +599,14 @@ export default function BookingScreen({ handle }: Props) {
           <div className="mb-4 text-base font-black">{t("visitorGuide")}</div>
           {orgLocation ? (
             <div className="mb-4">
-              <div className="text-sm font-bold text-[#20aeca]">{t("location")}</div>
+              <div className="brand-text text-sm font-bold">{t("location")}</div>
               <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">{orgLocation}</div>
             </div>
           ) : null}
 
           {orgNotice ? (
             <div>
-              <div className="text-sm font-bold text-[#20aeca]">{t("bookingNotice")}</div>
+              <div className="brand-text text-sm font-bold">{t("bookingNotice")}</div>
               <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">{orgNotice}</div>
             </div>
           ) : null}
@@ -621,7 +621,7 @@ export default function BookingScreen({ handle }: Props) {
             <button
               type="button"
               onClick={() => setStep(step === "customer" ? "datetime" : "service")}
-              className="min-h-12 shrink-0 rounded-2xl border border-[#dceef2] bg-white px-4 text-sm font-black text-[#397582] transition hover:bg-[#f3fbfc] focus:outline-none"
+              className="brand-outline min-h-12 shrink-0 rounded-2xl px-4 text-sm font-black transition"
             >
               {t("previous")}
             </button>
@@ -665,8 +665,8 @@ export default function BookingScreen({ handle }: Props) {
 
         .booking-date-tone button:hover,
         .booking-time-tone button:hover {
-          border-color: #8ee8f5 !important;
-          background: #ecfeff !important;
+          border-color: rgba(0, 193, 255, 0.55) !important;
+          background: rgba(0, 214, 247, 0.1) !important;
         }
 
         .booking-date-tone button:focus-visible,

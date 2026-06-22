@@ -38,7 +38,7 @@ function PublicConfirmedPageContent(props: Props) {
             <div className="brand-gradient mx-auto flex h-16 w-16 items-center justify-center rounded-full text-3xl font-black text-white shadow-[0_12px_26px_rgba(0,193,255,0.24)]">
               ✓
             </div>
-            <div className="mt-4 text-sm font-bold text-[#00a7df]">{t("bookingComplete")}</div>
+            <div className="brand-text mt-4 text-sm font-bold">{t("bookingComplete")}</div>
             <h1 className="mt-1 text-3xl font-black tracking-[-0.04em]">{t("bookingConfirmed")}</h1>
             <p className="mt-2 text-sm leading-5 text-gray-500">{t("checkBookingInfo")}</p>
           </header>
@@ -46,13 +46,13 @@ function PublicConfirmedPageContent(props: Props) {
           <section className="brand-gradient rounded-[24px] p-5 text-white shadow-[0_14px_30px_rgba(0,193,255,0.22)]">
             <div className="grid grid-cols-2 gap-4">
               <div className="min-w-0">
-                <div className="text-sm font-bold text-cyan-50">{t("reservationDate")}</div>
+                <div className="text-sm font-bold text-white/80">{t("reservationDate")}</div>
                 <div className="mt-1 break-words text-lg font-black [overflow-wrap:anywhere]">
                   {props.dateText}
                 </div>
               </div>
               <div className="min-w-0 text-right">
-                <div className="text-sm font-bold text-cyan-50">{t("reservationTime")}</div>
+                <div className="text-sm font-bold text-white/80">{t("reservationTime")}</div>
                 <div className="mt-1 break-words text-lg font-black [overflow-wrap:anywhere]">
                   {props.timeText}
                 </div>
@@ -60,7 +60,7 @@ function PublicConfirmedPageContent(props: Props) {
             </div>
             <div className="my-4 h-px bg-white/20" />
             <div>
-              <div className="text-sm font-bold text-cyan-50">{t("service")}</div>
+              <div className="text-sm font-bold text-white/80">{t("service")}</div>
               <div className="mt-1 break-words text-xl font-black [overflow-wrap:anywhere]">
                 {getLocalizedServiceName(
                   props.serviceName,
@@ -92,13 +92,13 @@ function PublicConfirmedPageContent(props: Props) {
           <section className="glass-card mt-4 rounded-[24px] p-4">
             <div className="mb-4 text-base font-black">{t("visitorGuide")}</div>
             <div className="mb-4">
-              <div className="text-sm font-bold text-[#00a7df]">{t("location")}</div>
+              <div className="brand-text text-sm font-bold">{t("location")}</div>
               <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">
                 {props.locationText || "-"}
               </div>
             </div>
             <div>
-              <div className="text-sm font-bold text-[#00a7df]">{t("bookingNotice")}</div>
+              <div className="brand-text text-sm font-bold">{t("bookingNotice")}</div>
               <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">
                 {props.noticeText || "-"}
               </div>

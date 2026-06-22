@@ -188,7 +188,7 @@ export default function ProfileEditor({
           ※ 변경 시 기존 링크는 더 이상 사용되지 않을 수 있어요
         </div>
 
-        <div className="mt-2 text-sm font-bold text-[#008fbe] [overflow-wrap:anywhere]">
+        <div className="brand-text mt-2 text-sm font-bold [overflow-wrap:anywhere]">
           {handle ? getBookingUrl(handle) : "-"}
         </div>
 
@@ -206,7 +206,7 @@ export default function ProfileEditor({
             type="button"
             onClick={onCopyLink}
             disabled={!handle}
-            className="min-h-11 rounded-xl border border-[#dceef2] bg-white px-3 py-2.5 text-sm font-black text-[#5594a3] disabled:opacity-50"
+            className="brand-outline min-h-11 rounded-xl px-3 py-2.5 text-sm font-black disabled:opacity-50"
           >
             링크 복사
           </button>

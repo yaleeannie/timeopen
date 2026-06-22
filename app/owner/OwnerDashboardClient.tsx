@@ -49,12 +49,12 @@ function statusLabel(status: string) {
 
 function statusStyle(status: string) {
   if (status === "confirmed") {
-    return "border-cyan-200/70 bg-cyan-50/75 text-[#007fa8]";
+    return "brand-chip";
   }
   if (status === "cancelled" || status === "canceled") {
     return "border-slate-200/70 bg-slate-100/70 text-slate-500";
   }
-  return "border-cyan-100/70 bg-white/55 text-slate-600";
+  return "border-[#00c1ff]/25 bg-white/55 text-slate-600";
 }
 
 function smsStatusLabel(status: SmsDisplayStatus) {
@@ -66,7 +66,7 @@ function smsStatusLabel(status: SmsDisplayStatus) {
 
 function smsStatusStyle(status: SmsDisplayStatus) {
   if (status === "success") {
-    return "border-cyan-200/70 bg-cyan-50/75 text-[#007fa8]";
+    return "brand-chip";
   }
   if (status === "partial") {
     return "border-amber-200/70 bg-amber-50/75 text-amber-700";
@@ -89,7 +89,7 @@ function QuickLink({
       href={href}
       className="glass-card group flex min-h-20 min-w-0 flex-col justify-between rounded-[20px] p-3 transition hover:-translate-y-0.5 hover:bg-white/80"
     >
-      <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/80 bg-gradient-to-br from-white/90 to-[#dff9ff] text-sm font-black text-[#008fbe] shadow-sm transition group-hover:scale-105">
+      <span className="brand-selected flex h-8 w-8 items-center justify-center rounded-xl text-sm font-black transition group-hover:scale-105">
         {icon}
       </span>
       <span className="truncate text-xs font-black text-slate-700">{label}</span>
@@ -160,7 +160,7 @@ export default function OwnerDashboardClient({
         <div className="px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7">
           <header className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-sm font-black text-[#008fbe]">{greeting}</div>
+              <div className="brand-text text-sm font-black">{greeting}</div>
               <h1 className="mt-1 truncate text-2xl font-black tracking-[-0.035em] text-slate-950">
                 {storeName} 사장님
               </h1>
@@ -208,7 +208,7 @@ export default function OwnerDashboardClient({
           <section className="glass-card mt-2.5 rounded-[20px] px-3.5 py-3">
             <div className="flex min-w-0 items-center gap-3">
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-black text-[#008fbe]">예약 링크</div>
+                <div className="brand-text text-[11px] font-black">예약 링크</div>
                 <div className="mt-0.5 truncate text-xs font-bold text-slate-500">
                   {canLink ? bookingUrl : "예약 링크 설정이 필요해요"}
                 </div>
@@ -257,7 +257,7 @@ export default function OwnerDashboardClient({
               </div>
               <a
                 href="/reservations"
-                className="rounded-full border border-white/70 bg-white/40 px-3 py-1.5 text-xs font-black text-[#168ca8] backdrop-blur-md"
+                className="brand-outline rounded-full px-3 py-1.5 text-xs font-black backdrop-blur-md"
               >
                 전체 보기
               </a>
@@ -281,9 +281,9 @@ export default function OwnerDashboardClient({
                     onClick={() => setSelectedDate(date.iso)}
                     className={`flex min-h-[72px] min-w-0 flex-col items-center justify-center rounded-[18px] border backdrop-blur-xl transition ${
                       selected
-                        ? "brand-gradient border-white/70 text-white shadow-[0_12px_28px_rgba(0,193,255,0.22)]"
+                        ? "brand-selected border-white/70"
                         : today
-                          ? "border-cyan-100/80 bg-white/65 text-slate-800 shadow-[0_8px_22px_rgba(72,128,145,0.07)]"
+                          ? "brand-border bg-white/65 text-slate-800 shadow-[0_8px_22px_rgba(72,128,145,0.07)]"
                           : "border-white/70 bg-white/42 text-slate-600 shadow-[0_8px_22px_rgba(72,128,145,0.05)]"
                     }`}
                   >
@@ -293,7 +293,7 @@ export default function OwnerDashboardClient({
                     <span className="mt-1 text-base font-black">{date.day}</span>
                     <span
                       className={`mt-1 min-h-1.5 text-[9px] font-black ${
-                        selected ? "text-white" : "text-[#18a8c3]"
+                        selected ? "text-white" : "brand-text"
                       }`}
                     >
                       {count > 0 ? `${count}건` : ""}
@@ -318,7 +318,7 @@ export default function OwnerDashboardClient({
 
             {selectedReservations.length === 0 ? (
               <div className="rounded-[24px] border border-white/75 bg-white/45 px-5 py-10 text-center shadow-[0_14px_40px_rgba(70,105,125,0.08)] backdrop-blur-xl">
-                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-white/80 bg-white/55 text-xl text-[#00a7df] shadow-sm">
+                <div className="brand-soft mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-white/80 text-xl shadow-sm">
                   ◷
                 </div>
                 <div className="mt-3 text-sm font-black text-slate-800">
@@ -329,7 +329,7 @@ export default function OwnerDashboardClient({
                 </div>
               </div>
             ) : (
-              <div className="relative space-y-2.5 before:absolute before:bottom-5 before:left-[35px] before:top-5 before:w-px before:bg-gradient-to-b before:from-cyan-300/20 before:via-[#00c1ff]/60 before:to-sky-300/20">
+              <div className="relative space-y-2.5 before:absolute before:bottom-5 before:left-[35px] before:top-5 before:w-px before:bg-gradient-to-b before:from-[#00d6f7]/15 before:via-[#00c1ff]/60 before:to-[#00c1ff]/15">
                 {selectedReservations.map((reservation) => (
                   <a
                     key={reservation.id}
@@ -337,7 +337,7 @@ export default function OwnerDashboardClient({
                     className="relative grid min-w-0 grid-cols-[70px_1fr] gap-2"
                   >
                     <div className="relative z-10 pt-4 text-center">
-                      <div className="inline-flex min-h-8 items-center rounded-full border border-white/80 bg-white/60 px-2 text-xs font-black text-[#008fbe] shadow-sm backdrop-blur-xl">
+                      <div className="brand-outline inline-flex min-h-8 items-center rounded-full px-2 text-xs font-black shadow-sm backdrop-blur-xl">
                         {reservation.start}
                       </div>
                     </div>

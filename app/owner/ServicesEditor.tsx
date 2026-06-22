@@ -274,7 +274,7 @@ export default function ServicesEditor({ organizationId }: Props) {
         <button
           type="button"
           onClick={addService}
-          className="min-h-11 w-full rounded-xl bg-white px-4 py-2.5 text-sm font-black text-[#008fbe] shadow-sm"
+          className="brand-outline min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-black shadow-sm"
         >
           서비스 저장
         </button>
@@ -304,7 +304,7 @@ export default function ServicesEditor({ organizationId }: Props) {
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="서비스명"
-                      className="min-h-11 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+                      className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
                     />
                   </div>
 
@@ -315,7 +315,7 @@ export default function ServicesEditor({ organizationId }: Props) {
                       onChange={(e) => setEditDurationMin(e.target.value)}
                       placeholder="소요시간(분)"
                       inputMode="numeric"
-                      className="min-h-11 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+                      className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
                     />
                   </div>
 
@@ -326,7 +326,7 @@ export default function ServicesEditor({ organizationId }: Props) {
                       onChange={(e) => setEditPrice(e.target.value)}
                       placeholder="가격"
                       inputMode="numeric"
-                      className="min-h-11 w-full min-w-0 rounded-xl border border-gray-200 px-3 py-2.5 text-base outline-none focus:border-[#55d4f0]"
+                      className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
                     />
                   </div>
 
@@ -359,7 +359,7 @@ export default function ServicesEditor({ organizationId }: Props) {
                     <div className="mt-1 text-sm text-gray-500">
                       {row.duration_min}분 {row.price != null ? `· ${row.price.toLocaleString()}원` : ""}
                     </div>
-                    <div className={`mt-1 text-sm font-bold ${row.active ? "text-[#008fbe]" : "text-gray-400"}`}>
+                    <div className={`mt-1 text-sm font-bold ${row.active ? "brand-text" : "text-gray-400"}`}>
                       {row.active ? "활성" : "비활성"}
                     </div>
                   </div>
@@ -368,7 +368,7 @@ export default function ServicesEditor({ organizationId }: Props) {
                     <button
                       type="button"
                       onClick={() => startEdit(row)}
-                      className="min-h-11 rounded-xl border border-gray-200 bg-white px-2 py-2 text-sm font-bold text-gray-600"
+                      className="brand-outline min-h-11 rounded-xl px-2 py-2 text-sm font-bold"
                     >
                       수정
                     </button>
@@ -376,7 +376,7 @@ export default function ServicesEditor({ organizationId }: Props) {
                     <button
                       type="button"
                       onClick={() => toggleActive(row)}
-                      className="min-h-11 rounded-xl border border-gray-200 bg-white px-2 py-2 text-sm font-bold text-gray-600"
+                      className="brand-outline min-h-11 rounded-xl px-2 py-2 text-sm font-bold"
                     >
                       {row.active ? "비활성화" : "활성화"}
                     </button>

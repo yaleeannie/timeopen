@@ -287,7 +287,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
                     className={`min-h-9 min-w-9 rounded-full border px-2.5 text-sm font-black transition ${
                       selected
                         ? "brand-gradient border-transparent text-white"
-                        : "border-[#dcecef] bg-white text-gray-500 hover:border-[#9bdde7]"
+                        : "brand-outline text-gray-500"
                     }`}
                   >
                     {label}
@@ -366,7 +366,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
               <div className="flex items-center justify-between gap-3 px-4 py-3.5">
                 <div>
                   <div className="text-lg font-black text-gray-900">{label}요일</div>
-                  <div className={`mt-0.5 text-xs font-bold ${d.open ? "text-[#159b83]" : "text-gray-400"}`}>
+                  <div className={`mt-0.5 text-xs font-bold ${d.open ? "brand-text" : "text-gray-400"}`}>
                     {d.open
                       ? `${d.work_start} ~ ${d.work_end}${d.break_start && d.break_end ? ` · 휴식 ${d.break_start} ~ ${d.break_end}` : ""}`
                       : "쉬는 날"}
@@ -383,7 +383,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
                   }}
                   className={`flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-3 text-xs font-black transition ${
                     d.open
-                      ? "border-cyan-200/70 bg-cyan-50/75 text-[#007fa8]"
+                      ? "brand-chip"
                       : "border-gray-200 bg-gray-50 text-gray-500"
                   }`}
                 >
@@ -431,7 +431,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
         <div
           className={`rounded-xl border px-4 py-3 text-sm font-semibold ${
             msg.includes("저장") || msg.includes("적용")
-              ? "border-cyan-200 bg-cyan-50 text-[#007fa8]"
+              ? "brand-chip"
               : "border-red-200 bg-red-50 text-red-700"
           }`}
         >

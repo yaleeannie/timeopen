@@ -19,7 +19,7 @@ function PublicBookingPageContent({ handle }: { handle: string }) {
           </div>
           <header className="mb-6 text-center">
             <div className="brand-gradient mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] text-2xl font-black text-white shadow-[0_12px_26px_rgba(0,193,255,0.22)]">T</div>
-            <div className="mt-4 text-sm font-bold text-[#00a7df]">TimeOpen</div>
+            <div className="brand-text mt-4 text-sm font-bold">TimeOpen</div>
             <h1 className="mt-1 text-3xl font-black tracking-[-0.04em]">{t("book")}</h1>
             <p className="mt-2 text-sm leading-5 text-gray-500">{t("bookingSubtitle")}</p>
           </header>

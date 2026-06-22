@@ -17,10 +17,10 @@ function PublicCancelPageContent({ handle }: { handle: string }) {
           <div className="mb-3 flex justify-end">
             <BookingLanguageSelect />
           </div>
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#eef9fb] text-3xl font-black text-[#4d9caf]">
+          <div className="brand-soft mx-auto flex h-16 w-16 items-center justify-center rounded-full text-3xl font-black">
             ···
           </div>
-          <div className="mt-5 text-sm font-bold text-[#00a7df]">TimeOpen</div>
+          <div className="brand-text mt-5 text-sm font-bold">TimeOpen</div>
           <h1 className="mt-1 text-3xl font-black tracking-[-0.04em]">{t("cancelComingSoon")}</h1>
           <p className="mt-3 text-sm leading-6 text-gray-500">{t("cancelUnavailable")}</p>
 
