@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-type Period = "" | "am" | "pm";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
+import { createPortal } from "react-dom";
 
 type TimeSelectProps = {
   value: string;
@@ -14,57 +21,29 @@ type TimeSelectProps = {
   "aria-label"?: string;
 };
 
-const HOURS = Array.from({ length: 12 }, (_, index) => String(index + 1));
-const MINUTES = ["00", "10", "20", "30", "40", "50"];
+type TimeOption = {
+  value: string;
+  label: string;
+};
 
-function parseTime(value: string) {
+const TIME_OPTIONS: TimeOption[] = Array.from({ length: 24 * 6 }, (_, index) => {
+  const hour = Math.floor(index / 6);
+  const minute = (index % 6) * 10;
+  const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+
+  return { value, label: formatTime(value) };
+});
+
+function formatTime(value: string) {
   const match = /^(\d{2}):(\d{2})$/.exec(value);
-  if (!match) return { period: "" as Period, hour: "", minute: "" };
+  if (!match) return "";
 
-  const hour24 = Number(match[1]);
-  const minute = match[2];
-  if (hour24 > 23) return { period: "" as Period, hour: "", minute: "" };
+  const hour = Number(match[1]);
+  if (hour > 23) return "";
 
-  return {
-    period: (hour24 < 12 ? "am" : "pm") as Period,
-    hour: String(hour24 % 12 || 12),
-    minute: MINUTES.includes(minute) ? minute : "",
-  };
-}
-
-function toTimeValue(period: Period, hour: string, minute: string) {
-  if (!period || !hour || !minute) return null;
-
-  const hour12 = Number(hour);
-  const hour24 =
-    period === "am"
-      ? hour12 === 12
-        ? 0
-        : hour12
-      : hour12 === 12
-        ? 12
-        : hour12 + 12;
-
-  return `${String(hour24).padStart(2, "0")}:${minute}`;
-}
-
-function SelectChevron() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      fill="none"
-      className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-[#21aeca]"
-    >
-      <path
-        d="m6 8 4 4 4-4"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  const period = hour < 12 ? "오전" : "오후";
+  const displayHour = hour % 12 || 12;
+  return `${period} ${displayHour}:${match[2]}`;
 }
 
 export default function TimeSelect({
@@ -76,105 +55,232 @@ export default function TimeSelect({
   className = "",
   "aria-label": ariaLabel = "시간 선택",
 }: TimeSelectProps) {
-  const parsed = parseTime(value);
-  const [period, setPeriod] = useState<Period>(parsed.period);
-  const [hour, setHour] = useState(parsed.hour);
-  const [minute, setMinute] = useState(parsed.minute);
+  const listboxId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [panelStyle, setPanelStyle] = useState<CSSProperties>();
+  const selectedIndex = TIME_OPTIONS.findIndex((option) => option.value === value);
+  const [activeIndex, setActiveIndex] = useState(Math.max(selectedIndex, 0));
+  const displayValue = formatTime(value);
+  const panelReady = Boolean(panelStyle);
 
-  useEffect(() => {
-    const next = parseTime(value);
-    setPeriod(next.period);
-    setHour(next.hour);
-    setMinute(next.minute);
-  }, [value]);
+  function updatePosition() {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
 
-  function update(nextPeriod: Period, nextHour: string, nextMinute: string) {
-    setPeriod(nextPeriod);
-    setHour(nextHour);
-    setMinute(nextMinute);
+    const rect = trigger.getBoundingClientRect();
+    const panelHeight = 240;
+    const gap = 6;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openAbove = spaceBelow < panelHeight + gap && rect.top > spaceBelow;
 
-    const nextValue = toTimeValue(nextPeriod, nextHour, nextMinute);
-    if (nextValue) onChange(nextValue);
+    setPanelStyle({
+      left: rect.left,
+      top: openAbove ? Math.max(8, rect.top - panelHeight - gap) : rect.bottom + gap,
+      width: rect.width,
+    });
   }
 
-  function changePeriod(nextPeriod: Period) {
-    if (!nextPeriod) {
-      setPeriod("");
-      setHour("");
-      setMinute("");
-      onChange("");
+  function close() {
+    setOpen(false);
+    setPanelStyle(undefined);
+  }
+
+  function selectTime(nextValue: string) {
+    onChange(nextValue);
+    close();
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }
+
+  function toggle() {
+    if (disabled) return;
+
+    if (open) {
+      close();
       return;
     }
 
-    update(nextPeriod, hour, minute);
+    setActiveIndex(Math.max(selectedIndex, 0));
+    setOpen(true);
   }
 
-  const selectClass =
-    "min-h-12 w-full appearance-none rounded-xl border border-[#dcecef] bg-white py-3 pl-2.5 pr-7 text-center text-sm font-black text-gray-900 outline-none transition focus:border-[#4fcbe6] focus:ring-3 focus:ring-cyan-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400";
+  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (disabled) return;
+
+    if (event.key === "Escape") {
+      close();
+      return;
+    }
+
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!open) {
+        setOpen(true);
+        setActiveIndex(Math.max(selectedIndex, 0));
+        return;
+      }
+
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      setActiveIndex((current) =>
+        Math.min(TIME_OPTIONS.length - 1, Math.max(0, current + direction))
+      );
+      return;
+    }
+
+    if ((event.key === "Enter" || event.key === " ") && open) {
+      event.preventDefault();
+      selectTime(TIME_OPTIONS[activeIndex].value);
+    }
+  }
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePosition();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node;
+      if (
+        !triggerRef.current?.contains(target) &&
+        !panelRef.current?.contains(target)
+      ) {
+        close();
+      }
+    }
+
+    function handleViewportChange() {
+      updatePosition();
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const activeOption = panelRef.current?.querySelector<HTMLElement>(
+      `[data-option-index="${activeIndex}"]`
+    );
+    activeOption?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex, open, panelReady]);
+
+  const dropdown = open && panelStyle
+    ? createPortal(
+        <div
+          ref={panelRef}
+          id={listboxId}
+          role="listbox"
+          aria-label={`${ariaLabel} 목록`}
+          style={panelStyle}
+          className="fixed z-[100] max-h-60 overflow-y-auto overscroll-contain rounded-2xl border border-[#dcecef] bg-white p-1.5 shadow-[0_16px_40px_rgba(61,111,123,0.18)]"
+        >
+          {allowEmpty ? (
+            <button
+              type="button"
+              role="option"
+              aria-selected={!value}
+              tabIndex={-1}
+              onClick={() => selectTime("")}
+              className={`flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm font-bold transition ${
+                !value
+                  ? "bg-[#e7f9f7] text-[#118873]"
+                  : "text-gray-500 hover:bg-[#effaf8] focus:bg-[#effaf8]"
+              }`}
+            >
+              선택 안 함
+            </button>
+          ) : null}
+
+          {TIME_OPTIONS.map((option, index) => {
+            const selected = option.value === value;
+            const active = index === activeIndex;
+
+            return (
+              <button
+                key={option.value}
+                id={`${listboxId}-option-${index}`}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                tabIndex={-1}
+                data-option-index={index}
+                onMouseEnter={() => setActiveIndex(index)}
+                onClick={() => selectTime(option.value)}
+                className={`flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-left text-sm font-bold transition ${
+                  selected
+                    ? "bg-[#dff7f4] text-[#0f8b75]"
+                    : active
+                      ? "bg-[#effaf8] text-gray-900"
+                      : "text-gray-700 hover:bg-[#effaf8] focus:bg-[#effaf8]"
+                }`}
+              >
+                <span>{option.label}</span>
+                {selected ? (
+                  <span aria-hidden="true" className="text-base text-[#1aa88c]">
+                    ✓
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>,
+        document.body
+      )
+    : null;
 
   return (
-    <div
-      role="group"
-      aria-label={ariaLabel}
-      title={!value ? placeholder : undefined}
-      className={`grid min-w-0 grid-cols-[1.15fr_1fr_1fr] gap-1.5 ${className}`}
-    >
-      <div className="relative min-w-0">
-        <select
-          value={period}
-          onChange={(event) => changePeriod(event.target.value as Period)}
-          disabled={disabled}
-          aria-label={`${ariaLabel} 오전 오후`}
-          className={selectClass}
+    <div className={`min-w-0 ${className}`}>
+      <button
+        ref={triggerRef}
+        type="button"
+        role="combobox"
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-controls={listboxId}
+        aria-expanded={open}
+        aria-activedescendant={open ? `${listboxId}-option-${activeIndex}` : undefined}
+        disabled={disabled}
+        onClick={toggle}
+        onKeyDown={handleKeyDown}
+        className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 text-left text-sm font-bold outline-none transition ${
+          open
+            ? "border-[#4fcbe6] ring-4 ring-cyan-50"
+            : "border-[#dcecef] hover:border-[#9bdde7]"
+        } disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400`}
+      >
+        <span className={displayValue ? "text-gray-900" : "text-gray-400"}>
+          {displayValue || placeholder}
+        </span>
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          fill="none"
+          className={`h-4 w-4 shrink-0 text-[#21aeca] transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
         >
-          <option value="" disabled={!allowEmpty}>
-            {allowEmpty ? "없음" : "구분"}
-          </option>
-          <option value="am">오전</option>
-          <option value="pm">오후</option>
-        </select>
-        <SelectChevron />
-      </div>
-
-      <div className="relative min-w-0">
-        <select
-          value={hour}
-          onChange={(event) => update(period, event.target.value, minute)}
-          disabled={disabled}
-          aria-label={`${ariaLabel} 시`}
-          className={selectClass}
-        >
-          <option value="" disabled>
-            시
-          </option>
-          {HOURS.map((option) => (
-            <option key={option} value={option}>
-              {option}시
-            </option>
-          ))}
-        </select>
-        <SelectChevron />
-      </div>
-
-      <div className="relative min-w-0">
-        <select
-          value={minute}
-          onChange={(event) => update(period, hour, event.target.value)}
-          disabled={disabled}
-          aria-label={`${ariaLabel} 분`}
-          className={selectClass}
-        >
-          <option value="" disabled>
-            분
-          </option>
-          {MINUTES.map((option) => (
-            <option key={option} value={option}>
-              {option}분
-            </option>
-          ))}
-        </select>
-        <SelectChevron />
-      </div>
+          <path
+            d="m6 8 4 4 4-4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      {dropdown}
     </div>
   );
 }
