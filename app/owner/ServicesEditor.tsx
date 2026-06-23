@@ -23,9 +23,12 @@ type ServiceRow = {
   name_translations: ServiceNameTranslations;
   description: string | null;
   duration_min: number;
+  cleanup_min: number;
   price: number | null;
   active: boolean;
 };
+
+const CLEANUP_OPTIONS = [0, 5, 10, 15, 20, 30] as const;
 
 function TranslationFields({
   value,
@@ -81,6 +84,7 @@ export default function ServicesEditor({ organizationId }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [durationMin, setDurationMin] = useState("");
+  const [cleanupMin, setCleanupMin] = useState("0");
   const [price, setPrice] = useState("");
   const [nameTranslations, setNameTranslations] = useState<ServiceNameTranslations>({});
   const [msg, setMsg] = useState("");
@@ -89,13 +93,14 @@ export default function ServicesEditor({ organizationId }: Props) {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editDurationMin, setEditDurationMin] = useState("");
+  const [editCleanupMin, setEditCleanupMin] = useState("0");
   const [editPrice, setEditPrice] = useState("");
   const [editNameTranslations, setEditNameTranslations] = useState<ServiceNameTranslations>({});
 
   async function load() {
     const { data, error } = await supabase
       .from("services")
-      .select("id, name, name_translations, description, duration_min, price, active")
+      .select("id, name, name_translations, description, duration_min, cleanup_min, price, active")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true });
 
@@ -115,11 +120,13 @@ export default function ServicesEditor({ organizationId }: Props) {
     setMsg("");
 
     const duration = Number(durationMin);
+    const cleanup = Number(cleanupMin);
     const priceValue = price.trim() ? Number(price) : null;
     const validation = validateServiceInput({
       name,
       description,
       durationMin: duration,
+      cleanupMin: cleanup,
       hasPrice: price.trim() !== "",
       price: priceValue,
     });
@@ -135,6 +142,7 @@ export default function ServicesEditor({ organizationId }: Props) {
       name_translations: normalizeServiceNameTranslations(nameTranslations),
       description: validation.value.description || null,
       duration_min: validation.value.durationMin,
+      cleanup_min: validation.value.cleanupMin,
       price: priceValue,
       active: true,
     });
@@ -147,6 +155,7 @@ export default function ServicesEditor({ organizationId }: Props) {
     setName("");
     setDescription("");
     setDurationMin("");
+    setCleanupMin("0");
     setPrice("");
     setNameTranslations({});
     setMsg("저장되었습니다.");
@@ -159,6 +168,7 @@ export default function ServicesEditor({ organizationId }: Props) {
     setEditDescription(row.description ?? "");
     setEditNameTranslations(normalizeServiceNameTranslations(row.name_translations));
     setEditDurationMin(String(row.duration_min));
+    setEditCleanupMin(String(row.cleanup_min ?? 0));
     setEditPrice(row.price != null ? String(row.price) : "");
     setMsg("");
   }
@@ -168,6 +178,7 @@ export default function ServicesEditor({ organizationId }: Props) {
     setEditName("");
     setEditDescription("");
     setEditDurationMin("");
+    setEditCleanupMin("0");
     setEditPrice("");
     setEditNameTranslations({});
   }
@@ -176,11 +187,13 @@ export default function ServicesEditor({ organizationId }: Props) {
     setMsg("");
 
     const duration = Number(editDurationMin);
+    const cleanup = Number(editCleanupMin);
     const priceValue = editPrice.trim() ? Number(editPrice) : null;
     const validation = validateServiceInput({
       name: editName,
       description: editDescription,
       durationMin: duration,
+      cleanupMin: cleanup,
       hasPrice: editPrice.trim() !== "",
       price: priceValue,
     });
@@ -197,6 +210,7 @@ export default function ServicesEditor({ organizationId }: Props) {
         name_translations: normalizeServiceNameTranslations(editNameTranslations),
         description: validation.value.description || null,
         duration_min: validation.value.durationMin,
+        cleanup_min: validation.value.cleanupMin,
         price: priceValue,
       })
       .eq("id", id);
@@ -297,6 +311,24 @@ export default function ServicesEditor({ organizationId }: Props) {
         </div>
 
         <div>
+          <div className="mb-1.5 text-sm font-bold text-white/90">정리시간</div>
+          <select
+            value={cleanupMin}
+            onChange={(e) => setCleanupMin(e.target.value)}
+            className="min-h-11 w-full min-w-0 rounded-xl border border-white/30 bg-white px-3 py-2.5 text-base text-gray-900 outline-none"
+          >
+            {CLEANUP_OPTIONS.map((value) => (
+              <option key={value} value={value}>
+                {value}분
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs font-bold leading-5 text-white/75">
+            시술 후 정리하거나 다음 고객을 준비하는 시간이에요.
+          </p>
+        </div>
+
+        <div>
           <div className="mb-1.5 text-sm font-bold text-white/90">가격 (원, 선택)</div>
           <input
             value={price}
@@ -383,6 +415,24 @@ export default function ServicesEditor({ organizationId }: Props) {
                   </div>
 
                   <div>
+                    <div className="mb-1.5 text-sm font-bold text-gray-700">정리시간</div>
+                    <select
+                      value={editCleanupMin}
+                      onChange={(e) => setEditCleanupMin(e.target.value)}
+                      className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
+                    >
+                      {CLEANUP_OPTIONS.map((value) => (
+                        <option key={value} value={value}>
+                          {value}분
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1.5 text-xs font-bold leading-5 text-gray-400">
+                      시술 후 정리하거나 다음 고객을 준비하는 시간이에요.
+                    </p>
+                  </div>
+
+                  <div>
                     <div className="mb-1.5 text-sm font-bold text-gray-700">가격 (원, 선택)</div>
                     <input
                       value={editPrice}
@@ -424,6 +474,11 @@ export default function ServicesEditor({ organizationId }: Props) {
                     <div className="mt-1 text-sm text-gray-500">
                       {row.duration_min}분 {row.price != null ? `· ${row.price.toLocaleString()}원` : ""}
                     </div>
+                    {row.cleanup_min > 0 ? (
+                      <div className="mt-1 text-xs font-bold text-gray-400">
+                        정리시간 {row.cleanup_min}분
+                      </div>
+                    ) : null}
                     {row.description ? (
                       <p className="mt-2 whitespace-pre-line text-sm leading-5 text-gray-500">
                         {row.description}

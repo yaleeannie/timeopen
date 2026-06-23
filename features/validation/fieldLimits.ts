@@ -5,6 +5,8 @@ export const FIELD_LIMITS = {
   serviceDescriptionMax: 120,
   serviceDurationMin: 5,
   serviceDurationMax: 480,
+  serviceCleanupMin: 0,
+  serviceCleanupMax: 120,
   servicePriceMin: 0,
   servicePriceMax: 9_999_999,
   customerNameMax: 30,
@@ -89,12 +91,14 @@ export function validateServiceInput(input: {
   name: string;
   description?: string | null;
   durationMin: number;
+  cleanupMin?: number;
   hasPrice?: boolean;
   priceRequired?: boolean;
   price?: number | null;
 }) {
   const name = input.name.trim();
   const description = (input.description ?? "").trim();
+  const cleanupMin = input.cleanupMin ?? 0;
   const price = input.price ?? null;
   const numericPrice = typeof price === "number" ? price : Number.NaN;
 
@@ -127,6 +131,18 @@ export function validateServiceInput(input: {
     };
   }
 
+  if (
+    !Number.isInteger(cleanupMin) ||
+    cleanupMin < FIELD_LIMITS.serviceCleanupMin ||
+    cleanupMin > FIELD_LIMITS.serviceCleanupMax ||
+    cleanupMin % 5 !== 0
+  ) {
+    return {
+      ok: false as const,
+      error: `정리시간은 ${FIELD_LIMITS.serviceCleanupMin}분 이상 ${FIELD_LIMITS.serviceCleanupMax}분 이하, 5분 단위로 선택해주세요.`,
+    };
+  }
+
   if (input.priceRequired && input.hasPrice === false) {
     return {
       ok: false as const,
@@ -152,6 +168,7 @@ export function validateServiceInput(input: {
       name,
       description,
       durationMin: input.durationMin,
+      cleanupMin,
       price: input.hasPrice === false ? null : numericPrice,
     },
   };

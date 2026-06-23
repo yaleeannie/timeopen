@@ -11,13 +11,15 @@ import {
   PUBLIC_BOOKING_THEMES,
   type LinkTheme,
 } from "@/features/booking/themes";
+import type { BookingSlotMode } from "@/features/booking/slotMode";
 
 type Props = {
   handle: string;
   linkTheme: LinkTheme;
+  bookingSlotMode: BookingSlotMode;
 };
 
-function PublicBookingPageContent({ handle, linkTheme }: Props) {
+function PublicBookingPageContent({ handle, linkTheme, bookingSlotMode }: Props) {
   const { locale, t } = usePublicBookingI18n();
   const theme = PUBLIC_BOOKING_THEMES[linkTheme];
 
@@ -45,17 +47,21 @@ function PublicBookingPageContent({ handle, linkTheme }: Props) {
             <p className="mt-2 text-sm leading-5 text-gray-500">{t("bookingSubtitle")}</p>
           </header>
 
-          <BookingScreen handle={handle} />
+          <BookingScreen handle={handle} bookingSlotMode={bookingSlotMode} />
         </div>
       </div>
     </main>
   );
 }
 
-export default function PublicBookingPage({ handle, linkTheme }: Props) {
+export default function PublicBookingPage({ handle, linkTheme, bookingSlotMode }: Props) {
   return (
     <PublicBookingI18nProvider>
-      <PublicBookingPageContent handle={handle} linkTheme={linkTheme} />
+      <PublicBookingPageContent
+        handle={handle}
+        linkTheme={linkTheme}
+        bookingSlotMode={bookingSlotMode}
+      />
     </PublicBookingI18nProvider>
   );
 }

@@ -12,7 +12,10 @@ import { buildDailySchedule } from "@/features/availability/buildDailySchedule";
 import { fetchExceptionForDate } from "@/features/availability/fetchExceptionForDate";
 import { fetchHolidayForDate } from "@/features/availability/fetchHolidayForDate";
 import { computeAvailableStartTimes } from "@/features/availability/computeAvailableStartTimes";
-import { SLOT_INTERVAL_MINUTES } from "@/features/availability/slotInterval";
+import {
+  getBookingSlotStepMinutes,
+  type BookingSlotMode,
+} from "@/features/booking/slotMode";
 import type { WeeklySchedule } from "@/features/availability/weeklySchedule";
 
 import { fetchBusyFromDb } from "@/features/availability/fetchBusyFromDb";
@@ -28,7 +31,7 @@ import {
   validateCustomerName,
 } from "@/features/validation/fieldLimits";
 
-type Props = { handle: string };
+type Props = { handle: string; bookingSlotMode: BookingSlotMode };
 type BookingStep = "service" | "datetime" | "customer";
 
 function hhmmToMin(v: string) {
@@ -86,7 +89,7 @@ function formatWon(price: number) {
   return `₩${wonNumberFormatter.format(price)}`;
 }
 
-export default function BookingScreen({ handle }: Props) {
+export default function BookingScreen({ handle, bookingSlotMode }: Props) {
   const { locale, t } = usePublicBookingI18n();
   const [step, setStep] = useState<BookingStep>("service");
   const [organizationId, setOrganizationId] = useState<string | null>(null);
@@ -195,7 +198,8 @@ export default function BookingScreen({ handle }: Props) {
     if (!nextService) return;
 
     const myReq = ++reqIdRef.current;
-    const key = `${organizationId}_${nextDateISO}_${nextServiceId}`;
+    const cleanupMin = Number(nextService.cleanup_min ?? 0);
+    const key = `${organizationId}_${nextDateISO}_${nextServiceId}_${bookingSlotMode}_${cleanupMin}`;
 
     setIsTimesLoading(true);
     setNoTimesForCurrent(false);
@@ -239,8 +243,12 @@ export default function BookingScreen({ handle }: Props) {
         breaks: daily.breaks,
         busy,
         durationMin: nextService.duration_min,
-        bufferMin: 0,
-        stepMin: SLOT_INTERVAL_MINUTES,
+        bufferMin: cleanupMin,
+        stepMin: getBookingSlotStepMinutes({
+          mode: bookingSlotMode,
+          durationMin: nextService.duration_min,
+          cleanupMin,
+        }),
         notBefore,
       });
 
@@ -288,7 +296,7 @@ export default function BookingScreen({ handle }: Props) {
     if (computedKeyRef.current === key) return;
 
     void recomputeTimes(dateISO, serviceId);
-  }, [organizationId, weeklySchedule, dateISO, serviceId, services]);
+  }, [bookingSlotMode, organizationId, weeklySchedule, dateISO, serviceId, services]);
 
   async function onReserve() {
     setMsg("");
@@ -320,6 +328,7 @@ export default function BookingScreen({ handle }: Props) {
     }
 
     const end = minToHhmm(hhmmToMin(time) + service.duration_min);
+    const cleanupMin = Number(service.cleanup_min ?? 0);
 
     let rid: string | null = null;
 
@@ -331,7 +340,7 @@ export default function BookingScreen({ handle }: Props) {
         start: time,
         end,
         durationMin: service.duration_min,
-        bufferMin: 0,
+        bufferMin: cleanupMin,
         customerName,
         customerPhone: normalizedPhone.e164,
       });

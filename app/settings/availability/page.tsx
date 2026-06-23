@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import AvailabilityManagementClient from "./AvailabilityManagementClient";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function AvailabilitySettingsPage() {
   const Shell = ({ children }: { children: ReactNode }) => (
@@ -24,6 +25,13 @@ export default async function AvailabilitySettingsPage() {
     redirect("/onboarding?setup=retry");
   }
 
+  const supabase = await createSupabaseServerClient();
+  const { data: organization } = await supabase
+    .from("organizations")
+    .select("booking_slot_mode")
+    .eq("id", organizationId)
+    .maybeSingle();
+
   return (
     <Shell>
       <header className="mb-6">
@@ -34,7 +42,10 @@ export default async function AvailabilitySettingsPage() {
         </p>
         <p className="mt-2 truncate text-sm text-gray-400">@{handle ?? "-"}</p>
       </header>
-      <AvailabilityManagementClient organizationId={organizationId} />
+      <AvailabilityManagementClient
+        organizationId={organizationId}
+        initialBookingSlotMode={organization?.booking_slot_mode}
+      />
       <nav className="brand-nav mt-7 grid grid-cols-4 gap-1 rounded-2xl p-2">
         <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">대시보드</a>
         <a href="/reservations" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">예약관리</a>

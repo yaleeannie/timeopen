@@ -3,15 +3,19 @@
 import { useState } from "react";
 import AvailabilitySettingsClient from "./AvailabilitySettingsClient";
 import HolidaySettingsClient from "./HolidaySettingsClient";
+import { normalizeBookingSlotMode, type BookingSlotMode } from "@/features/booking/slotMode";
 
 type Tab = "hours" | "holidays";
 
 export default function AvailabilityManagementClient({
   organizationId,
+  initialBookingSlotMode,
 }: {
   organizationId: string;
+  initialBookingSlotMode?: unknown;
 }) {
   const [tab, setTab] = useState<Tab>("hours");
+  const bookingSlotMode: BookingSlotMode = normalizeBookingSlotMode(initialBookingSlotMode);
 
   return (
     <div>
@@ -56,7 +60,10 @@ export default function AvailabilityManagementClient({
         hidden={tab !== "hours"}
         className="mt-5"
       >
-          <AvailabilitySettingsClient organizationId={organizationId} />
+          <AvailabilitySettingsClient
+            organizationId={organizationId}
+            initialBookingSlotMode={bookingSlotMode}
+          />
       </div>
       <div
         id="availability-holidays-panel"

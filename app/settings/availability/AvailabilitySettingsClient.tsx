@@ -5,6 +5,10 @@ import TimeSelect from "@/components/TimeSelect";
 import { fetchAvailabilityFromDb } from "@/features/availability/fetchAvailabilityFromDb";
 import { weeklyScheduleToFormState } from "@/features/availability/weeklyScheduleToFormState";
 import { WEEKDAYS, type AvailabilityFormState, type WeekdayKey } from "@/features/availability/types";
+import {
+  normalizeBookingSlotMode,
+  type BookingSlotMode,
+} from "@/features/booking/slotMode";
 
 /* ------------------ 기본 상태 ------------------ */
 function defaultState(): AvailabilityFormState {
@@ -122,8 +126,17 @@ function toApiRows(state: AvailabilityFormState) {
 }
 
 /* ------------------ main ------------------ */
-export default function AvailabilitySettingsClient({ organizationId }: { organizationId: string }) {
+export default function AvailabilitySettingsClient({
+  organizationId,
+  initialBookingSlotMode,
+}: {
+  organizationId: string;
+  initialBookingSlotMode?: unknown;
+}) {
   const [state, setState] = useState<AvailabilityFormState>(defaultState());
+  const [bookingSlotMode, setBookingSlotMode] = useState<BookingSlotMode>(
+    normalizeBookingSlotMode(initialBookingSlotMode)
+  );
   const [quickWeekdays, setQuickWeekdays] = useState<WeekdayKey[]>([
     "mon",
     "tue",
@@ -136,6 +149,7 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
   const [quickBreakStart, setQuickBreakStart] = useState("");
   const [quickBreakEnd, setQuickBreakEnd] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savingSlotMode, setSavingSlotMode] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -244,6 +258,36 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
     await saveState(nextState, "선택한 요일에 영업시간을 적용했습니다.");
   }
 
+  async function saveBookingSlotMode(nextMode: BookingSlotMode) {
+    const previousMode = bookingSlotMode;
+    setBookingSlotMode(nextMode);
+    setMsg(null);
+    setSavingSlotMode(true);
+
+    try {
+      const res = await fetch("/api/settings/booking-slot-mode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_slot_mode: nextMode }),
+      });
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setMsg(json?.error ?? `저장 실패 (HTTP ${res.status})`);
+        setBookingSlotMode(previousMode);
+        return;
+      }
+
+      setMsg("예약 시간 표시 방식이 저장되었습니다.");
+    } catch (e) {
+      console.error(e);
+      setMsg("네트워크 오류입니다. 잠시 후 다시 시도해주세요.");
+      setBookingSlotMode(previousMode);
+    } finally {
+      setSavingSlotMode(false);
+    }
+  }
+
   function toggleQuickWeekday(key: WeekdayKey) {
     setQuickWeekdays((current) =>
       current.includes(key)
@@ -338,6 +382,80 @@ export default function AvailabilitySettingsClient({ organizationId }: { organiz
           >
             {saving ? "적용 중..." : "선택한 요일에 일괄 적용"}
           </button>
+        </div>
+      </section>
+
+      <section className="glass-card overflow-hidden rounded-[26px] p-5">
+        <div className="brand-chip inline-flex rounded-full px-3 py-1 text-xs font-black shadow-sm">
+          예약 설정
+        </div>
+        <h2 className="mt-3 text-xl font-black tracking-[-0.03em] text-gray-950">
+          예약 시간 표시 방식
+        </h2>
+        <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
+          고객에게 예약 가능한 시간을 어떤 간격으로 보여줄지 선택해요.
+        </p>
+
+        <div className="mt-4 grid gap-3">
+          {[
+            {
+              value: "flexible" as const,
+              title: "촘촘하게 받기",
+              description:
+                "10분 단위로 예약 가능 시간을 보여줘요. 고객이 더 많은 시간 중에서 선택할 수 있어요.",
+            },
+            {
+              value: "service_duration" as const,
+              title: "딱 맞게 받기",
+              description:
+                "서비스 소요시간에 맞춰 예약 시간을 보여줘요. 시술 사이에 애매한 빈 시간이 생기는 걸 줄일 수 있어요.",
+            },
+          ].map((option) => {
+            const selected = bookingSlotMode === option.value;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                disabled={savingSlotMode}
+                onClick={() => {
+                  if (!selected) void saveBookingSlotMode(option.value);
+                }}
+                className={`rounded-2xl border p-4 text-left transition disabled:opacity-60 ${
+                  selected
+                    ? "border-[#00c1ff]/60 bg-[#00d6f7]/10 shadow-[0_12px_28px_rgba(0,193,255,0.12)]"
+                    : "border-white/70 bg-white/50 hover:border-[#00c1ff]/40 hover:bg-white/80"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-base font-black text-gray-950">
+                      {option.title}
+                    </div>
+                    <p className="mt-1 text-sm font-medium leading-5 text-gray-500">
+                      {option.description}
+                    </p>
+                  </div>
+                  <span
+                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs font-black ${
+                      selected
+                        ? "brand-gradient border-transparent text-white"
+                        : "border-gray-200 bg-white text-transparent"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    ✓
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-[#00c1ff]/20 bg-[#e7fbff]/70 p-4 text-sm font-bold leading-6 text-gray-600">
+          <div className="brand-text font-black">예: 90분 시술 기준</div>
+          <div className="mt-1">촘촘하게 받기: 12:00, 12:10, 12:20 ...</div>
+          <div>딱 맞게 받기: 12:00, 13:30, 15:00 ...</div>
         </div>
       </section>
 

@@ -45,6 +45,43 @@ test("buffer가 영업 종료를 넘어가도 duration이 영업시간 안이면
   assert.equal(result.includes("17:00"), true);
 });
 
+test("정리시간 buffer는 실제 차단 시간에 포함한다", () => {
+  const result = computeAvailableStartTimes({
+    ...baseParams,
+    workWindows: [{ start: "12:00", end: "18:00" }],
+    durationMin: 90,
+    bufferMin: 10,
+    stepMin: 100,
+  });
+
+  assert.deepEqual(result, ["12:00", "13:40", "15:20"]);
+});
+
+test("서비스 소요시간 모드는 서비스 시간 간격으로 슬롯을 생성한다", () => {
+  const result = computeAvailableStartTimes({
+    ...baseParams,
+    workWindows: [{ start: "12:00", end: "18:00" }],
+    durationMin: 90,
+    bufferMin: 0,
+    stepMin: 90,
+  });
+
+  assert.deepEqual(result, ["12:00", "13:30", "15:00", "16:30"]);
+});
+
+test("서비스 소요시간 모드에서도 기존 예약과 겹치면 제외한다", () => {
+  const result = computeAvailableStartTimes({
+    ...baseParams,
+    workWindows: [{ start: "12:00", end: "18:00" }],
+    busy: [{ start: "13:30", end: "15:00" }],
+    durationMin: 90,
+    bufferMin: 0,
+    stepMin: 90,
+  });
+
+  assert.deepEqual(result, ["12:00", "15:00", "16:30"]);
+});
+
 test("휴게시간과 겹치는 슬롯을 제외한다", () => {
   const result = computeAvailableStartTimes({
     ...baseParams,

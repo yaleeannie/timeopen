@@ -57,6 +57,45 @@ test("validates service duration and price bounds", () => {
   );
 });
 
+test("validates service cleanup time bounds and 5-minute steps", () => {
+  assert.equal(
+    validateServiceInput({
+      name: "젤네일",
+      durationMin: 90,
+      cleanupMin: 10,
+      price: 50000,
+    }).ok,
+    true
+  );
+  assert.equal(
+    validateServiceInput({
+      name: "젤네일",
+      durationMin: 90,
+      cleanupMin: -5,
+      price: 50000,
+    }).ok,
+    false
+  );
+  assert.equal(
+    validateServiceInput({
+      name: "젤네일",
+      durationMin: 90,
+      cleanupMin: 125,
+      price: 50000,
+    }).ok,
+    false
+  );
+  assert.equal(
+    validateServiceInput({
+      name: "젤네일",
+      durationMin: 90,
+      cleanupMin: 7,
+      price: 50000,
+    }).ok,
+    false
+  );
+});
+
 test("validates handles with underscores and 3 to 30 characters", () => {
   assert.deepEqual(validateHandleValue("my_shop-01"), {
     ok: true,

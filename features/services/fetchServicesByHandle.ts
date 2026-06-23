@@ -8,6 +8,7 @@ export type ServiceRow = {
   name_translations: ServiceNameTranslations;
   description: string | null;
   duration_min: number;
+  cleanup_min: number;
   price: number | null;
   active: boolean;
 };
