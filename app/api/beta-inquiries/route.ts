@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { validateBetaInquiry } from "@/features/betaInquiry/validation";
+import { notifyAdminBetaInquiry } from "@/features/betaInquiry/notifyAdmin";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -24,6 +25,12 @@ export async function POST(req: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  try {
+    await notifyAdminBetaInquiry(validation.value);
+  } catch (emailError) {
+    console.error("[beta-inquiries] admin email notification failed", emailError);
   }
 
   return NextResponse.json({ ok: true });
