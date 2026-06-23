@@ -28,6 +28,12 @@ export type IncompleteSetting = {
   href: string;
 };
 
+export type PlanDisplayInfo = {
+  label: string;
+  helperText: string;
+  billingNotice: string;
+};
+
 type Props = {
   storeName: string;
   greeting: string;
@@ -39,6 +45,7 @@ type Props = {
   incompleteSettings: IncompleteSetting[];
   bookingUrl: string;
   canLink: boolean;
+  planDisplay: PlanDisplayInfo;
 };
 
 function statusLabel(status: string) {
@@ -108,6 +115,7 @@ export default function OwnerDashboardClient({
   incompleteSettings,
   bookingUrl,
   canLink,
+  planDisplay,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState(todayISO);
   const [copyStatus, setCopyStatus] = useState("");
@@ -229,6 +237,26 @@ export default function OwnerDashboardClient({
                   만들기
                 </a>
               )}
+            </div>
+          </section>
+
+          <section className="glass-card mt-2.5 rounded-[20px] px-3.5 py-3">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="brand-soft flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-xs font-black">
+                PLAN
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] font-black text-slate-400">현재 플랜</div>
+                <div className="mt-0.5 text-sm font-black text-slate-900">
+                  {planDisplay.label}
+                </div>
+                <p className="mt-1 text-xs font-medium leading-5 text-slate-500">
+                  {planDisplay.helperText}
+                </p>
+                <p className="mt-1 text-[11px] font-bold leading-5 text-slate-400">
+                  {planDisplay.billingNotice}
+                </p>
+              </div>
             </div>
           </section>
 

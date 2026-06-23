@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { getPlanDisplay } from "@/features/billing/planStatus";
 import OwnerDashboardClient, {
   type DashboardReservation,
   type IncompleteSetting,
@@ -153,7 +154,9 @@ export default async function OwnerPage() {
     await Promise.all([
       supabase
         .from("organizations")
-        .select("name, handle")
+        .select(
+          "name, handle, plan_type, subscription_status, trial_ends_at, beta_ends_at, billing_starts_at"
+        )
         .eq("id", organizationId)
         .maybeSingle(),
       supabase
@@ -208,6 +211,13 @@ export default async function OwnerPage() {
   const orgRow = orgResult.data;
   const storeName = (orgRow?.name as string | null)?.trim() || "TimeOpen";
   const finalHandle = (orgRow?.handle as string | null) ?? handle;
+  const planDisplay = getPlanDisplay({
+    plan_type: orgRow?.plan_type as string | null | undefined,
+    subscription_status: orgRow?.subscription_status as string | null | undefined,
+    trial_ends_at: orgRow?.trial_ends_at as string | null | undefined,
+    beta_ends_at: orgRow?.beta_ends_at as string | null | undefined,
+    billing_starts_at: orgRow?.billing_starts_at as string | null | undefined,
+  });
   const canLink =
     typeof finalHandle === "string" &&
     finalHandle.trim().length > 0 &&
@@ -299,6 +309,11 @@ export default async function OwnerPage() {
       incompleteSettings={incompleteSettings}
       bookingUrl={bookingUrl}
       canLink={canLink}
+      planDisplay={{
+        label: planDisplay.label,
+        helperText: planDisplay.helperText,
+        billingNotice: planDisplay.billingNotice,
+      }}
     />
   );
 }
