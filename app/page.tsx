@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import BetaInquiryModal from "./BetaInquiryModal";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,12 @@ const coreFeatures = [
   },
   {
     number: "03",
+    title: "서비스·가격·소요시간",
+    description:
+      "고객에게 보여질 서비스 설명, 가격, 소요시간을 깔끔한 카드로 보여줘요.",
+  },
+  {
+    number: "04",
     title: "영업시간·휴무일 자동 반영",
     description:
       "운영 요일과 휴무일을 설정하면 고객 화면의 예약 가능 시간이 자동으로 달라져요.",
@@ -25,6 +32,16 @@ const coreFeatures = [
 ];
 
 const managementFeatures = [
+  {
+    icon: "빈",
+    title: "빈 시간 공유",
+    description: "예약 가능한 시간을 인스타 DM이나 스토리 문구로 바로 공유해요.",
+  },
+  {
+    icon: "IMG",
+    title: "스토리 이미지 저장",
+    description: "빈 시간을 알리는 인스타 스토리용 이미지를 저장해 홍보할 수 있어요.",
+  },
   {
     icon: "CAL",
     title: "월별 예약관리",
@@ -44,7 +61,7 @@ const managementFeatures = [
 
 function DashboardPreview() {
   return (
-    <div className="relative mx-auto w-full max-w-md">
+    <div id="booking-preview" className="relative mx-auto w-full max-w-md scroll-mt-8">
       <div
         aria-hidden="true"
         className="absolute -left-10 top-16 h-40 w-40 rounded-full bg-[#00D6F7]/25 blur-3xl"
@@ -192,22 +209,18 @@ export default async function Page() {
               <span className="brand-text">이제 링크 하나로</span>
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-base font-medium leading-7 text-slate-600 sm:text-lg sm:leading-8 lg:mx-0">
-              인스타로 예약받는 1인샵을 위한 간편 예약 링크. 고객은 로그인 없이
-              서비스와 시간을 고르고, 사장님은 DM 없이 예약을 관리해요.
+              TimeOpen은 인스타로 예약받는 1인샵을 위한 간편 예약 링크예요.
+              고객은 로그인 없이 서비스와 시간을 선택하고, 사장님은 DM 없이
+              예약을 관리해요.
             </p>
 
             <div className="mx-auto mt-8 grid max-w-md gap-3 sm:grid-cols-2 lg:mx-0">
+              <BetaInquiryModal />
               <a
-                href="/signup"
-                className="brand-button flex min-h-14 items-center justify-center rounded-2xl px-6 text-base font-black"
-              >
-                무료로 시작하기
-              </a>
-              <a
-                href="/signup"
+                href="#booking-preview"
                 className="brand-outline flex min-h-14 items-center justify-center rounded-2xl px-6 text-base font-black"
               >
-                베타 파트너 문의
+                예약 링크 예시 보기
               </a>
             </div>
             <p className="mt-4 text-xs font-medium text-slate-400">
@@ -247,7 +260,7 @@ export default async function Page() {
             </h2>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             {coreFeatures.map((feature) => (
               <article
                 key={feature.title}
@@ -277,12 +290,12 @@ export default async function Page() {
                 한 화면에 정리해요
               </h2>
               <p className="mt-4 text-sm font-medium leading-7 text-slate-500 sm:text-base">
-                서비스, 예약 현황, 문자 발송 상태와 베타 다국어 예약 화면을 복잡한
-                도구 없이 TimeOpen 안에서 관리할 수 있어요.
+                서비스, 가격, 소요시간, 예약 현황, 빈 시간 공유와 베타 다국어 예약
+                화면을 복잡한 도구 없이 TimeOpen 안에서 관리할 수 있어요.
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               {managementFeatures.map((feature) => (
                 <article key={feature.title} className="glass-card rounded-[24px] p-5">
                   <div className="brand-soft inline-flex min-h-9 min-w-9 items-center justify-center rounded-xl px-2 text-[10px] font-black">
@@ -315,17 +328,12 @@ export default async function Page() {
               전환될 예정입니다.
             </p>
             <div className="mx-auto mt-8 grid max-w-md gap-3 sm:grid-cols-2">
-              <a
-                href="/signup"
-                className="flex min-h-14 items-center justify-center rounded-2xl bg-white px-5 text-base font-black text-[#0098CB] shadow-lg transition hover:bg-[#F2FCFF]"
-              >
-                무료로 시작하기
-              </a>
+              <BetaInquiryModal variant="footer" />
               <a
                 href="/signup"
                 className="flex min-h-14 items-center justify-center rounded-2xl border border-white/70 bg-white/15 px-5 text-base font-black text-white backdrop-blur transition hover:bg-white/25"
               >
-                베타 파트너 문의
+                회원가입으로 먼저 보기
               </a>
             </div>
           </div>
