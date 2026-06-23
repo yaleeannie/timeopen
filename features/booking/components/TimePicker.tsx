@@ -88,8 +88,10 @@ export default function TimePicker({
             onClick={() => onChange(time)}
             className="min-h-10 w-full rounded-xl border px-3 py-2 text-sm transition"
             style={{
-              borderColor: active ? colors.border.active : colors.border.default,
-              background: active ? colors.brand.primary : colors.background.base,
+              borderColor: active ? "var(--brand-primary)" : colors.border.default,
+              background: active
+                ? "linear-gradient(135deg, var(--brand-accent), var(--brand-primary))"
+                : colors.background.base,
               color: active ? colors.text.inverse : colors.text.primary,
             }}
           >

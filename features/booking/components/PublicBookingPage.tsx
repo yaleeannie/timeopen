@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import BookingScreen from "./BookingScreen";
 import {
   BookingLanguageSelect,
@@ -7,16 +8,24 @@ import {
   usePublicBookingI18n,
 } from "./PublicBookingI18n";
 import {
-  DEFAULT_PUBLIC_BOOKING_THEME,
   PUBLIC_BOOKING_THEMES,
+  type LinkTheme,
 } from "@/features/booking/themes";
 
-function PublicBookingPageContent({ handle }: { handle: string }) {
+type Props = {
+  handle: string;
+  linkTheme: LinkTheme;
+};
+
+function PublicBookingPageContent({ handle, linkTheme }: Props) {
   const { t } = usePublicBookingI18n();
-  const theme = PUBLIC_BOOKING_THEMES[DEFAULT_PUBLIC_BOOKING_THEME];
+  const theme = PUBLIC_BOOKING_THEMES[linkTheme];
 
   return (
-    <main className={`${theme.page} overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7`}>
+    <main
+      className={`${theme.page} overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7`}
+      style={theme.variables as CSSProperties}
+    >
       <div className={`${theme.shell} mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] sm:rounded-[36px]`}>
         <div className="px-4 pb-7 pt-6 sm:px-6 sm:pb-9 sm:pt-8">
           <div className="mb-3 flex justify-end">
@@ -36,10 +45,10 @@ function PublicBookingPageContent({ handle }: { handle: string }) {
   );
 }
 
-export default function PublicBookingPage({ handle }: { handle: string }) {
+export default function PublicBookingPage({ handle, linkTheme }: Props) {
   return (
     <PublicBookingI18nProvider>
-      <PublicBookingPageContent handle={handle} />
+      <PublicBookingPageContent handle={handle} linkTheme={linkTheme} />
     </PublicBookingI18nProvider>
   );
 }

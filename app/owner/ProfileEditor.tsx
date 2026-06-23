@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getBookingUrl } from "@/lib/siteUrl";
+import {
+  LINK_THEME_NAMES,
+  PUBLIC_BOOKING_THEMES,
+  type LinkTheme,
+} from "@/features/booking/themes";
 
 type Props = {
   organizationId: string;
@@ -10,6 +15,7 @@ type Props = {
   initialNotice: string;
   initialName?: string;
   initialHandle?: string;
+  initialTheme: LinkTheme;
 };
 
 export default function ProfileEditor({
@@ -18,12 +24,14 @@ export default function ProfileEditor({
   initialNotice,
   initialName = "",
   initialHandle = "",
+  initialTheme,
 }: Props) {
   const router = useRouter();
 
   const [loadingName, setLoadingName] = useState(false);
   const [loadingHandle, setLoadingHandle] = useState(false);
   const [loadingExtra, setLoadingExtra] = useState(false);
+  const [loadingTheme, setLoadingTheme] = useState(false);
 
   const [msg, setMsg] = useState("");
 
@@ -31,6 +39,7 @@ export default function ProfileEditor({
   const [handle, setHandle] = useState(initialHandle ?? "");
   const [locationText, setLocationText] = useState(initialLocation ?? "");
   const [noticeText, setNoticeText] = useState(initialNotice ?? "");
+  const [linkTheme, setLinkTheme] = useState<LinkTheme>(initialTheme);
 
   useEffect(() => {
     setShopName(initialName ?? "");
@@ -47,6 +56,10 @@ export default function ProfileEditor({
   useEffect(() => {
     setNoticeText(initialNotice ?? "");
   }, [initialNotice]);
+
+  useEffect(() => {
+    setLinkTheme(initialTheme);
+  }, [initialTheme]);
 
   async function onSaveName() {
     setLoadingName(true);
@@ -140,6 +153,32 @@ export default function ProfileEditor({
       setMsg("인스타 예약 링크가 복사되었습니다.");
     } catch {
       setMsg("링크 복사에 실패했습니다.");
+    }
+  }
+
+  async function onSaveTheme() {
+    setLoadingTheme(true);
+    setMsg("");
+
+    try {
+      const res = await fetch("/api/settings/link-theme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ link_theme: linkTheme }),
+      });
+      const json: { error?: string } = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setMsg(json.error ?? "예약 링크 테마 저장 중 오류가 발생했습니다.");
+        return;
+      }
+
+      setMsg("인스타 예약 링크 테마가 저장되었습니다.");
+      router.refresh();
+    } catch {
+      setMsg("예약 링크 테마 저장 중 오류가 발생했습니다.");
+    } finally {
+      setLoadingTheme(false);
     }
   }
 
@@ -253,6 +292,64 @@ export default function ProfileEditor({
           {msg}
         </div>
       ) : null}
+      </div>
+
+      <div className="glass-card rounded-[24px] p-4">
+        <div className="text-base font-black">인스타 예약 링크 테마</div>
+        <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
+          고객에게 보여지는 예약 페이지의 분위기를 선택해요.
+        </p>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          {LINK_THEME_NAMES.map((themeName) => {
+            const theme = PUBLIC_BOOKING_THEMES[themeName];
+            const selected = linkTheme === themeName;
+
+            return (
+              <button
+                key={themeName}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setLinkTheme(themeName)}
+                className={`overflow-hidden rounded-[20px] border p-2.5 text-left transition ${
+                  selected
+                    ? "border-[#00C1FF] bg-[#E9FAFF] shadow-[0_10px_26px_rgba(0,193,255,0.14)]"
+                    : "border-white/80 bg-white/55 hover:border-[#00C1FF]/45"
+                }`}
+              >
+                <div className={`h-24 rounded-2xl p-2.5 ${theme.preview}`}>
+                  <div className={`h-full rounded-xl border p-2 ${theme.previewCard}`}>
+                    <div className={`h-2 w-10 rounded-full ${theme.previewAccent}`} />
+                    <div className="mt-2 h-2 w-16 rounded-full bg-slate-300/65" />
+                    <div className="mt-3 grid grid-cols-2 gap-1.5">
+                      <div className="h-7 rounded-lg bg-white/85" />
+                      <div className={`h-7 rounded-lg ${theme.previewAccent}`} />
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-2 px-1">
+                  <span className="text-sm font-black text-slate-800">{theme.label}</span>
+                  <span
+                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
+                      selected ? "brand-selected" : "border border-slate-200 bg-white text-transparent"
+                    }`}
+                  >
+                    ✓
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={onSaveTheme}
+          disabled={loadingTheme}
+          className="brand-button mt-4 min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-black disabled:opacity-60"
+        >
+          {loadingTheme ? "저장 중..." : "선택한 테마 저장"}
+        </button>
       </div>
 
       <div className="brand-gradient rounded-[24px] p-5 text-white shadow-[0_14px_30px_rgba(0,193,255,0.22)]">

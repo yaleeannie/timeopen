@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
+import type { LinkTheme } from "@/features/booking/themes";
 
 export type Organization = {
   id: string;
@@ -10,12 +11,13 @@ export type Organization = {
   // ✅ 추가
   location_text: string | null;
   notice_text: string | null;
+  link_theme: LinkTheme | null;
 };
 
 export async function fetchOrganizationByHandle(handle: string): Promise<Organization | null> {
   const { data, error } = await supabase
     .from("organizations")
-    .select("id, handle, name, display_name, created_at, location_text, notice_text")
+    .select("id, handle, name, display_name, created_at, location_text, notice_text, link_theme")
     .eq("handle", handle)
     .maybeSingle();
 

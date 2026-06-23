@@ -497,7 +497,7 @@ export default function BookingScreen({ handle }: Props) {
             <div
               className="text-right text-[11px] font-bold"
               style={{
-                color: "#00c1ff",
+                color: "var(--brand-primary)",
                 opacity: shouldShowEarliestHint ? 1 : 0,
                 transition: "opacity 160ms ease",
                 pointerEvents: "none",
@@ -508,7 +508,7 @@ export default function BookingScreen({ handle }: Props) {
             </div>
           </div>
 
-          <div className="booking-time-tone mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:border-[#00c1ff]/40 [&_button]:px-4 [&_button]:font-bold">
+          <div className="booking-time-tone mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:px-4 [&_button]:font-bold">
             {!serviceId || !dateISO ? (
               <TimePicker
                 times={[]}
@@ -517,7 +517,7 @@ export default function BookingScreen({ handle }: Props) {
                 onChange={() => {}}
               />
             ) : isTimesLoading || !organizationId || !weeklySchedule ? (
-              <div className="brand-soft rounded-2xl border border-[#00c1ff]/30 px-4 py-6 text-sm font-medium">
+              <div className="brand-soft rounded-2xl border brand-border px-4 py-6 text-sm font-medium">
                 {t("loadingTimes")}
               </div>
             ) : timesError ? (
