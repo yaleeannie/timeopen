@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase/client";
 import type { Organization } from "@/features/organizations/fetchOrganizationByHandle";
 import { validateHandleValue } from "@/features/validation/fieldLimits";
+import { getDefaultOwnerOrganizationPayload } from "@/features/owner/bootstrapDefaults";
 
 export async function createOrganization(handle: string): Promise<Organization> {
   const validation = validateHandleValue(handle);
@@ -11,7 +12,7 @@ export async function createOrganization(handle: string): Promise<Organization> 
 
   const { data, error } = await supabase
     .from("organizations")
-    .insert({ handle: validation.value })
+    .insert(getDefaultOwnerOrganizationPayload(validation.value))
     .select("id, handle, display_name, created_at")
     .single();
 

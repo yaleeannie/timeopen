@@ -22,6 +22,13 @@ export default async function OnboardingPage() {
   );
 
   if (error || !organizationId) {
+    console.error("[bootstrap] failed", {
+      source: "onboarding",
+      userId: user.id,
+      error,
+      hasOrganizationId: Boolean(organizationId),
+    });
+
     return (
       <main className="soft-page-bg flex items-center px-4 py-8 text-slate-950">
         <div className="glass-card mx-auto w-full max-w-md rounded-[28px] p-6 text-center">
@@ -29,10 +36,10 @@ export default async function OnboardingPage() {
             !
           </div>
           <h1 className="mt-5 text-2xl font-black tracking-[-0.04em]">
-            초기 설정을 준비하지 못했어요.
+            초기 설정을 불러오지 못했어요.
           </h1>
           <p className="mt-2 text-sm font-medium leading-6 text-gray-500">
-            잠시 후 다시 시도해 주세요. 문제가 계속되면 다시 로그인한 뒤 진행해 주세요.
+            다시 시도해 주세요. 문제가 계속되면 다시 로그인한 뒤 진행해 주세요.
           </p>
           <a
             href="/onboarding"

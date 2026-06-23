@@ -53,6 +53,15 @@ export async function bootstrapOwner(
 
     if (error) {
       lastError = error.message;
+      console.error("[bootstrap] failed", {
+        source,
+        attempt,
+        userId: user.id,
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
       console.error(`[${source}] bootstrap_owner failed`, {
         attempt,
         userId: user.id,
@@ -186,6 +195,12 @@ export async function bootstrapOwner(
     userId: user.id,
     existingOrganizationId: existingMembership?.organization_id ?? null,
     membershipLookupError: membershipError?.message ?? null,
+    lastError,
+  });
+  console.error("[bootstrap] failed", {
+    source,
+    userId: user.id,
+    existingOrganizationId: existingMembership?.organization_id ?? null,
     lastError,
   });
 
