@@ -91,14 +91,12 @@ begin
   if v_organization_id is null then
     insert into public.organizations (
       name,
-      plan,
       plan_type,
       subscription_status,
       booking_slot_mode
     )
     values (
       '내 샵',
-      'trial',
       'beta',
       'active',
       'flexible'
