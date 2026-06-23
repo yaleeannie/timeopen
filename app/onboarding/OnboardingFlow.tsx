@@ -4,6 +4,14 @@ import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import TimeSelect from "@/components/TimeSelect";
 import { getBookingUrl } from "@/lib/siteUrl";
+import {
+  FIELD_LIMITS,
+  normalizeHandleValue,
+  validateHandleValue,
+  validateOptionalText,
+  validateServiceInput,
+  validateShopName,
+} from "@/features/validation/fieldLimits";
 
 type InitialService = {
   id: string;
@@ -200,10 +208,27 @@ export default function OnboardingFlow({
 
     try {
       if (step === 0) {
+        const nameValidation = validateShopName(name);
+        if (!nameValidation.ok) throw new Error(nameValidation.error);
+
+        const locationValidation = validateOptionalText(
+          locationText,
+          FIELD_LIMITS.noticeMax,
+          "위치 안내"
+        );
+        if (!locationValidation.ok) throw new Error(locationValidation.error);
+
+        const noticeValidation = validateOptionalText(
+          noticeText,
+          FIELD_LIMITS.noticeMax,
+          "예약 안내 문구"
+        );
+        if (!noticeValidation.ok) throw new Error(noticeValidation.error);
+
         await postJson("/api/settings/profile", {
-          name,
-          location_text: locationText,
-          notice_text: noticeText,
+          name: nameValidation.value,
+          location_text: locationValidation.value,
+          notice_text: noticeValidation.value,
         });
       }
 
@@ -213,16 +238,17 @@ export default function OnboardingFlow({
             service.name.trim() || service.price.trim() || service.durationMin.trim()
         );
 
-        const invalidServiceIndex = nonEmptyServices.findIndex(
-          (service) =>
-            !service.name.trim() ||
-            !service.price.trim() ||
-            !service.durationMin.trim()
-        );
-        if (invalidServiceIndex >= 0) {
-          throw new Error(
-            `${invalidServiceIndex + 1}번째 서비스의 이름, 가격, 소요 시간을 모두 입력해주세요.`
-          );
+        for (const [index, service] of nonEmptyServices.entries()) {
+          const validation = validateServiceInput({
+            name: service.name,
+            durationMin: Number(service.durationMin),
+            hasPrice: service.price.trim() !== "",
+            priceRequired: true,
+            price: Number(service.price),
+          });
+          if (!validation.ok) {
+            throw new Error(`${index + 1}번째 서비스: ${validation.error}`);
+          }
         }
 
         const normalizedNames = nonEmptyServices.map((service) =>
@@ -297,15 +323,15 @@ export default function OnboardingFlow({
   }
 
   async function saveHandle() {
-    const cleanHandle = handle.trim().toLowerCase();
+    const validation = validateHandleValue(handle);
 
-    if (!/^[a-z0-9-]{3,30}$/.test(cleanHandle)) {
-      throw new Error("영어 소문자, 숫자, 하이픈으로 3~30자를 입력해주세요.");
+    if (!validation.ok) {
+      throw new Error(validation.error);
     }
 
-    await postJson("/api/settings/handle", { handle: cleanHandle });
-    setHandle(cleanHandle);
-    return cleanHandle;
+    await postJson("/api/settings/handle", { handle: validation.value });
+    setHandle(validation.value);
+    return validation.value;
   }
 
   async function finish(destination: "preview" | "dashboard") {
@@ -434,6 +460,7 @@ export default function OnboardingFlow({
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                     placeholder="예: 지수 헤어"
+                    maxLength={FIELD_LIMITS.shopNameMax}
                     className={inputClass}
                   />
                 </label>
@@ -444,8 +471,12 @@ export default function OnboardingFlow({
                     onChange={(event) => setLocationText(event.target.value)}
                     placeholder="예: 홍대입구역 3번 출구에서 도보 3분"
                     rows={3}
+                    maxLength={FIELD_LIMITS.noticeMax}
                     className={`${inputClass} resize-none`}
                   />
+                  <span className="mt-1 block text-right text-xs font-bold text-gray-400">
+                    {locationText.length}/{FIELD_LIMITS.noticeMax}
+                  </span>
                 </label>
                 <label>
                   <span className={labelClass}>예약 안내 문구</span>
@@ -454,8 +485,12 @@ export default function OnboardingFlow({
                     onChange={(event) => setNoticeText(event.target.value)}
                     placeholder="예: 예약 시간 10분 전까지 도착해주세요."
                     rows={4}
+                    maxLength={FIELD_LIMITS.noticeMax}
                     className={`${inputClass} resize-none`}
                   />
+                  <span className="mt-1 block text-right text-xs font-bold text-gray-400">
+                    {noticeText.length}/{FIELD_LIMITS.noticeMax}
+                  </span>
                 </label>
               </div>
             ) : null}
@@ -499,6 +534,7 @@ export default function OnboardingFlow({
                               patchService(service.key, { name: event.target.value })
                             }
                             placeholder="예: 커트"
+                            maxLength={FIELD_LIMITS.serviceNameMax}
                             className={inputClass}
                           />
                         </label>
@@ -515,6 +551,8 @@ export default function OnboardingFlow({
                                 }
                                 placeholder="30000"
                                 inputMode="numeric"
+                                min={FIELD_LIMITS.servicePriceMin}
+                                max={FIELD_LIMITS.servicePriceMax}
                                 className={`${inputClass} pr-9`}
                               />
                               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
@@ -534,6 +572,8 @@ export default function OnboardingFlow({
                                 }
                                 placeholder="30"
                                 inputMode="numeric"
+                                min={FIELD_LIMITS.serviceDurationMin}
+                                max={FIELD_LIMITS.serviceDurationMax}
                                 className={`${inputClass} pr-9`}
                               />
                               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
@@ -668,15 +708,16 @@ export default function OnboardingFlow({
                       value={handle}
                       onChange={(event) =>
                         setHandle(
-                          event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
+                          normalizeHandleValue(event.target.value).replace(/[^a-z0-9_-]/g, "")
                         )
                       }
                       placeholder="my-shop"
+                      maxLength={FIELD_LIMITS.handleMax}
                       className="min-h-12 min-w-0 flex-1 rounded-2xl bg-transparent px-2 py-3 text-base font-bold text-gray-950 outline-none"
                     />
                   </div>
                   <span className="mt-2 block text-xs font-medium leading-5 text-gray-400">
-                    영어 소문자, 숫자, 하이픈(-)을 3~30자로 입력해주세요.
+                    영어 소문자, 숫자, 하이픈(-), 언더스코어(_)를 3~30자로 입력해주세요.
                   </span>
                 </label>
 

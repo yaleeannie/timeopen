@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import {
+  normalizeHandleValue,
+  validateHandleValue,
+} from "@/features/validation/fieldLimits";
 
 export default function HandleSetup() {
   const [handle, setHandle] = useState("");
@@ -8,14 +12,11 @@ export default function HandleSetup() {
   const [loading, setLoading] = useState(false);
 
   async function onSave() {
-    const v = handle.trim().toLowerCase();
+    const v = normalizeHandleValue(handle);
+    const validation = validateHandleValue(v);
 
-    if (v.length < 3 || v.length > 30) {
-      setMsg("주소는 3~30자로 입력해 주세요.");
-      return;
-    }
-    if (!/^[a-z0-9-]+$/.test(v)) {
-      setMsg("영문/숫자/하이픈(-)만 사용할 수 있어요.");
+    if (!validation.ok) {
+      setMsg(validation.error);
       return;
     }
 
@@ -26,7 +27,7 @@ export default function HandleSetup() {
       const res = await fetch("/api/owner/set-handle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ handle: v }),
+        body: JSON.stringify({ handle: validation.value }),
       });
 
       const json = await res.json().catch(() => ({}));
@@ -53,7 +54,9 @@ export default function HandleSetup() {
 
       <input
         value={handle}
-        onChange={(e) => setHandle(e.target.value)}
+        onChange={(e) =>
+          setHandle(normalizeHandleValue(e.target.value).replace(/[^a-z0-9_-]/g, ""))
+        }
         placeholder="예) my-shop"
         style={{ width: 320, padding: 12, border: "1px solid #ccc", borderRadius: 10 }}
       />
@@ -72,7 +75,7 @@ export default function HandleSetup() {
       {msg ? <div style={{ marginTop: 12, color: "#b00020" }}>{msg}</div> : null}
 
       <div style={{ marginTop: 12, fontSize: 12, color: "#666" }}>
-        영문/숫자/하이픈만 가능, 3~30자
+        영문/숫자/하이픈/언더스코어 가능, 3~30자
       </div>
     </main>
   );

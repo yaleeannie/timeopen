@@ -4,15 +4,11 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthShell from "@/components/AuthShell";
 import { createOrganization } from "@/features/organizations/createOrganization";
-
-function normalizeHandle(v: string) {
-  return v.trim().toLowerCase();
-}
-
-function isValidHandle(v: string) {
-  // a-z, 0-9, underscore, dash / 3~20자
-  return /^[a-z0-9_-]{3,20}$/.test(v);
-}
+import {
+  FIELD_LIMITS,
+  normalizeHandleValue,
+  validateHandleValue,
+} from "@/features/validation/fieldLimits";
 
 export default function CreateOrganizationPage() {
   const router = useRouter();
@@ -21,15 +17,15 @@ export default function CreateOrganizationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const cleanHandle = useMemo(() => normalizeHandle(handle), [handle]);
-  const valid = useMemo(() => isValidHandle(cleanHandle), [cleanHandle]);
+  const cleanHandle = useMemo(() => normalizeHandleValue(handle), [handle]);
+  const valid = useMemo(() => validateHandleValue(cleanHandle).ok, [cleanHandle]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
 
     if (!valid) {
-      setErrorMsg("handle 형식이 올바르지 않습니다. (3~20자, a-z0-9_-)");
+      setErrorMsg("주소는 영어 소문자, 숫자, 하이픈(-), 언더스코어(_)를 사용해 3~30자로 입력해주세요.");
       return;
     }
 
@@ -60,8 +56,11 @@ export default function CreateOrganizationPage() {
           <div>
             <input
               value={handle}
-              onChange={(e) => setHandle(e.target.value)}
+              onChange={(e) =>
+                setHandle(normalizeHandleValue(e.target.value).replace(/[^a-z0-9_-]/g, ""))
+              }
               placeholder="e.g. timeopen"
+              maxLength={FIELD_LIMITS.handleMax}
               className="brand-input min-h-12 w-full rounded-2xl px-4 py-3 text-base"
               autoCapitalize="none"
               autoCorrect="off"

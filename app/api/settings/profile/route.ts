@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
+import {
+  FIELD_LIMITS,
+  validateOptionalText,
+  validateShopName,
+} from "@/features/validation/fieldLimits";
 
 export async function POST(req: Request) {
   try {
@@ -18,15 +23,35 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => null);
-    const name = typeof body?.name === "string" ? body.name.trim() : "";
+    const nameInput = typeof body?.name === "string" ? body.name : "";
     const hasLocationText = typeof body?.location_text === "string";
     const hasNoticeText = typeof body?.notice_text === "string";
 
-    if (!name) {
-      return NextResponse.json(
-        { error: "매장 이름을 입력해주세요." },
-        { status: 400 }
+    const nameValidation = validateShopName(nameInput);
+    if (!nameValidation.ok) {
+      return NextResponse.json({ error: nameValidation.error }, { status: 400 });
+    }
+
+    if (hasLocationText) {
+      const locationValidation = validateOptionalText(
+        body.location_text,
+        FIELD_LIMITS.noticeMax,
+        "위치 안내"
       );
+      if (!locationValidation.ok) {
+        return NextResponse.json({ error: locationValidation.error }, { status: 400 });
+      }
+    }
+
+    if (hasNoticeText) {
+      const noticeValidation = validateOptionalText(
+        body.notice_text,
+        FIELD_LIMITS.noticeMax,
+        "예약 안내문"
+      );
+      if (!noticeValidation.ok) {
+        return NextResponse.json({ error: noticeValidation.error }, { status: 400 });
+      }
     }
 
     const supabase = await createSupabaseServerClient();
@@ -34,7 +59,7 @@ export async function POST(req: Request) {
       name: string;
       location_text?: string | null;
       notice_text?: string | null;
-    } = { name };
+    } = { name: nameValidation.value };
 
     if (hasLocationText) {
       updates.location_text = body.location_text.trim() || null;

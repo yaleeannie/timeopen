@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { FIELD_LIMITS, validateOptionalText } from "@/features/validation/fieldLimits";
 
 export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
@@ -23,6 +24,24 @@ export async function POST(req: Request) {
 
   const notice_text =
     typeof body?.notice_text === "string" ? body.notice_text.trim() : "";
+
+  const locationValidation = validateOptionalText(
+    location_text,
+    FIELD_LIMITS.noticeMax,
+    "위치 안내"
+  );
+  if (!locationValidation.ok) {
+    return NextResponse.json({ error: locationValidation.error }, { status: 400 });
+  }
+
+  const noticeValidation = validateOptionalText(
+    notice_text,
+    FIELD_LIMITS.noticeMax,
+    "예약 안내문"
+  );
+  if (!noticeValidation.ok) {
+    return NextResponse.json({ error: noticeValidation.error }, { status: 400 });
+  }
 
   if (!organizationId) {
     return NextResponse.json({ error: "organizationId가 필요합니다." }, { status: 400 });

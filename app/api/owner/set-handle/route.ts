@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { validateHandleValue } from "@/features/validation/fieldLimits";
 
 export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
@@ -11,9 +12,16 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "not authenticated" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
-  const handle = typeof body?.handle === "string" ? body.handle : "";
+  const handleInput = typeof body?.handle === "string" ? body.handle : "";
+  const handleValidation = validateHandleValue(handleInput);
 
-  const { data, error } = await supabase.rpc("set_my_handle", { p_handle: handle });
+  if (!handleValidation.ok) {
+    return NextResponse.json({ error: handleValidation.error }, { status: 400 });
+  }
+
+  const { data, error } = await supabase.rpc("set_my_handle", {
+    p_handle: handleValidation.value,
+  });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 

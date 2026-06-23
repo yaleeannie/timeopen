@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { validateServiceInput } from "@/features/validation/fieldLimits";
 
 type ServiceRequest = {
   id?: unknown;
@@ -48,23 +49,17 @@ export async function POST(req: Request) {
   );
 
   for (const [index, service] of services.entries()) {
-    if (!service.name) {
-      return NextResponse.json(
-        { error: `${index + 1}번째 서비스명을 입력해주세요.` },
-        { status: 400 }
-      );
-    }
+    const validation = validateServiceInput({
+      name: service.name,
+      durationMin: service.durationMin,
+      hasPrice: service.hasPrice,
+      priceRequired: true,
+      price: service.price,
+    });
 
-    if (!Number.isInteger(service.durationMin) || service.durationMin <= 0) {
+    if (!validation.ok) {
       return NextResponse.json(
-        { error: `${index + 1}번째 서비스의 소요 시간을 확인해주세요.` },
-        { status: 400 }
-      );
-    }
-
-    if (!service.hasPrice || !Number.isFinite(service.price) || service.price < 0) {
-      return NextResponse.json(
-        { error: `${index + 1}번째 서비스의 가격을 확인해주세요.` },
+        { error: `${index + 1}번째 서비스: ${validation.error}` },
         { status: 400 }
       );
     }

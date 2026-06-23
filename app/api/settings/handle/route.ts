@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
-
-function isValidHandle(v: string) {
-  return /^[a-z0-9\-]{3,30}$/.test(v);
-}
+import { validateHandleValue } from "@/features/validation/fieldLimits";
 
 export async function POST(req: Request) {
   const { user, organizationId, error } = await getOwnerContext();
@@ -18,19 +15,14 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => null);
-  const handle = typeof body?.handle === "string" ? body.handle.trim().toLowerCase() : "";
+  const handleInput = typeof body?.handle === "string" ? body.handle : "";
+  const handleValidation = validateHandleValue(handleInput);
 
-  if (!handle) {
-    return NextResponse.json({ error: "handle을 입력해주세요." }, { status: 400 });
+  if (!handleValidation.ok) {
+    return NextResponse.json({ error: handleValidation.error }, { status: 400 });
   }
 
-  if (!isValidHandle(handle)) {
-    return NextResponse.json(
-      { error: "handle은 영어 소문자, 숫자, 하이픈(-)만 사용 가능하며 3~30자여야 합니다." },
-      { status: 400 }
-    );
-  }
-
+  const handle = handleValidation.value;
   const supabase = await createSupabaseServerClient();
 
   // 중복 체크

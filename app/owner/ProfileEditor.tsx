@@ -8,6 +8,10 @@ import {
   PUBLIC_BOOKING_THEMES,
   type LinkTheme,
 } from "@/features/booking/themes";
+import {
+  FIELD_LIMITS,
+  normalizeHandleValue,
+} from "@/features/validation/fieldLimits";
 
 type Props = {
   organizationId: string;
@@ -193,6 +197,7 @@ export default function ProfileEditor({
           value={shopName}
           onChange={(e) => setShopName(e.target.value)}
           placeholder="예: 지수헤어"
+          maxLength={FIELD_LIMITS.shopNameMax}
           className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
         />
 
@@ -213,15 +218,16 @@ export default function ProfileEditor({
         <input
           value={handle}
           onChange={(e) => {
-            const v = e.target.value.toLowerCase().replace(/[^a-z0-9\-]/g, "");
+            const v = normalizeHandleValue(e.target.value).replace(/[^a-z0-9_-]/g, "");
             setHandle(v);
           }}
-          placeholder="예: jisu-hair (영어/숫자/-만)"
+          placeholder="예: jisu_hair"
+          maxLength={FIELD_LIMITS.handleMax}
           className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
         />
 
         <div className="mt-2 text-sm leading-5 text-gray-500">
-          인스타 프로필에 복사할 주소예요. 영어 소문자, 숫자, 하이픈(-)만 사용할 수 있어요.
+          인스타 프로필에 복사할 주소예요. 영어 소문자, 숫자, 하이픈(-), 언더스코어(_)를 3~30자로 사용할 수 있어요.
         </div>
 
         <div className="mt-1 text-sm leading-5 text-gray-400">
@@ -263,8 +269,12 @@ export default function ProfileEditor({
         onChange={(e) => setLocationText(e.target.value)}
         rows={3}
         placeholder="예) 서울시 마포구 ... / 2층"
+        maxLength={FIELD_LIMITS.noticeMax}
         className="brand-input mb-4 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
       />
+      <div className="-mt-3 mb-4 text-right text-xs font-bold text-gray-400">
+        {locationText.length}/{FIELD_LIMITS.noticeMax}
+      </div>
 
       <div className="mb-1.5 text-sm font-bold text-gray-700">예약 안내문 (선택)</div>
       <textarea
@@ -272,8 +282,12 @@ export default function ProfileEditor({
         onChange={(e) => setNoticeText(e.target.value)}
         rows={4}
         placeholder="예) 10분 전 도착 부탁드립니다. 지각 시 자동 취소될 수 있어요."
+        maxLength={FIELD_LIMITS.noticeMax}
         className="brand-input mb-4 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
       />
+      <div className="-mt-3 mb-4 text-right text-xs font-bold text-gray-400">
+        {noticeText.length}/{FIELD_LIMITS.noticeMax}
+      </div>
 
       <button
         type="button"

@@ -1,4 +1,5 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { validateCustomerName } from "@/features/validation/fieldLimits";
 
 export type Params = {
   handle: string;
@@ -13,6 +14,11 @@ export type Params = {
 };
 
 export async function saveReservation(params: Params): Promise<string> {
+  const customerName = validateCustomerName(params.customerName);
+  if (!customerName.ok) {
+    throw new Error(customerName.error);
+  }
+
   const supabase = createSupabaseBrowserClient();
 
   const { data, error } = await supabase.rpc("create_reservation_by_handle", {
@@ -23,7 +29,7 @@ export async function saveReservation(params: Params): Promise<string> {
     p_end: params.end,
     p_duration_min: params.durationMin,
     p_buffer_min: params.bufferMin,
-    p_customer_name: params.customerName,
+    p_customer_name: customerName.value,
     p_customer_phone: params.customerPhone,
   });
 

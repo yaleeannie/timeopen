@@ -8,6 +8,10 @@ import {
   normalizeServiceNameTranslations,
   type ServiceNameTranslations,
 } from "@/features/services/serviceTranslations";
+import {
+  FIELD_LIMITS,
+  validateServiceInput,
+} from "@/features/validation/fieldLimits";
 
 type Props = {
   organizationId: string;
@@ -110,24 +114,28 @@ export default function ServicesEditor({ organizationId }: Props) {
   async function addService() {
     setMsg("");
 
-    if (!name.trim()) {
-      setMsg("서비스명을 입력해주세요.");
-      return;
-    }
-
     const duration = Number(durationMin);
-    if (!duration || duration <= 0) {
-      setMsg("소요시간을 올바르게 입력해주세요.");
+    const priceValue = price.trim() ? Number(price) : null;
+    const validation = validateServiceInput({
+      name,
+      description,
+      durationMin: duration,
+      hasPrice: price.trim() !== "",
+      price: priceValue,
+    });
+
+    if (!validation.ok) {
+      setMsg(validation.error);
       return;
     }
 
     const { error } = await supabase.from("services").insert({
       organization_id: organizationId,
-      name: name.trim(),
+      name: validation.value.name,
       name_translations: normalizeServiceNameTranslations(nameTranslations),
-      description: description.trim() || null,
-      duration_min: duration,
-      price: price.trim() ? Number(price) : null,
+      description: validation.value.description || null,
+      duration_min: validation.value.durationMin,
+      price: priceValue,
       active: true,
     });
 
@@ -167,25 +175,29 @@ export default function ServicesEditor({ organizationId }: Props) {
   async function saveEdit(id: string) {
     setMsg("");
 
-    if (!editName.trim()) {
-      setMsg("서비스명을 입력해주세요.");
-      return;
-    }
-
     const duration = Number(editDurationMin);
-    if (!duration || duration <= 0) {
-      setMsg("소요시간을 올바르게 입력해주세요.");
+    const priceValue = editPrice.trim() ? Number(editPrice) : null;
+    const validation = validateServiceInput({
+      name: editName,
+      description: editDescription,
+      durationMin: duration,
+      hasPrice: editPrice.trim() !== "",
+      price: priceValue,
+    });
+
+    if (!validation.ok) {
+      setMsg(validation.error);
       return;
     }
 
     const { error } = await supabase
       .from("services")
       .update({
-        name: editName.trim(),
+        name: validation.value.name,
         name_translations: normalizeServiceNameTranslations(editNameTranslations),
-        description: editDescription.trim() || null,
-        duration_min: duration,
-        price: editPrice.trim() ? Number(editPrice) : null,
+        description: validation.value.description || null,
+        duration_min: validation.value.durationMin,
+        price: priceValue,
       })
       .eq("id", id);
 
@@ -250,6 +262,7 @@ export default function ServicesEditor({ organizationId }: Props) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="예: 커트"
+            maxLength={FIELD_LIMITS.serviceNameMax}
             className="min-h-11 w-full min-w-0 rounded-xl border border-white/30 bg-white px-3 py-2.5 text-base text-gray-900 outline-none"
           />
         </div>
@@ -261,8 +274,13 @@ export default function ServicesEditor({ organizationId }: Props) {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="예: 손톱 상태 상담 후 맞춤 케어를 진행해요."
             rows={3}
+            maxLength={FIELD_LIMITS.serviceDescriptionMax}
             className="w-full min-w-0 resize-none rounded-xl border border-white/30 bg-white px-3 py-2.5 text-base text-gray-900 outline-none"
           />
+          <div className="mt-1.5 flex items-center justify-between text-xs font-bold text-white/75">
+            <span>최대 120자까지 입력할 수 있어요.</span>
+            <span>{description.length}/{FIELD_LIMITS.serviceDescriptionMax}</span>
+          </div>
         </div>
 
         <div>
@@ -272,6 +290,8 @@ export default function ServicesEditor({ organizationId }: Props) {
             onChange={(e) => setDurationMin(e.target.value)}
             placeholder="예: 30"
             inputMode="numeric"
+            min={FIELD_LIMITS.serviceDurationMin}
+            max={FIELD_LIMITS.serviceDurationMax}
             className="min-h-11 w-full min-w-0 rounded-xl border border-white/30 bg-white px-3 py-2.5 text-base text-gray-900 outline-none"
           />
         </div>
@@ -283,6 +303,8 @@ export default function ServicesEditor({ organizationId }: Props) {
             onChange={(e) => setPrice(e.target.value)}
             placeholder="예: 30000"
             inputMode="numeric"
+            min={FIELD_LIMITS.servicePriceMin}
+            max={FIELD_LIMITS.servicePriceMax}
             className="min-h-11 w-full min-w-0 rounded-xl border border-white/30 bg-white px-3 py-2.5 text-base text-gray-900 outline-none"
           />
         </div>
@@ -326,6 +348,7 @@ export default function ServicesEditor({ organizationId }: Props) {
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="서비스명"
+                      maxLength={FIELD_LIMITS.serviceNameMax}
                       className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
                     />
                   </div>
@@ -337,8 +360,13 @@ export default function ServicesEditor({ organizationId }: Props) {
                       onChange={(e) => setEditDescription(e.target.value)}
                       placeholder="고객에게 보여질 서비스 설명"
                       rows={3}
+                      maxLength={FIELD_LIMITS.serviceDescriptionMax}
                       className="brand-input w-full min-w-0 resize-none rounded-xl px-3 py-2.5 text-base"
                     />
+                    <div className="mt-1.5 flex items-center justify-between text-xs font-bold text-gray-400">
+                      <span>최대 120자까지 입력할 수 있어요.</span>
+                      <span>{editDescription.length}/{FIELD_LIMITS.serviceDescriptionMax}</span>
+                    </div>
                   </div>
 
                   <div>
@@ -348,6 +376,8 @@ export default function ServicesEditor({ organizationId }: Props) {
                       onChange={(e) => setEditDurationMin(e.target.value)}
                       placeholder="소요시간(분)"
                       inputMode="numeric"
+                      min={FIELD_LIMITS.serviceDurationMin}
+                      max={FIELD_LIMITS.serviceDurationMax}
                       className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
                     />
                   </div>
@@ -359,6 +389,8 @@ export default function ServicesEditor({ organizationId }: Props) {
                       onChange={(e) => setEditPrice(e.target.value)}
                       placeholder="가격"
                       inputMode="numeric"
+                      min={FIELD_LIMITS.servicePriceMin}
+                      max={FIELD_LIMITS.servicePriceMax}
                       className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
                     />
                   </div>

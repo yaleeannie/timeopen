@@ -22,6 +22,10 @@ import {
 } from "@/features/booking/phone";
 import { fetchOrganizationByHandle } from "@/features/organizations/fetchOrganizationByHandle";
 import { getLocalizedServiceName } from "@/features/services/serviceTranslations";
+import {
+  FIELD_LIMITS,
+  validateCustomerName,
+} from "@/features/validation/fieldLimits";
 
 type Props = { handle: string };
 type BookingStep = "service" | "datetime" | "customer";
@@ -292,8 +296,9 @@ export default function BookingScreen({ handle }: Props) {
     if (!isTimesReadyForCurrent) return;
 
     // ✅ Day 1 추가: 이름/전화 검증
-    if (!customerName.trim()) {
-      setMsg(t("enterName"));
+    const nameValidation = validateCustomerName(customerName);
+    if (!nameValidation.ok) {
+      setMsg(nameValidation.error);
       return;
     }
 
@@ -431,7 +436,7 @@ export default function BookingScreen({ handle }: Props) {
         <div className="text-sm font-semibold text-gray-900">{t("selectService")}</div>
 
         {services.length > 0 ? (
-          <div className="mt-3 flex max-h-[42vh] flex-col gap-3 overflow-x-hidden overflow-y-auto pr-1">
+          <div className="mt-3 flex flex-col gap-3">
             {services.map((item) => {
               const active = item.id === serviceId;
 
@@ -451,7 +456,7 @@ export default function BookingScreen({ handle }: Props) {
                     setServiceId(item.id);
                   }}
                   className={[
-                    "relative block min-h-[104px] w-full shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none",
+                    "relative block w-full shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none",
                     active
                       ? "brand-gradient border-transparent [color:var(--brand-contrast)]"
                       : "brand-outline text-gray-900",
@@ -466,7 +471,7 @@ export default function BookingScreen({ handle }: Props) {
                   </div>
                   {item.description ? (
                     <p
-                      className={`mt-2 whitespace-pre-line text-sm leading-5 ${
+                      className={`mt-2 line-clamp-2 whitespace-pre-line text-sm leading-5 ${
                         active
                           ? "[color:var(--brand-contrast)] opacity-85"
                           : "text-slate-500"
@@ -578,6 +583,7 @@ export default function BookingScreen({ handle }: Props) {
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder={t("name")}
+            maxLength={FIELD_LIMITS.customerNameMax}
             className="brand-input mb-4 min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
           />
         </div>
