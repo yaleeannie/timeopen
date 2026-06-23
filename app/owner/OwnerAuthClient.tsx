@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { validateEmail } from "@/features/auth/email";
 
 type Props = {
   initialEmail?: string;
@@ -19,10 +20,9 @@ export default function OwnerAuthClient({ initialEmail = "" }: Props) {
   }, [msg]);
 
   async function sendMagicLink() {
-    const v = email.trim();
-
-    if (!v) {
-      setMsg("이메일을 입력해주세요.");
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.ok) {
+      setMsg(emailValidation.error);
       return;
     }
 
@@ -33,7 +33,7 @@ export default function OwnerAuthClient({ initialEmail = "" }: Props) {
       const res = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: v }),
+        body: JSON.stringify({ email: emailValidation.value }),
       });
 
       const json = await res.json().catch(() => ({}));

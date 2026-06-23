@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AuthShell from "@/components/AuthShell";
+import { validateEmail } from "@/features/auth/email";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
@@ -13,9 +14,14 @@ export default function SignupPage() {
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
 
   async function onSignup() {
-  const e = email.trim().toLowerCase();
-  if (!e || !pw) {
-    setMsg("이메일/비밀번호를 입력해 주세요.");
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.ok) {
+    setMsg(emailValidation.error);
+    return;
+  }
+
+  if (!pw) {
+    setMsg("비밀번호를 입력해 주세요.");
     return;
   }
 
@@ -30,7 +36,7 @@ export default function SignupPage() {
     callbackUrl.searchParams.set("flow", "signup");
 
     const { data, error } = await supabase.auth.signUp({
-      email: e,
+      email: emailValidation.value,
       password: pw,
       options: { emailRedirectTo: callbackUrl.toString() },
     });
@@ -74,7 +80,7 @@ export default function SignupPage() {
   return (
     <AuthShell
       title="인스타 예약 링크를 만들고 시작해보세요"
-      description="이메일 인증 후 샵 정보, 서비스, 영업시간을 차례로 설정할 수 있어요."
+      description="네이버·카카오·다음·Gmail·회사 이메일 모두 사용할 수 있어요."
     >
           {sent ? (
             <div className="text-sm font-bold leading-6 text-gray-900">
@@ -121,6 +127,9 @@ export default function SignupPage() {
                 autoComplete="email"
                 className="brand-input mb-4 min-h-12 w-full min-w-0 rounded-2xl px-4 py-3 text-base"
               />
+              <p className="-mt-2 mb-4 text-xs font-bold leading-5 text-slate-400">
+                평소 사용하는 이메일로 가입해도 괜찮아요.
+              </p>
 
               <label className="mb-1.5 block text-sm font-bold text-slate-700">
                 비밀번호
@@ -140,7 +149,7 @@ export default function SignupPage() {
                 disabled={loading}
                 className="brand-button min-h-12 w-full rounded-2xl px-4 py-3 text-base font-black disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "처리 중..." : "가입하기"}
+                {loading ? "처리 중..." : "이메일로 가입하기"}
               </button>
 
               {msg ? (

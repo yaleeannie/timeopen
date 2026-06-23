@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { validateEmail } from "@/features/auth/email";
 
 export default function LoginPanel() {
   const [email, setEmail] = useState("");
@@ -9,9 +10,9 @@ export default function LoginPanel() {
   const [loading, setLoading] = useState(false);
 
   async function onLogin() {
-    const v = email.trim();
-    if (!v) {
-      setMsg("이메일을 입력해주세요.");
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.ok) {
+      setMsg(emailValidation.error);
       return;
     }
 
@@ -19,7 +20,7 @@ export default function LoginPanel() {
     setMsg(null);
 
     const { error } = await supabase.auth.signInWithOtp({
-      email: v,
+      email: emailValidation.value,
       options: {
         emailRedirectTo: `${window.location.origin}/owner`,
       },

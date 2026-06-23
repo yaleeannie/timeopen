@@ -1,13 +1,28 @@
 // app/api/auth/magic-link/route.ts
 import { NextResponse } from "next/server";
+import { validateEmail } from "@/features/auth/email";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
-  const { email } = await req.json();
+  const body = await req.json().catch(() => null);
+  const validation = validateEmail(typeof body?.email === "string" ? body.email : "");
 
-  if (!email || typeof email !== "string") {
-    return NextResponse.json({ error: "email required" }, { status: 400 });
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
-  // 🔓 누구나 로그인 가능 (온보딩 자동화 테스트 단계)
+  const url = new URL(req.url);
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email: validation.value,
+    options: {
+      emailRedirectTo: `${url.origin}/auth/callback?next=/owner`,
+    },
+  });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
   return NextResponse.json({ ok: true });
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AuthShell from "@/components/AuthShell";
+import { validateEmail } from "@/features/auth/email";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function ForgotPasswordPage() {
@@ -11,9 +12,9 @@ export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
 
   async function onSend() {
-    const e = email.trim().toLowerCase();
-    if (!e) {
-      setMsg("이메일을 입력해주세요.");
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.ok) {
+      setMsg(emailValidation.error);
       return;
     }
 
@@ -26,7 +27,7 @@ export default function ForgotPasswordPage() {
       // ✅ reset 링크가 열릴 페이지
       const redirectTo = `${window.location.origin}/auth/callback?next=/auth/reset`;
 
-      const { error } = await supabase.auth.resetPasswordForEmail(e, {
+      const { error } = await supabase.auth.resetPasswordForEmail(emailValidation.value, {
         redirectTo,
       });
 
@@ -76,6 +77,9 @@ export default function ForgotPasswordPage() {
                 autoComplete="email"
                 className="brand-input mb-5 min-h-12 w-full min-w-0 rounded-2xl px-4 py-3 text-base"
               />
+              <p className="-mt-3 mb-5 text-xs font-bold leading-5 text-slate-400">
+                네이버·카카오·다음·Gmail·회사 이메일 모두 사용할 수 있어요.
+              </p>
 
               <button
                 type="button"
