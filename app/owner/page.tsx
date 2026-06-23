@@ -10,6 +10,7 @@ import OwnerDashboardClient, {
   type ScheduleDate,
   type SmsDisplayStatus,
 } from "./OwnerDashboardClient";
+import { normalizeLinkTheme } from "@/features/booking/themes";
 
 const SITE_URL = getSiteUrl();
 
@@ -153,7 +154,7 @@ export default async function OwnerPage() {
     await Promise.all([
       supabase
         .from("organizations")
-        .select("name, handle")
+        .select("name, handle, link_theme")
         .eq("id", organizationId)
         .maybeSingle(),
       supabase
@@ -299,6 +300,7 @@ export default async function OwnerPage() {
       incompleteSettings={incompleteSettings}
       bookingUrl={bookingUrl}
       canLink={canLink}
+      linkTheme={normalizeLinkTheme(orgRow?.link_theme)}
     />
   );
 }

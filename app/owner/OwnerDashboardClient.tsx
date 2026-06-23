@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import LogoutButton from "./LogoutButton";
 import OpenSlotShareCard from "./OpenSlotShareCard";
+import type { LinkTheme } from "@/features/booking/themes";
 
 export type SmsDisplayStatus = "success" | "partial" | "failed" | "none";
 
@@ -40,6 +41,7 @@ type Props = {
   incompleteSettings: IncompleteSetting[];
   bookingUrl: string;
   canLink: boolean;
+  linkTheme: LinkTheme;
 };
 
 function statusLabel(status: string) {
@@ -109,6 +111,7 @@ export default function OwnerDashboardClient({
   incompleteSettings,
   bookingUrl,
   canLink,
+  linkTheme,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState(todayISO);
   const [copyStatus, setCopyStatus] = useState("");
@@ -237,6 +240,8 @@ export default function OwnerDashboardClient({
             todayISO={todayISO}
             bookingUrl={bookingUrl}
             canLink={canLink}
+            storeName={storeName}
+            linkTheme={linkTheme}
           />
 
           {incompleteSettings.length > 0 ? (
