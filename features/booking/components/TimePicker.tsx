@@ -92,7 +92,7 @@ export default function TimePicker({
               background: active
                 ? "linear-gradient(135deg, var(--brand-accent), var(--brand-primary))"
                 : colors.background.base,
-              color: active ? colors.text.inverse : colors.text.primary,
+              color: active ? "var(--brand-contrast)" : colors.text.primary,
             }}
           >
             <span>{time}</span>

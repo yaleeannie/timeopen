@@ -42,6 +42,9 @@ function TranslationFields({
       <summary className={`cursor-pointer text-sm font-black ${labelClass}`}>
         외국어 메뉴명
       </summary>
+      <p className={`mt-2 text-xs font-medium leading-5 ${tone === "cyan" ? "text-white/75" : "text-gray-400"}`}>
+        다국어 예약 화면은 베타로 제공 중이에요.
+      </p>
       <div className="mt-4 grid gap-3">
         {SERVICE_TRANSLATION_LOCALES.map((locale) => (
           <label key={locale} className="block">

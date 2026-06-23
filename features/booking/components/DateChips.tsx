@@ -84,12 +84,12 @@ export default function DateChips({ value, onChange, days = 14 }: Props) {
                     background: active
                       ? "linear-gradient(135deg, var(--brand-accent), var(--brand-primary))"
                       : colors.background.base,
-                    color: active ? colors.text.inverse : colors.text.primary,
+                    color: active ? "var(--brand-contrast)" : colors.text.primary,
                   }}
                 >
                   <div
                     className="text-xs font-semibold"
-                    style={{ color: active ? "rgba(255,255,255,0.85)" : colors.text.secondary }}
+                    style={{ color: active ? "var(--brand-contrast)" : colors.text.secondary }}
                   >
                     {it.dow}
                   </div>
@@ -98,7 +98,7 @@ export default function DateChips({ value, onChange, days = 14 }: Props) {
 
                   <div
                     className="text-[11px]"
-                    style={{ color: active ? "rgba(255,255,255,0.75)" : colors.text.muted }}
+                    style={{ color: active ? "var(--brand-contrast)" : colors.text.muted }}
                   >
                     {it.month}
                   </div>

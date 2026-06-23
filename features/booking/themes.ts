@@ -10,11 +10,16 @@ type ThemeDefinition = {
   preview: string;
   previewCard: string;
   previewAccent: string;
+  storyGlow: boolean;
   variables: {
     "--brand-primary": string;
     "--brand-accent": string;
+    "--brand-ink": string;
+    "--brand-contrast": string;
     "--brand-soft": string;
     "--brand-border": string;
+    "--brand-shadow": string;
+    "--brand-focus": string;
     "--booking-shell-bg": string;
     "--booking-card-bg": string;
     "--booking-shadow": string;
@@ -24,56 +29,71 @@ type ThemeDefinition = {
 export const PUBLIC_BOOKING_THEMES: Record<LinkTheme, ThemeDefinition> = {
   minimal: {
     label: "미니멀",
-    page: "bg-gradient-to-br from-slate-50 via-white to-cyan-50",
+    page: "bg-[#F7F7F7]",
     shell: "glass-shell",
     logo: "brand-gradient",
-    preview: "bg-gradient-to-br from-slate-100 to-white",
+    preview: "bg-[#F5F5F5]",
     previewCard: "border-slate-200 bg-white",
-    previewAccent: "bg-slate-700",
+    previewAccent: "bg-black",
+    storyGlow: false,
     variables: {
-      "--brand-primary": "#334155",
-      "--brand-accent": "#00C1FF",
-      "--brand-soft": "#f1f5f9",
-      "--brand-border": "rgba(100, 116, 139, 0.32)",
-      "--booking-shell-bg": "rgba(255, 255, 255, 0.78)",
-      "--booking-card-bg": "rgba(255, 255, 255, 0.9)",
-      "--booking-shadow": "0 18px 54px rgba(51, 65, 85, 0.1)",
+      "--brand-primary": "#111111",
+      "--brand-accent": "#111111",
+      "--brand-ink": "#111111",
+      "--brand-contrast": "#FFFFFF",
+      "--brand-soft": "#F3F4F6",
+      "--brand-border": "rgba(17, 17, 17, 0.22)",
+      "--brand-shadow": "rgba(17, 17, 17, 0.14)",
+      "--brand-focus": "rgba(17, 17, 17, 0.16)",
+      "--booking-shell-bg": "rgba(255, 255, 255, 0.94)",
+      "--booking-card-bg": "rgba(255, 255, 255, 0.98)",
+      "--booking-shadow": "0 16px 42px rgba(15, 23, 42, 0.08)",
     },
   },
   beauty: {
     label: "뷰티",
-    page: "bg-gradient-to-br from-cyan-50 via-white to-blue-50",
+    page: "bg-[#FFF8FC]",
     shell: "glass-shell",
     logo: "brand-gradient",
-    preview: "bg-gradient-to-br from-[#e6fbff] via-white to-[#eaf3ff]",
-    previewCard: "border-white/80 bg-white/80",
-    previewAccent: "bg-gradient-to-r from-[#74E8FA] to-[#5ABEFF]",
+    preview: "bg-[#FFF4FA]",
+    previewCard: "border-[#FFD1E8] bg-white",
+    previewAccent: "bg-[#FF69B4]",
+    storyGlow: false,
     variables: {
-      "--brand-primary": "#38AEEF",
-      "--brand-accent": "#74E8FA",
-      "--brand-soft": "#ebfbff",
-      "--brand-border": "rgba(116, 232, 250, 0.55)",
-      "--booking-shell-bg": "rgba(255, 255, 255, 0.58)",
-      "--booking-card-bg": "rgba(255, 255, 255, 0.72)",
-      "--booking-shadow": "0 24px 68px rgba(56, 174, 239, 0.14)",
+      "--brand-primary": "#FF69B4",
+      "--brand-accent": "#FF69B4",
+      "--brand-ink": "#D93687",
+      "--brand-contrast": "#FFFFFF",
+      "--brand-soft": "#FFF0F7",
+      "--brand-border": "rgba(255, 105, 180, 0.34)",
+      "--brand-shadow": "rgba(255, 105, 180, 0.2)",
+      "--brand-focus": "rgba(255, 105, 180, 0.18)",
+      "--booking-shell-bg": "rgba(255, 255, 255, 0.92)",
+      "--booking-card-bg": "rgba(255, 255, 255, 0.96)",
+      "--booking-shadow": "0 18px 48px rgba(255, 105, 180, 0.1)",
     },
   },
   simple: {
-    label: "심플",
-    page: "bg-[#f5fbfe]",
+    label: "톡톡",
+    page: "bg-[#FFFCF2]",
     shell: "glass-shell",
     logo: "brand-gradient",
-    preview: "bg-[#f5fbfe]",
-    previewCard: "border-[#d8f2fb] bg-white",
-    previewAccent: "bg-[#00C1FF]",
+    preview: "bg-[#FFF8DD]",
+    previewCard: "border-[#FFE59A] bg-white",
+    previewAccent: "bg-[#FFBF00]",
+    storyGlow: false,
     variables: {
-      "--brand-primary": "#00AEEA",
-      "--brand-accent": "#00C1FF",
-      "--brand-soft": "#e9faff",
-      "--brand-border": "rgba(0, 193, 255, 0.4)",
-      "--booking-shell-bg": "rgba(255, 255, 255, 0.82)",
-      "--booking-card-bg": "rgba(255, 255, 255, 0.92)",
-      "--booking-shadow": "0 16px 46px rgba(0, 174, 234, 0.09)",
+      "--brand-primary": "#FFBF00",
+      "--brand-accent": "#FFBF00",
+      "--brand-ink": "#8A6700",
+      "--brand-contrast": "#111111",
+      "--brand-soft": "#FFF7D6",
+      "--brand-border": "rgba(216, 159, 0, 0.34)",
+      "--brand-shadow": "rgba(216, 159, 0, 0.18)",
+      "--brand-focus": "rgba(216, 159, 0, 0.18)",
+      "--booking-shell-bg": "rgba(255, 255, 255, 0.92)",
+      "--booking-card-bg": "rgba(255, 255, 255, 0.97)",
+      "--booking-shadow": "0 16px 44px rgba(216, 159, 0, 0.09)",
     },
   },
   glow: {
@@ -84,14 +104,19 @@ export const PUBLIC_BOOKING_THEMES: Record<LinkTheme, ThemeDefinition> = {
     preview: "bg-gradient-to-br from-[#ddfbff] via-white to-[#dcefff]",
     previewCard: "border-white/80 bg-white/65 backdrop-blur",
     previewAccent: "brand-gradient",
+    storyGlow: true,
     variables: {
       "--brand-primary": "#00C1FF",
       "--brand-accent": "#00D6F7",
+      "--brand-ink": "#009ED3",
+      "--brand-contrast": "#FFFFFF",
       "--brand-soft": "#e9faff",
       "--brand-border": "rgba(125, 223, 255, 0.48)",
-      "--booking-shell-bg": "rgba(255, 255, 255, 0.46)",
-      "--booking-card-bg": "rgba(255, 255, 255, 0.68)",
-      "--booking-shadow": "0 24px 70px rgba(0, 193, 255, 0.13)",
+      "--brand-shadow": "rgba(0, 193, 255, 0.18)",
+      "--brand-focus": "rgba(0, 193, 255, 0.16)",
+      "--booking-shell-bg": "rgba(255, 255, 255, 0.64)",
+      "--booking-card-bg": "rgba(255, 255, 255, 0.78)",
+      "--booking-shadow": "0 20px 58px rgba(0, 193, 255, 0.1)",
     },
   },
 };

@@ -58,6 +58,9 @@ export default function OpenSlotShareCard({
           primary: theme.variables["--brand-primary"],
           accent: theme.variables["--brand-accent"],
           soft: theme.variables["--brand-soft"],
+          glow: theme.storyGlow,
+          ink: theme.variables["--brand-ink"],
+          contrast: theme.variables["--brand-contrast"],
         },
       }),
     [dateISO, note, storeName, theme, time, todayISO]
@@ -127,7 +130,7 @@ export default function OpenSlotShareCard({
   }
 
   return (
-    <section className="glass-card mt-2.5 rounded-[22px] p-4" aria-labelledby="open-slot-share">
+    <section className="glass-card rounded-[22px] p-4" aria-labelledby="open-slot-share">
       <div>
         <h2 id="open-slot-share" className="text-base font-black text-slate-900">
           빈 시간 공유

@@ -33,12 +33,12 @@ const managementFeatures = [
   {
     icon: "SMS",
     title: "문자 알림 상태",
-    description: "사장님과 고객에게 전달된 예약 문자 상태를 예약별로 확인해요.",
+    description: "현재는 한국 번호 기준으로 먼저 테스트하고 있어요. 해외 번호 문자 알림은 준비 중입니다.",
   },
   {
     icon: "文",
     title: "다국어 예약 화면",
-    description: "외국인 고객도 익숙한 언어로 메뉴를 확인하고 예약할 수 있어요.",
+    description: "다국어 예약 화면은 베타로 제공 중이에요.",
   },
 ];
 
@@ -211,7 +211,7 @@ export default async function Page() {
               </a>
             </div>
             <p className="mt-4 text-xs font-medium text-slate-400">
-              네일·속눈썹·왁싱·헤어·피부관리 1인샵을 위한 초기 베타 서비스입니다.
+              네일샵·속눈썹샵·왁싱샵·1인 미용실·피부관리샵을 위한 초기 베타 서비스입니다.
             </p>
           </div>
 
@@ -277,8 +277,8 @@ export default async function Page() {
                 한 화면에 정리해요
               </h2>
               <p className="mt-4 text-sm font-medium leading-7 text-slate-500 sm:text-base">
-                메뉴판, 예약 현황, 문자 발송 상태, 고객용 다국어 화면을 복잡한 도구
-                없이 TimeOpen 안에서 관리할 수 있어요.
+                메뉴판, 예약 현황, 문자 발송 상태와 베타 다국어 예약 화면을 복잡한
+                도구 없이 TimeOpen 안에서 관리할 수 있어요.
               </p>
             </div>
 

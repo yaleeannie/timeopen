@@ -2,8 +2,6 @@
 
 import { useMemo, useRef, useState } from "react";
 import LogoutButton from "./LogoutButton";
-import OpenSlotShareCard from "./OpenSlotShareCard";
-import type { LinkTheme } from "@/features/booking/themes";
 
 export type SmsDisplayStatus = "success" | "partial" | "failed" | "none";
 
@@ -41,7 +39,6 @@ type Props = {
   incompleteSettings: IncompleteSetting[];
   bookingUrl: string;
   canLink: boolean;
-  linkTheme: LinkTheme;
 };
 
 function statusLabel(status: string) {
@@ -111,7 +108,6 @@ export default function OwnerDashboardClient({
   incompleteSettings,
   bookingUrl,
   canLink,
-  linkTheme,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState(todayISO);
   const [copyStatus, setCopyStatus] = useState("");
@@ -236,13 +232,22 @@ export default function OwnerDashboardClient({
             </div>
           </section>
 
-          <OpenSlotShareCard
-            todayISO={todayISO}
-            bookingUrl={bookingUrl}
-            canLink={canLink}
-            storeName={storeName}
-            linkTheme={linkTheme}
-          />
+          <section className="glass-card mt-2.5 rounded-[20px] px-3.5 py-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-black text-slate-900">빈 시간 공유</div>
+                <p className="mt-0.5 text-xs font-medium leading-5 text-slate-500">
+                  오늘 가능한 시간을 인스타 스토리나 DM에 빠르게 공유해보세요.
+                </p>
+              </div>
+              <a
+                href="/owner/open-slot"
+                className="brand-chip flex min-h-9 shrink-0 items-center rounded-xl px-3 text-xs font-black shadow-sm"
+              >
+                빈 시간 만들기
+              </a>
+            </div>
+          </section>
 
           {incompleteSettings.length > 0 ? (
             <section className="mt-2.5 flex items-center gap-2 overflow-x-auto rounded-[18px] border border-white/65 bg-white/30 px-3 py-2.5 backdrop-blur-lg">

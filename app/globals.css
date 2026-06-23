@@ -5,8 +5,12 @@
   --foreground: #102033;
   --brand-primary: #00c1ff;
   --brand-accent: #00d6f7;
+  --brand-ink: #009ed3;
+  --brand-contrast: #ffffff;
   --brand-soft: #e9faff;
   --brand-border: rgba(125, 223, 255, 0.48);
+  --brand-shadow: rgba(0, 193, 255, 0.2);
+  --brand-focus: rgba(0, 193, 255, 0.2);
 }
 
 @theme inline {
@@ -51,7 +55,7 @@ body {
   }
 
   .brand-text {
-    color: var(--brand-primary);
+    color: var(--brand-ink);
   }
 
   .brand-border {
@@ -60,20 +64,20 @@ body {
 
   .brand-soft {
     background: var(--brand-soft);
-    color: var(--brand-primary);
+    color: var(--brand-ink);
   }
 
   .brand-selected {
     border-color: transparent;
     background: linear-gradient(135deg, var(--brand-accent), var(--brand-primary));
-    color: white;
-    box-shadow: 0 10px 24px rgba(0, 193, 255, 0.2);
+    color: var(--brand-contrast);
+    box-shadow: 0 10px 24px var(--brand-shadow);
   }
 
   .brand-button {
     background: linear-gradient(135deg, var(--brand-accent), var(--brand-primary));
-    color: white;
-    box-shadow: 0 12px 26px rgba(0, 193, 255, 0.2);
+    color: var(--brand-contrast);
+    box-shadow: 0 12px 26px var(--brand-shadow);
   }
 
   .brand-button:hover {
@@ -83,14 +87,14 @@ body {
   .brand-button:focus-visible,
   .brand-outline:focus-visible,
   .brand-selected:focus-visible {
-    outline: 3px solid rgba(0, 193, 255, 0.2);
+    outline: 3px solid var(--brand-focus);
     outline-offset: 2px;
   }
 
   .brand-outline {
     border: 1px solid var(--brand-border);
     background: rgba(255, 255, 255, 0.72);
-    color: var(--brand-primary);
+    color: var(--brand-ink);
   }
 
   .brand-outline:hover {
@@ -101,7 +105,7 @@ body {
   .brand-chip {
     border: 1px solid var(--brand-border);
     background: var(--brand-soft);
-    color: var(--brand-primary);
+    color: var(--brand-ink);
   }
 
   .brand-input {
@@ -112,7 +116,7 @@ body {
 
   .brand-input:focus {
     border-color: var(--brand-primary);
-    box-shadow: 0 0 0 4px rgba(0, 193, 255, 0.1);
+    box-shadow: 0 0 0 4px var(--brand-focus);
     outline: none;
   }
 

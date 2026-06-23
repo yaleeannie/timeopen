@@ -4,6 +4,9 @@ type StoryTheme = {
   primary: string;
   accent: string;
   soft: string;
+  glow: boolean;
+  ink: string;
+  contrast: string;
 };
 
 type OpenSlotStoryInput = {
@@ -98,6 +101,11 @@ export function buildOpenSlotStorySvg({
         `<text x="540" y="${1170 + index * 68}" text-anchor="middle" font-size="42" font-weight="700" fill="#334155">${line}</text>`
     )
     .join("");
+  const backgroundMarkup = theme.glow
+    ? `<rect width="1080" height="1920" fill="url(#background)"/>
+  <circle cx="145" cy="235" r="250" fill="${theme.accent}" fill-opacity="0.2" filter="url(#blur)"/>
+  <circle cx="940" cy="1510" r="320" fill="${theme.primary}" fill-opacity="0.14" filter="url(#blur)"/>`
+    : `<rect width="1080" height="1920" fill="${theme.soft}"/>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
   <defs>
@@ -117,20 +125,18 @@ export function buildOpenSlotStorySvg({
       <feDropShadow dx="0" dy="28" stdDeviation="34" flood-color="${theme.primary}" flood-opacity="0.16"/>
     </filter>
   </defs>
-  <rect width="1080" height="1920" fill="url(#background)"/>
-  <circle cx="145" cy="235" r="250" fill="${theme.accent}" fill-opacity="0.26" filter="url(#blur)"/>
-  <circle cx="940" cy="1510" r="320" fill="${theme.primary}" fill-opacity="0.18" filter="url(#blur)"/>
-  <rect x="78" y="82" width="924" height="1756" rx="72" fill="#FFFFFF" fill-opacity="0.58" stroke="#FFFFFF" stroke-opacity="0.88" stroke-width="3" filter="url(#shadow)"/>
-  <text x="540" y="218" text-anchor="middle" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="34" font-weight="800" fill="${theme.primary}">TimeOpen</text>
+  ${backgroundMarkup}
+  <rect x="78" y="82" width="924" height="1756" rx="72" fill="#FFFFFF" fill-opacity="${theme.glow ? "0.68" : "0.96"}" stroke="#FFFFFF" stroke-width="3" filter="url(#shadow)"/>
+  <text x="540" y="218" text-anchor="middle" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="34" font-weight="800" fill="${theme.ink}">TimeOpen</text>
   <text x="540" y="315" text-anchor="middle" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="48" font-weight="800" fill="#0F172A">${safeShopName}</text>
   <rect x="418" y="382" width="244" height="18" rx="9" fill="url(#brand)"/>
   <text x="540" y="705" text-anchor="middle" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="54" font-weight="800" fill="#334155">OPEN SLOT</text>
   <text x="540" y="835" text-anchor="middle" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="82" font-weight="900" fill="#0F172A">${mainTimeLabel}</text>
-  <text x="540" y="945" text-anchor="middle" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="88" font-weight="900" fill="${theme.primary}">예약 가능</text>
+  <text x="540" y="945" text-anchor="middle" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="88" font-weight="900" fill="${theme.ink}">예약 가능</text>
   <text x="540" y="1045" text-anchor="middle" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="38" font-weight="700" fill="#475569">원하시는 시간에 편하게 예약해주세요</text>
   ${noteMarkup}
   <rect x="220" y="1428" width="640" height="142" rx="71" fill="url(#brand)"/>
-  <text x="540" y="1518" text-anchor="middle" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="42" font-weight="900" fill="#FFFFFF">예약 링크는 프로필에서</text>
+  <text x="540" y="1518" text-anchor="middle" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="42" font-weight="900" fill="${theme.contrast}">예약 링크는 프로필에서</text>
   <text x="540" y="1700" text-anchor="middle" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="30" font-weight="700" fill="#64748B">Instagram booking link by TimeOpen</text>
 </svg>`;
 }

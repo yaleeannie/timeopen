@@ -27,6 +27,9 @@ test("builds a 1080 by 1920 SVG and escapes editable text", () => {
       primary: "#00C1FF",
       accent: "#00D6F7",
       soft: "#E9FAFF",
+      glow: true,
+      ink: "#009ED3",
+      contrast: "#FFFFFF",
     },
   });
 

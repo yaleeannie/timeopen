@@ -399,7 +399,7 @@ export default function BookingScreen({ handle }: Props) {
                   className={[
                     "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black",
                     active || complete
-                      ? "brand-gradient text-white"
+                      ? "brand-gradient [color:var(--brand-contrast)]"
                       : "brand-soft",
                   ].join(" ")}
                 >
@@ -453,14 +453,14 @@ export default function BookingScreen({ handle }: Props) {
                   className={[
                     "relative block min-h-[104px] w-full shrink-0 overflow-visible rounded-[18px] border px-4 py-4 text-left opacity-100 shadow-sm transition visible focus:outline-none",
                     active
-                      ? "brand-gradient border-transparent text-white"
+                      ? "brand-gradient border-transparent [color:var(--brand-contrast)]"
                       : "brand-outline text-gray-900",
                   ].join(" ")}
                 >
                   <div className="text-base font-semibold leading-tight">
                     {getLocalizedServiceName(item.name, item.name_translations, locale)}
                   </div>
-                  <div className={`mt-2 text-[13px] leading-5 ${active ? "text-white/85" : "text-gray-500"}`}>
+                  <div className={`mt-2 text-[13px] leading-5 ${active ? "[color:var(--brand-contrast)] opacity-80" : "text-gray-500"}`}>
                     {item.duration_min ? t("minutes", { count: item.duration_min }) : ""}
                     {item.price != null ? ` · ${formatWon(item.price)}` : ""}
                   </div>
@@ -596,6 +596,12 @@ export default function BookingScreen({ handle }: Props) {
               className="brand-input min-h-11 min-w-0 flex-1 rounded-xl px-3 py-2.5 text-base"
             />
           </div>
+          {locale === "ko" ? (
+            <p className="mt-2 text-[11px] font-medium leading-5 text-slate-400">
+              해외 번호 문자 알림은 준비 중입니다. 현재는 한국 번호 기준으로 먼저
+              테스트하고 있어요.
+            </p>
+          ) : null}
         </div>
 
         {msg ? (
@@ -674,33 +680,16 @@ export default function BookingScreen({ handle }: Props) {
             box-shadow 160ms ease;
         }
 
-        .booking-date-tone button:hover,
-        .booking-time-tone button:hover {
-          border-color: rgba(0, 193, 255, 0.55) !important;
-          background: rgba(0, 214, 247, 0.1) !important;
+        .booking-date-tone button:not([style*="linear-gradient"]):hover,
+        .booking-time-tone button:not([style*="linear-gradient"]):hover {
+          border-color: var(--brand-primary) !important;
+          background: var(--brand-soft) !important;
         }
 
         .booking-date-tone button:focus-visible,
         .booking-time-tone button:focus-visible {
           outline: none;
-          box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.45);
-        }
-
-        .booking-date-tone button[style*="background:#2F2F2F"],
-        .booking-date-tone button[style*="background: #2F2F2F"],
-        .booking-date-tone button[style*="background: rgb(47, 47, 47)"],
-        .booking-time-tone button[style*="background:#2F2F2F"],
-        .booking-time-tone button[style*="background: #2F2F2F"],
-        .booking-time-tone button[style*="background: rgb(47, 47, 47)"] {
-          border-color: #00c1ff !important;
-          background: linear-gradient(135deg, #00d6f7, #00c1ff) !important;
-          color: #ffffff !important;
-        }
-
-        .booking-date-tone button[style*="background:#2F2F2F"] div,
-        .booking-date-tone button[style*="background: #2F2F2F"] div,
-        .booking-date-tone button[style*="background: rgb(47, 47, 47)"] div {
-          color: rgba(255, 255, 255, 0.86) !important;
+          box-shadow: 0 0 0 3px var(--brand-focus);
         }
       `}</style>
     </div>
