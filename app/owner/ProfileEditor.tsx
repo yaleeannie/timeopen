@@ -22,6 +22,8 @@ type Props = {
   initialHandle?: string;
   initialTheme: LinkTheme;
   initialBookingEnabled: boolean;
+  initialWithdrawalRequested: boolean;
+  initialDisabled: boolean;
 };
 
 type HandleAvailability =
@@ -38,6 +40,8 @@ export default function ProfileEditor({
   initialHandle = "",
   initialTheme,
   initialBookingEnabled,
+  initialWithdrawalRequested,
+  initialDisabled,
 }: Props) {
   const router = useRouter();
 
@@ -46,10 +50,14 @@ export default function ProfileEditor({
   const [loadingExtra, setLoadingExtra] = useState(false);
   const [loadingTheme, setLoadingTheme] = useState(false);
   const [loadingBookingStatus, setLoadingBookingStatus] = useState(false);
+  const [loadingWithdrawal, setLoadingWithdrawal] = useState(false);
 
   const [msg, setMsg] = useState("");
   const [themeMsg, setThemeMsg] = useState("");
   const [bookingStatusMsg, setBookingStatusMsg] = useState("");
+  const [withdrawalMsg, setWithdrawalMsg] = useState("");
+  const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
+  const [withdrawalReason, setWithdrawalReason] = useState("");
   const [handleAvailability, setHandleAvailability] = useState<HandleAvailability>({
     state: "idle",
     message: "",
@@ -62,6 +70,7 @@ export default function ProfileEditor({
   const [noticeText, setNoticeText] = useState(initialNotice ?? "");
   const [linkTheme, setLinkTheme] = useState<LinkTheme>(initialTheme);
   const [bookingEnabled, setBookingEnabled] = useState(initialBookingEnabled);
+  const withdrawalRequested = initialWithdrawalRequested || initialDisabled;
 
   useEffect(() => {
     setShopName(initialName ?? "");
@@ -325,6 +334,31 @@ export default function ProfileEditor({
       setBookingStatusMsg("예약 접수 상태 저장 중 오류가 발생했습니다.");
     } finally {
       setLoadingBookingStatus(false);
+    }
+  }
+
+  async function onRequestWithdrawal() {
+    setLoadingWithdrawal(true);
+    setWithdrawalMsg("");
+
+    try {
+      const res = await fetch("/api/settings/withdrawal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: withdrawalReason }),
+      });
+      const json: { error?: string } = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setWithdrawalMsg(json.error ?? "탈퇴 요청 처리 중 오류가 발생했습니다.");
+        return;
+      }
+
+      window.location.href = "/login?withdrawal=requested";
+    } catch {
+      setWithdrawalMsg("탈퇴 요청 처리 중 오류가 발생했습니다.");
+    } finally {
+      setLoadingWithdrawal(false);
     }
   }
 
@@ -622,6 +656,93 @@ export default function ProfileEditor({
         <div className="text-sm text-blue-100">아직 입력된 내용이 없습니다.</div>
       ) : null}
       </div>
+
+      <div className="rounded-[24px] border border-red-100 bg-white/70 p-4 backdrop-blur">
+        <div className="text-base font-black text-red-700">계정 관리</div>
+        <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
+          탈퇴를 요청하면 예약 링크가 닫히고, 이후 데이터 삭제는 확인 후 진행돼요.
+        </p>
+        {withdrawalRequested ? (
+          <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold leading-5 text-red-700">
+            이미 탈퇴 요청이 접수되었습니다. 예약 링크는 닫힌 상태예요.
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setWithdrawalModalOpen(true)}
+            className="mt-4 min-h-11 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-100"
+          >
+            회원 탈퇴하기
+          </button>
+        )}
+      </div>
+
+      {withdrawalModalOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="withdrawal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4 py-6 backdrop-blur-sm"
+        >
+          <div className="w-full max-w-md rounded-[28px] border border-white/70 bg-white/90 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
+            <h2
+              id="withdrawal-title"
+              className="text-2xl font-black tracking-[-0.04em] text-slate-950"
+            >
+              정말 탈퇴하시겠어요?
+            </h2>
+            <p className="mt-3 text-sm font-medium leading-6 text-gray-500">
+              탈퇴를 요청하면 예약 링크가 닫히고 더 이상 고객이 예약할 수 없어요.
+              기존 예약 및 데이터는 확인 후 처리됩니다.
+            </p>
+
+            <label className="mt-5 block">
+              <span className="mb-2 block text-sm font-black text-gray-700">
+                탈퇴 사유를 알려주세요. 더 나은 TimeOpen을 만드는 데 도움이 돼요.
+              </span>
+              <textarea
+                value={withdrawalReason}
+                onChange={(event) => setWithdrawalReason(event.target.value)}
+                rows={4}
+                maxLength={FIELD_LIMITS.withdrawalReasonMax}
+                className="brand-input w-full resize-none rounded-2xl px-4 py-3 text-base"
+                placeholder="선택 입력"
+              />
+              <span className="mt-1 block text-right text-xs font-bold text-gray-400">
+                {withdrawalReason.length}/{FIELD_LIMITS.withdrawalReasonMax}
+              </span>
+            </label>
+
+            {withdrawalMsg ? (
+              <div className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+                {withdrawalMsg}
+              </div>
+            ) : null}
+
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setWithdrawalModalOpen(false);
+                  setWithdrawalMsg("");
+                }}
+                disabled={loadingWithdrawal}
+                className="min-h-12 rounded-2xl border border-[#dcecef] bg-white px-4 text-sm font-black text-gray-500 disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={onRequestWithdrawal}
+                disabled={loadingWithdrawal}
+                className="min-h-12 rounded-2xl bg-red-600 px-4 text-sm font-black text-white shadow-[0_14px_30px_rgba(220,38,38,0.18)] disabled:opacity-50"
+              >
+                {loadingWithdrawal ? "처리 중..." : "탈퇴 요청하기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

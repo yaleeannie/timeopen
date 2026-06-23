@@ -13,6 +13,7 @@ export const FIELD_LIMITS = {
   customerRequestMax: 300,
   handleMin: 3,
   handleMax: 30,
+  withdrawalReasonMax: 500,
 } as const;
 
 export const RESERVED_HANDLES = new Set([
@@ -112,6 +113,19 @@ export function validateCustomerName(value: string) {
   }
 
   return { ok: true as const, value: name };
+}
+
+export function validateWithdrawalReason(value: string) {
+  const reason = value.trim();
+
+  if (reason.length > FIELD_LIMITS.withdrawalReasonMax) {
+    return {
+      ok: false as const,
+      error: `탈퇴 사유는 최대 ${FIELD_LIMITS.withdrawalReasonMax}자까지 입력할 수 있어요.`,
+    };
+  }
+
+  return { ok: true as const, value: reason };
 }
 
 export function validateServiceInput(input: {

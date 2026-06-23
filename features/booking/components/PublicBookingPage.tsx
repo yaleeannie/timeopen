@@ -21,6 +21,7 @@ type Props = {
   shopName?: string;
   locationText?: string;
   noticeText?: string;
+  disabled?: boolean;
 };
 
 function PublicBookingPageContent({
@@ -31,6 +32,7 @@ function PublicBookingPageContent({
   shopName = "",
   locationText = "",
   noticeText = "",
+  disabled = false,
 }: Props) {
   const { locale, t } = usePublicBookingI18n();
   const theme = PUBLIC_BOOKING_THEMES[linkTheme];
@@ -59,7 +61,7 @@ function PublicBookingPageContent({
             <p className="mt-2 text-sm leading-5 text-gray-500">{t("bookingSubtitle")}</p>
           </header>
 
-          {bookingEnabled ? (
+          {!disabled && bookingEnabled ? (
             <BookingScreen handle={handle} bookingSlotMode={bookingSlotMode} />
           ) : (
             <section className="space-y-3.5">
@@ -79,10 +81,14 @@ function PublicBookingPageContent({
                   …
                 </div>
                 <h2 className="mt-5 text-2xl font-black tracking-[-0.04em] text-slate-950">
-                  지금은 예약을 잠시 받고 있지 않아요.
+                  {disabled
+                    ? "지금은 예약을 받을 수 없는 링크예요."
+                    : "지금은 예약을 잠시 받고 있지 않아요."}
                 </h2>
                 <p className="mt-2 text-sm font-medium leading-6 text-gray-500">
-                  예약이 다시 열리면 이 링크에서 예약할 수 있어요.
+                  {disabled
+                    ? "샵에서 예약 링크를 다시 열면 이곳에서 예약할 수 있어요."
+                    : "예약이 다시 열리면 이 링크에서 예약할 수 있어요."}
                 </p>
                 {noticeText.trim() ? (
                   <div className="mt-5 rounded-2xl bg-white/70 px-4 py-3 text-left text-sm font-medium leading-6 text-gray-600">

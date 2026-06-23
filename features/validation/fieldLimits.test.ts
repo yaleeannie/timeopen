@@ -4,6 +4,7 @@ import {
   FIELD_LIMITS,
   validateHandleValue,
   validateServiceInput,
+  validateWithdrawalReason,
 } from "./fieldLimits";
 
 test("validates service description max length", () => {
@@ -112,4 +113,15 @@ test("rejects reserved handles and edge punctuation", () => {
   assert.equal(validateHandleValue("-myshop").ok, false);
   assert.equal(validateHandleValue("myshop_").ok, false);
   assert.equal(validateHandleValue("내샵").ok, false);
+});
+
+test("validates withdrawal reason max length", () => {
+  assert.deepEqual(validateWithdrawalReason("  잠시 쉬어갈게요.  "), {
+    ok: true,
+    value: "잠시 쉬어갈게요.",
+  });
+  assert.equal(
+    validateWithdrawalReason("a".repeat(FIELD_LIMITS.withdrawalReasonMax + 1)).ok,
+    false
+  );
 });

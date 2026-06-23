@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AuthShell from "@/components/AuthShell";
 import { validateEmail } from "@/features/auth/email";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -10,6 +10,13 @@ export default function LoginPage() {
   const [pw, setPw] = useState("");
   const [msg, setMsg] = useState<string>("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("withdrawal") === "requested") {
+      setMsg("탈퇴 요청이 접수되었어요.");
+    }
+  }, []);
 
   async function onLogin() {
     const emailValidation = validateEmail(email);
@@ -96,7 +103,13 @@ export default function LoginPage() {
           </button>
 
           {msg ? (
-            <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold leading-5 text-red-700 [overflow-wrap:anywhere]">
+            <div
+              className={`mt-4 rounded-xl border px-4 py-3 text-sm font-bold leading-5 [overflow-wrap:anywhere] ${
+                msg.includes("접수")
+                  ? "brand-chip"
+                  : "border-red-100 bg-red-50 text-red-700"
+              }`}
+            >
               {msg}
             </div>
           ) : null}
