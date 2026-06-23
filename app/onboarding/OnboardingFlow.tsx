@@ -54,24 +54,24 @@ const STEP_COPY = [
     description: "고객에게 보여질 매장 이름과 안내를 설정해요.",
   },
   {
-    title: "서비스를 등록해볼까요?",
-    description: "고객이 예약할 서비스와 가격, 소요 시간을 입력해요.",
+    title: "메뉴판을 만들어볼까요?",
+    description: "고객이 예약할 메뉴와 가격, 소요 시간을 입력해요.",
   },
   {
     title: "예약 가능한 시간을 정해요",
     description: "처음에는 간단히 운영 요일과 시간을 정하면 돼요.",
   },
   {
-    title: "예약 링크를 만들어요",
-    description: "고객에게 공유할 나만의 예약 주소예요.",
+    title: "인스타 예약 링크를 만들어요",
+    description: "인스타 프로필에 올릴 나만의 예약 주소예요.",
   },
 ];
 
 const INTRO_STEPS = [
   "매장 정보",
-  "서비스 설정",
+  "메뉴판 설정",
   "영업시간 설정",
-  "예약 링크 만들기",
+  "인스타 예약 링크 만들기",
 ];
 
 function createEmptyService(key: string): ServiceInput {
@@ -221,7 +221,7 @@ export default function OnboardingFlow({
         );
         if (invalidServiceIndex >= 0) {
           throw new Error(
-            `${invalidServiceIndex + 1}번째 서비스의 이름, 가격, 소요 시간을 모두 입력해주세요.`
+            `${invalidServiceIndex + 1}번째 메뉴의 이름, 가격, 소요 시간을 모두 입력해주세요.`
           );
         }
 
@@ -229,7 +229,7 @@ export default function OnboardingFlow({
           service.name.trim().toLocaleLowerCase()
         );
         if (new Set(normalizedNames).size !== normalizedNames.length) {
-          throw new Error("같은 이름의 서비스를 중복해서 등록할 수 없습니다.");
+          throw new Error("같은 이름의 메뉴를 중복해서 등록할 수 없습니다.");
         }
 
         const result = await postJson("/api/onboarding/service", {
@@ -346,12 +346,12 @@ export default function OnboardingFlow({
                 T
               </div>
               <h1 className="mt-6 text-3xl font-black leading-tight tracking-[-0.045em]">
-                예약 링크를 만들
+                인스타 예약 링크를 만들
                 <br />
                 준비를 해볼까요?
               </h1>
               <p className="mt-3 text-sm font-medium leading-6 text-gray-500">
-                매장 정보, 서비스, 영업시간만 설정하면 고객이 로그인 없이 예약할 수
+                샵 정보, 메뉴판, 영업시간만 설정하면 고객이 로그인 없이 예약할 수
                 있어요.
               </p>
             </header>
@@ -464,7 +464,7 @@ export default function OnboardingFlow({
               <div className="grid gap-5">
                 {initialServices.length > 0 ? (
                   <div className="brand-soft rounded-2xl px-4 py-3 text-sm font-bold leading-5">
-                    등록된 서비스를 불러왔어요. 내용을 수정하거나 새 서비스를 추가할 수
+                    등록된 메뉴를 불러왔어요. 내용을 수정하거나 새 메뉴를 추가할 수
                     있어요.
                   </div>
                 ) : null}
@@ -477,7 +477,7 @@ export default function OnboardingFlow({
                     >
                       <div className="mb-4 flex items-center justify-between gap-3">
                         <h2 className="text-base font-black text-gray-900">
-                          서비스 {index + 1}
+                          메뉴 {index + 1}
                         </h2>
                         {services.length > 1 || service.id ? (
                           <button
@@ -492,7 +492,7 @@ export default function OnboardingFlow({
 
                       <div className="grid gap-4">
                         <label>
-                          <span className={labelClass}>서비스명</span>
+                          <span className={labelClass}>메뉴명</span>
                           <input
                             value={service.name}
                             onChange={(event) =>
@@ -552,7 +552,7 @@ export default function OnboardingFlow({
                   onClick={addService}
                   className="brand-outline min-h-12 w-full rounded-2xl border-dashed px-4 text-sm font-black"
                 >
-                  + 서비스 추가
+                  + 메뉴 추가
                 </button>
               </div>
             ) : null}
@@ -681,7 +681,7 @@ export default function OnboardingFlow({
                 </label>
 
                 <div className="overflow-hidden rounded-[22px] bg-gradient-to-br from-[#eefcfa] to-[#eef8fd] p-4">
-                  <div className="brand-text text-xs font-black">예약 링크 미리보기</div>
+                  <div className="brand-text text-xs font-black">인스타 예약 링크 미리보기</div>
                   <div className="mt-2 break-all text-sm font-black leading-6 text-gray-800">
                     {bookingUrl}
                   </div>

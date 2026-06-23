@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase/client";
 export type Organization = {
   id: string;
   handle: string;
+  name: string | null;
   display_name: string | null;
   created_at: string;
 
@@ -14,7 +15,7 @@ export type Organization = {
 export async function fetchOrganizationByHandle(handle: string): Promise<Organization | null> {
   const { data, error } = await supabase
     .from("organizations")
-    .select("id, handle, display_name, created_at, location_text, notice_text")
+    .select("id, handle, name, display_name, created_at, location_text, notice_text")
     .eq("handle", handle)
     .maybeSingle();
 

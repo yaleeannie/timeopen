@@ -81,12 +81,12 @@ export default function SummaryPanel({
         <div className="my-5 h-px bg-white/20" />
 
         <div className="min-w-0">
-          <div className="text-sm font-bold text-white/80">예약 링크</div>
+          <div className="text-sm font-bold text-white/80">인스타 예약 링크</div>
           <div className="mt-1 break-words text-base font-extrabold [overflow-wrap:anywhere]">
             {previewPath}
           </div>
           <div className="mt-1 break-words text-sm leading-5 text-white/80 [overflow-wrap:anywhere]">
-            {canLink ? previewFullLink : "handle 설정 필요"}
+            {canLink ? previewFullLink : "인스타 예약 링크 설정 필요"}
           </div>
 
           {canLink ? (

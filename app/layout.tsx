@@ -10,7 +10,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "TimeOpen",
-  description: "예약 링크 하나로 끝나는 스케줄링",
+  description: "인스타로 예약받는 1인샵을 위한 간편 예약 링크",
 };
 
 export default function RootLayout({

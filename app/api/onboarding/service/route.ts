@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
 
   if (!body || !Array.isArray(body.services)) {
-    return NextResponse.json({ error: "서비스 목록이 필요합니다." }, { status: 400 });
+    return NextResponse.json({ error: "메뉴 목록이 필요합니다." }, { status: 400 });
   }
 
   const services: ParsedService[] = (body.services as ServiceRequest[]).map(
@@ -50,21 +50,21 @@ export async function POST(req: Request) {
   for (const [index, service] of services.entries()) {
     if (!service.name) {
       return NextResponse.json(
-        { error: `${index + 1}번째 서비스명을 입력해주세요.` },
+        { error: `${index + 1}번째 메뉴명을 입력해주세요.` },
         { status: 400 }
       );
     }
 
     if (!Number.isInteger(service.durationMin) || service.durationMin <= 0) {
       return NextResponse.json(
-        { error: `${index + 1}번째 서비스의 소요 시간을 확인해주세요.` },
+        { error: `${index + 1}번째 메뉴의 소요 시간을 확인해주세요.` },
         { status: 400 }
       );
     }
 
     if (!service.hasPrice || !Number.isFinite(service.price) || service.price < 0) {
       return NextResponse.json(
-        { error: `${index + 1}번째 서비스의 가격을 확인해주세요.` },
+        { error: `${index + 1}번째 메뉴의 가격을 확인해주세요.` },
         { status: 400 }
       );
     }
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
   const normalizedNames = services.map((service) => service.name.toLocaleLowerCase());
   if (new Set(normalizedNames).size !== normalizedNames.length) {
     return NextResponse.json(
-      { error: "같은 이름의 서비스를 중복해서 등록할 수 없습니다." },
+      { error: "같은 이름의 메뉴를 중복해서 등록할 수 없습니다." },
       { status: 400 }
     );
   }
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
 
     if (service.id && !existingIds.has(service.id)) {
       return NextResponse.json(
-        { error: "수정할 서비스를 찾을 수 없습니다. 화면을 새로고침해 주세요." },
+        { error: "수정할 메뉴를 찾을 수 없습니다. 화면을 새로고침해 주세요." },
         { status: 400 }
       );
     }

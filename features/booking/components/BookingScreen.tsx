@@ -108,6 +108,7 @@ export default function BookingScreen({ handle }: Props) {
 
   const [orgLocation, setOrgLocation] = useState<string>("");
   const [orgNotice, setOrgNotice] = useState<string>("");
+  const [orgName, setOrgName] = useState<string>("");
 
   const [msg, setMsg] = useState<string>("");
 
@@ -152,6 +153,7 @@ export default function BookingScreen({ handle }: Props) {
   useEffect(() => {
   (async () => {
     const org = await fetchOrganizationByHandle(handle);
+    setOrgName((org?.name ?? org?.display_name ?? "").trim());
     setOrgLocation((org?.location_text ?? "").trim());
     setOrgNotice((org?.notice_text ?? "").trim());
 
@@ -374,6 +376,15 @@ export default function BookingScreen({ handle }: Props) {
 
   return (
     <div className="space-y-3.5 pb-32">
+      <section className="glass-card rounded-[24px] px-4 py-4 text-center">
+        <div className="text-lg font-black tracking-[-0.025em] text-slate-950">
+          {orgName || `@${handle}`}
+        </div>
+        <p className="mt-1 text-xs font-medium leading-5 text-slate-500">
+          아래 메뉴판에서 원하는 메뉴와 시간을 선택해주세요.
+        </p>
+      </section>
+
       <div className="glass-card rounded-[24px] p-4">
         <div className="flex items-center gap-2">
           {(["service", "datetime", "customer"] as const).map((item, index) => {

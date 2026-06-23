@@ -6,15 +6,15 @@ export const dynamic = "force-dynamic";
 const coreFeatures = [
   {
     number: "01",
-    title: "로그인 없는 예약 링크",
+    title: "인스타 프로필용 예약 링크",
     description:
-      "고객은 별도 가입 없이 서비스와 시간을 고르고 바로 예약할 수 있어요.",
+      "프로필 링크를 누른 고객이 로그인 없이 메뉴와 시간을 고르고 바로 예약해요.",
   },
   {
     number: "02",
-    title: "오늘 일정 대시보드",
+    title: "DM 없는 예약 관리",
     description:
-      "오늘과 앞으로 7일의 예약을 시간순으로 확인하고 필요한 일정에 바로 접근해요.",
+      "DM을 다시 확인하지 않아도 오늘과 앞으로의 예약을 시간순으로 확인해요.",
   },
   {
     number: "03",
@@ -38,7 +38,7 @@ const managementFeatures = [
   {
     icon: "文",
     title: "다국어 예약 화면",
-    description: "외국인 고객도 익숙한 언어로 서비스를 확인하고 예약할 수 있어요.",
+    description: "외국인 고객도 익숙한 언어로 메뉴를 확인하고 예약할 수 있어요.",
   },
 ];
 
@@ -82,7 +82,7 @@ function DashboardPreview() {
             </div>
           </div>
           <div className="glass-card rounded-[20px] p-3.5">
-            <div className="text-[10px] font-bold text-slate-400">예약 링크</div>
+            <div className="text-[10px] font-bold text-slate-400">인스타 예약 링크</div>
             <div className="mt-1 truncate text-xs font-black text-slate-700">
               /u/yourshop
             </div>
@@ -184,16 +184,16 @@ export default async function Page() {
 
           <div className="relative text-center lg:text-left">
             <div className="brand-chip inline-flex rounded-full px-3.5 py-2 text-xs font-black">
-              작은 매장을 위한 예약 관리
+              1인 뷰티샵을 위한 인스타 예약 링크
             </div>
             <h1 className="mt-6 text-[2.55rem] font-black leading-[1.08] tracking-[-0.06em] sm:text-6xl lg:text-[4.25rem]">
-              예약 링크 하나로,
+              인스타 DM 예약,
               <br />
-              <span className="brand-text">매장 예약을 더 쉽게</span>
+              <span className="brand-text">이제 링크 하나로</span>
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-base font-medium leading-7 text-slate-600 sm:text-lg sm:leading-8 lg:mx-0">
-              고객은 로그인 없이 예약하고, 사장님은 오늘 일정과 예약 내역을 한눈에
-              확인해요.
+              인스타로 예약받는 1인샵을 위한 간편 예약 링크. 고객은 로그인 없이
+              메뉴와 시간을 고르고, 사장님은 DM 없이 예약을 관리해요.
             </p>
 
             <div className="mx-auto mt-8 grid max-w-md gap-3 sm:grid-cols-2 lg:mx-0">
@@ -211,7 +211,7 @@ export default async function Page() {
               </a>
             </div>
             <p className="mt-4 text-xs font-medium text-slate-400">
-              예약제 매장과 소규모 운영팀을 위한 초기 베타 서비스입니다.
+              네일·속눈썹·왁싱·헤어·피부관리 1인샵을 위한 초기 베타 서비스입니다.
             </p>
           </div>
 
@@ -225,13 +225,13 @@ export default async function Page() {
               className="absolute left-1/2 top-0 h-44 w-80 -translate-x-1/2 rounded-full bg-[#00C1FF]/12 blur-3xl"
             />
             <div className="relative">
-              <div className="brand-text text-sm font-black">예약 창구가 여러 개인 매장이라면</div>
+              <div className="brand-text text-sm font-black">인스타 DM으로 예약받고 있다면</div>
               <h2 className="mt-3 text-3xl font-black tracking-[-0.045em] sm:text-4xl">
                 DM, 전화, 카톡 예약이 흩어져 있나요?
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-sm font-medium leading-7 text-slate-500 sm:text-base">
-                TimeOpen은 고객에게 하나의 예약 링크를 제공하고, 들어온 예약을 일정
-                중심으로 모아 작은 매장의 확인 업무를 단순하게 만듭니다.
+                프로필에 TimeOpen 링크 하나만 올려두세요. 고객은 메뉴와 가능한 시간을
+                직접 고르고, 사장님은 흩어진 DM 대신 확정된 예약만 확인할 수 있어요.
               </p>
             </div>
           </div>
@@ -241,9 +241,9 @@ export default async function Page() {
           <div className="mb-8 max-w-2xl">
             <div className="brand-text text-sm font-black">핵심 기능</div>
             <h2 className="mt-2 text-3xl font-black leading-tight tracking-[-0.045em] sm:text-4xl">
-              예약을 받고 확인하는
+              인스타에서 예약까지
               <br />
-              가장 필요한 흐름부터
+              가장 짧은 흐름으로
             </h2>
           </div>
 
@@ -277,8 +277,8 @@ export default async function Page() {
                 한 화면에 정리해요
               </h2>
               <p className="mt-4 text-sm font-medium leading-7 text-slate-500 sm:text-base">
-                예약 현황, 문자 발송 상태, 고객용 다국어 화면을 각각 복잡한 도구 없이
-                TimeOpen 안에서 관리할 수 있어요.
+                메뉴판, 예약 현황, 문자 발송 상태, 고객용 다국어 화면을 복잡한 도구
+                없이 TimeOpen 안에서 관리할 수 있어요.
               </p>
             </div>
 
@@ -308,7 +308,7 @@ export default async function Page() {
           <div className="relative mx-auto max-w-2xl">
             <div className="text-sm font-black text-white/80">TimeOpen Beta</div>
             <h2 className="mt-3 text-3xl font-black tracking-[-0.045em] sm:text-4xl">
-              초기 베타 파트너를 모집 중입니다.
+              1인 뷰티샵 베타 파트너를 모집 중입니다.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-sm font-medium leading-7 text-white/85 sm:text-base">
               베타 기간 동안 무료로 사용 가능하며, 정식 출시 후 월 정액제 플랜으로
@@ -335,7 +335,7 @@ export default async function Page() {
           <div>
             <div className="brand-text text-sm font-black">TimeOpen</div>
             <p className="mt-1 text-xs font-medium text-slate-400">
-              작은 매장의 예약 운영을 더 단순하게.
+              인스타로 예약받는 1인샵을 위한 간편 예약 링크.
             </p>
           </div>
           <div className="flex items-center gap-4 text-xs font-bold text-slate-400">

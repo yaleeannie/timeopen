@@ -208,9 +208,9 @@ export default function OwnerDashboardClient({
           <section className="glass-card mt-2.5 rounded-[20px] px-3.5 py-3">
             <div className="flex min-w-0 items-center gap-3">
               <div className="min-w-0 flex-1">
-                <div className="brand-text text-[11px] font-black">예약 링크</div>
+                <div className="brand-text text-[11px] font-black">인스타 예약 링크</div>
                 <div className="mt-0.5 truncate text-xs font-bold text-slate-500">
-                  {canLink ? bookingUrl : "예약 링크 설정이 필요해요"}
+                  {canLink ? bookingUrl : "인스타 프로필에 올릴 링크를 만들어주세요"}
                 </div>
               </div>
               {canLink ? (
@@ -219,7 +219,7 @@ export default function OwnerDashboardClient({
                   onClick={copyBookingLink}
                   className="brand-chip min-h-9 shrink-0 rounded-xl px-3 text-xs font-black shadow-sm transition hover:bg-white"
                 >
-                  {copyStatus || "복사"}
+                  {copyStatus || "링크 복사"}
                 </button>
               ) : (
                 <a
@@ -392,9 +392,9 @@ export default function OwnerDashboardClient({
             </h2>
             <div className="grid grid-cols-4 gap-2">
               <QuickLink href="/reservations" icon="✓" label="예약관리" />
-              <QuickLink href="/settings/services" icon="+" label="서비스" />
+              <QuickLink href="/settings/services" icon="+" label="메뉴판" />
               <QuickLink href="/settings/availability" icon="◷" label="영업시간" />
-              <QuickLink href="/settings/profile" icon="···" label="설정" />
+              <QuickLink href="/settings/profile" icon="···" label="샵 프로필" />
             </div>
           </section>
         </div>

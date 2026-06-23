@@ -50,8 +50,8 @@ export default function CreateOrganizationPage() {
 
   return (
     <AuthShell
-      title="예약 링크를 만들어요"
-      description="고객에게 공유할 매장 전용 주소를 설정해주세요."
+      title="인스타 예약 링크를 만들어요"
+      description="인스타 프로필에 올릴 샵 전용 예약 주소를 설정해주세요."
       eyebrow="TimeOpen 시작하기"
     >
         <form onSubmit={onSubmit}>

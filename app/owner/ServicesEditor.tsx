@@ -40,7 +40,7 @@ function TranslationFields({
   return (
     <details className={`rounded-2xl border p-3 ${tone === "cyan" ? "border-white/35 bg-white/15" : "glass-card"}`}>
       <summary className={`cursor-pointer text-sm font-black ${labelClass}`}>
-        외국어 서비스명
+        외국어 메뉴명
       </summary>
       <div className="mt-4 grid gap-3">
         {SERVICE_TRANSLATION_LOCALES.map((locale) => (
@@ -105,7 +105,7 @@ export default function ServicesEditor({ organizationId }: Props) {
     setMsg("");
 
     if (!name.trim()) {
-      setMsg("서비스명을 입력해주세요.");
+      setMsg("메뉴명을 입력해주세요.");
       return;
     }
 
@@ -158,7 +158,7 @@ export default function ServicesEditor({ organizationId }: Props) {
     setMsg("");
 
     if (!editName.trim()) {
-      setMsg("서비스명을 입력해주세요.");
+      setMsg("메뉴명을 입력해주세요.");
       return;
     }
 
@@ -206,7 +206,7 @@ export default function ServicesEditor({ organizationId }: Props) {
   }
 
   async function deleteService(id: string) {
-    const ok = window.confirm("이 서비스를 삭제할까요?");
+    const ok = window.confirm("이 메뉴를 삭제할까요?");
     if (!ok) return;
 
     setMsg("");
@@ -231,10 +231,10 @@ export default function ServicesEditor({ organizationId }: Props) {
   return (
     <section className="min-w-0">
       <div className="brand-gradient mb-6 rounded-[24px] p-5 text-white shadow-[0_14px_30px_rgba(0,193,255,0.22)]">
-        <div className="mb-4 text-lg font-black">새 서비스</div>
+        <div className="mb-4 text-lg font-black">새 메뉴</div>
         <div className="grid gap-4">
         <div>
-          <div className="mb-1.5 text-sm font-bold text-white/90">서비스명</div>
+          <div className="mb-1.5 text-sm font-bold text-white/90">메뉴명</div>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -276,7 +276,7 @@ export default function ServicesEditor({ organizationId }: Props) {
           onClick={addService}
           className="brand-outline min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-black shadow-sm"
         >
-          서비스 저장
+          메뉴 저장
         </button>
         </div>
       </div>
@@ -284,7 +284,7 @@ export default function ServicesEditor({ organizationId }: Props) {
       {msg ? <div className="brand-chip mb-4 rounded-xl px-4 py-3 text-sm font-bold [overflow-wrap:anywhere]">{msg}</div> : null}
 
       <div className="mb-3 flex items-center justify-between px-1">
-        <div className="text-base font-black">서비스 목록</div>
+        <div className="text-base font-black">메뉴판</div>
         <div className="text-sm font-bold text-gray-400">{rows.length}개</div>
       </div>
       <div className="grid gap-3">
@@ -299,11 +299,11 @@ export default function ServicesEditor({ organizationId }: Props) {
               {isEditing ? (
                 <div className="grid gap-4">
                   <div>
-                    <div className="mb-1.5 text-sm font-bold text-gray-700">서비스명</div>
+                    <div className="mb-1.5 text-sm font-bold text-gray-700">메뉴명</div>
                     <input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      placeholder="서비스명"
+                      placeholder="메뉴명"
                       className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
                     />
                   </div>

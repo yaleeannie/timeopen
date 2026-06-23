@@ -19,7 +19,7 @@ export default function ServicePicker({ services, value, onChange }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
+      <div className="text-sm font-semibold text-gray-900">메뉴판</div>
 
       <div
         className={

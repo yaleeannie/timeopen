@@ -567,7 +567,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
                           {displayValue(row.customer_name)}
                         </div>
                         <div className="mt-0.5 truncate text-xs font-bold text-slate-500">
-                          {serviceName === "-" ? "서비스 미지정" : serviceName}
+                          {serviceName === "-" ? "메뉴 미지정" : serviceName}
                         </div>
                       </div>
 
@@ -632,8 +632,8 @@ export default async function ReservationsPage({ searchParams }: Props) {
         <nav className="brand-nav mt-7 grid grid-cols-4 gap-1 rounded-2xl p-2">
           <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">대시보드</a>
           <a href="/reservations" className="brand-chip flex min-h-11 items-center justify-center rounded-xl text-sm font-black">예약관리</a>
-          <a href="/settings/services" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">서비스</a>
-          <a href="/settings/profile" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">설정</a>
+          <a href="/settings/services" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">메뉴판</a>
+          <a href="/settings/profile" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">샵 프로필</a>
         </nav>
         </div>
       </div>

@@ -62,14 +62,14 @@ export default function ProfileEditor({
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setMsg(json?.error ?? "서비스명 저장 중 오류가 발생했습니다.");
+        setMsg(json?.error ?? "샵 이름 저장 중 오류가 발생했습니다.");
         return;
       }
 
-      setMsg("서비스명이 저장되었습니다.");
+      setMsg("샵 이름이 저장되었습니다.");
       router.refresh();
     } catch {
-      setMsg("서비스명 저장 중 오류가 발생했습니다.");
+      setMsg("샵 이름 저장 중 오류가 발생했습니다.");
     } finally {
       setLoadingName(false);
     }
@@ -89,14 +89,14 @@ export default function ProfileEditor({
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setMsg(json?.error ?? "예약 링크 저장 중 오류가 발생했습니다.");
+        setMsg(json?.error ?? "인스타 예약 링크 저장 중 오류가 발생했습니다.");
         return;
       }
 
-      setMsg("예약 링크가 저장되었습니다.");
+      setMsg("인스타 예약 링크가 저장되었습니다.");
       router.refresh();
     } catch {
-      setMsg("예약 링크 저장 중 오류가 발생했습니다.");
+      setMsg("인스타 예약 링크 저장 중 오류가 발생했습니다.");
     } finally {
       setLoadingHandle(false);
     }
@@ -137,7 +137,7 @@ export default function ProfileEditor({
     const link = getBookingUrl(handle);
     try {
       await navigator.clipboard.writeText(link);
-      setMsg("예약 링크가 복사되었습니다.");
+      setMsg("인스타 예약 링크가 복사되었습니다.");
     } catch {
       setMsg("링크 복사에 실패했습니다.");
     }
@@ -148,7 +148,7 @@ export default function ProfileEditor({
       <div className="glass-card rounded-[24px] p-4">
         <div className="mb-4 text-base font-black">기본 정보</div>
         <div className="mb-5">
-        <div className="mb-1.5 text-sm font-bold text-gray-700">서비스명</div>
+        <div className="mb-1.5 text-sm font-bold text-gray-700">샵 이름</div>
         <input
           value={shopName}
           onChange={(e) => setShopName(e.target.value)}
@@ -163,13 +163,13 @@ export default function ProfileEditor({
             disabled={loadingName}
             className="brand-button min-h-11 rounded-xl px-4 py-2.5 text-sm font-black disabled:opacity-60"
           >
-            {loadingName ? "저장 중..." : "서비스명 저장"}
+            {loadingName ? "저장 중..." : "샵 이름 저장"}
           </button>
         </div>
       </div>
 
         <div>
-        <div className="mb-1.5 text-sm font-bold text-gray-700">예약 링크</div>
+        <div className="mb-1.5 text-sm font-bold text-gray-700">인스타 예약 링크</div>
         <input
           value={handle}
           onChange={(e) => {
@@ -181,7 +181,7 @@ export default function ProfileEditor({
         />
 
         <div className="mt-2 text-sm leading-5 text-gray-500">
-          영어 소문자, 숫자, 하이픈(-)만 사용 가능 (3~30자)
+          인스타 프로필에 복사할 주소예요. 영어 소문자, 숫자, 하이픈(-)만 사용할 수 있어요.
         </div>
 
         <div className="mt-1 text-sm leading-5 text-gray-400">
@@ -199,7 +199,7 @@ export default function ProfileEditor({
             disabled={loadingHandle}
             className="brand-button min-h-11 rounded-xl px-3 py-2.5 text-sm font-black disabled:opacity-60"
           >
-            {loadingHandle ? "저장 중..." : "예약 링크 저장"}
+            {loadingHandle ? "저장 중..." : "인스타 예약 링크 저장"}
           </button>
 
           <button
@@ -259,7 +259,7 @@ export default function ProfileEditor({
       <div className="mb-4 text-base font-black">고객 화면 미리보기</div>
 
       <div className="mb-3">
-        <div className="text-sm font-bold text-blue-100">서비스명</div>
+        <div className="text-sm font-bold text-blue-100">샵 이름</div>
         <div className="mt-1 break-words font-black [overflow-wrap:anywhere]">{shopName || "-"}</div>
       </div>
 
