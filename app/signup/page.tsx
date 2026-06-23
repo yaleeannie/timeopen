@@ -79,8 +79,8 @@ export default function SignupPage() {
 
   return (
     <AuthShell
-      title="인스타 예약 링크를 만들고 시작해보세요"
-      description="네이버·카카오·다음·Gmail·회사 이메일 모두 사용할 수 있어요."
+      title="TimeOpen 시작하기"
+      description="사용 중인 이메일로 가입할 수 있어요."
     >
           {sent ? (
             <div className="text-sm font-bold leading-6 text-gray-900">
@@ -149,7 +149,7 @@ export default function SignupPage() {
                 disabled={loading}
                 className="brand-button min-h-12 w-full rounded-2xl px-4 py-3 text-base font-black disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "처리 중..." : "이메일로 가입하기"}
+                {loading ? "처리 중..." : "회원가입"}
               </button>
 
               {msg ? (

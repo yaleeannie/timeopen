@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
   return (
     <AuthShell
       title="비밀번호를 다시 설정해요"
-      description="가입한 이메일로 안전한 비밀번호 재설정 링크를 보내드릴게요."
+      description="가입한 이메일 주소를 입력하면 비밀번호 재설정 링크를 보내드려요."
     >
           {sent ? (
             <div className="text-center">

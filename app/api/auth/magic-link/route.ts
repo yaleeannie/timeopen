@@ -21,8 +21,13 @@ export async function POST(req: Request) {
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error("[auth/magic-link] signInWithOtp failed", error.message);
+    return NextResponse.json(
+      { error: "로그인 링크를 보내지 못했습니다. 잠시 후 다시 시도해주세요." },
+      { status: 400 }
+    );
   }
 
+  // TODO: beta 안정화 후 Naver/Kakao/Daum 등 국내 메일 수신 성공률을 운영 환경에서 확인한다.
   return NextResponse.json({ ok: true });
 }
