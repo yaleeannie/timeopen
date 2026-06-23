@@ -689,16 +689,20 @@ export default function ProfileEditor({
               id="withdrawal-title"
               className="text-2xl font-black tracking-[-0.04em] text-slate-950"
             >
-              정말 탈퇴하시겠어요?
+              정말 탈퇴하시겠어요? 🥺
             </h2>
-            <p className="mt-3 text-sm font-medium leading-6 text-gray-500">
-              탈퇴를 요청하면 예약 링크가 닫히고 더 이상 고객이 예약할 수 없어요.
-              기존 예약 및 데이터는 확인 후 처리됩니다.
+            <p className="mt-3 whitespace-pre-line text-sm font-medium leading-6 text-gray-500">
+              {`탈퇴를 요청하면 예약 링크가 닫히고, 고객은 더 이상 이 링크에서 예약할 수 없어요.
+기존 예약과 데이터는 확인 후 처리됩니다.
+이 작업은 바로 되돌리기 어려워요.`}
             </p>
 
             <label className="mt-5 block">
               <span className="mb-2 block text-sm font-black text-gray-700">
-                탈퇴 사유를 알려주세요. 더 나은 TimeOpen을 만드는 데 도움이 돼요.
+                탈퇴 사유를 알려주세요
+              </span>
+              <span className="mb-2 block text-xs font-bold leading-5 text-gray-400">
+                더 나은 TimeOpen을 만드는 데 도움이 돼요. 선택 사항이에요.
               </span>
               <textarea
                 value={withdrawalReason}
