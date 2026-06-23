@@ -1,3 +1,4 @@
+import { SLOT_INTERVAL_MINUTES } from "../../features/availability/slotInterval";
 import { computeAvailableStartTimes } from "./computeAvailableStarts";
 
 type Case = {
@@ -9,14 +10,14 @@ type Case = {
 
 const cases: Case[] = [
   {
-    name: "a) work 09-18, break 13-14, duration 60 buffer 10 step 20",
+    name: "a) work 09-18, break 13-14, duration 60 buffer 10 step 10",
     input: {
       workWindows: [{ start: "09:00", end: "18:00" }],
       breaks: [{ start: "13:00", end: "14:00" }],
       busy: [],
       durationMin: 60,
       bufferMin: 10,
-      stepMin: 20,
+      stepMin: SLOT_INTERVAL_MINUTES,
     },
     expectExcludes: ["13:00"],
   },
@@ -28,7 +29,7 @@ const cases: Case[] = [
       breaks: [],
       durationMin: 240,
       bufferMin: 10,
-      stepMin: 20,
+      stepMin: SLOT_INTERVAL_MINUTES,
     },
   },
   {
@@ -39,7 +40,7 @@ const cases: Case[] = [
       breaks: [],
       durationMin: 60,
       bufferMin: 0,
-      stepMin: 15,
+      stepMin: SLOT_INTERVAL_MINUTES,
     },
     expectIncludes: ["17:00"],
     expectExcludes: ["18:00"],

@@ -12,6 +12,7 @@ import { buildDailySchedule } from "@/features/availability/buildDailySchedule";
 import { fetchExceptionForDate } from "@/features/availability/fetchExceptionForDate";
 import { fetchHolidayForDate } from "@/features/availability/fetchHolidayForDate";
 import { computeAvailableStartTimes } from "@/features/availability/computeAvailableStartTimes";
+import { SLOT_INTERVAL_MINUTES } from "@/features/availability/slotInterval";
 import type { WeeklySchedule } from "@/features/availability/weeklySchedule";
 
 import { fetchBusyFromDb } from "@/features/availability/fetchBusyFromDb";
@@ -239,7 +240,7 @@ export default function BookingScreen({ handle }: Props) {
         busy,
         durationMin: nextService.duration_min,
         bufferMin: 0,
-        stepMin: 15,
+        stepMin: SLOT_INTERVAL_MINUTES,
         notBefore,
       });
 

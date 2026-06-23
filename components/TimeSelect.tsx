@@ -11,6 +11,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { SLOT_INTERVAL_MINUTES } from "@/features/availability/slotInterval";
+
 type TimeSelectProps = {
   value: string;
   onChange: (value: string) => void;
@@ -26,9 +28,11 @@ type TimeOption = {
   label: string;
 };
 
-const TIME_OPTIONS: TimeOption[] = Array.from({ length: 24 * 6 }, (_, index) => {
-  const hour = Math.floor(index / 6);
-  const minute = (index % 6) * 10;
+const OPTIONS_PER_HOUR = 60 / SLOT_INTERVAL_MINUTES;
+
+const TIME_OPTIONS: TimeOption[] = Array.from({ length: 24 * OPTIONS_PER_HOUR }, (_, index) => {
+  const hour = Math.floor(index / OPTIONS_PER_HOUR);
+  const minute = (index % OPTIONS_PER_HOUR) * SLOT_INTERVAL_MINUTES;
   const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 
   return { value, label: formatTime(value) };

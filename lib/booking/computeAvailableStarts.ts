@@ -1,3 +1,5 @@
+import { SLOT_INTERVAL_MINUTES } from "../../features/availability/slotInterval";
+
 export type TimeRange = {
   start: string; // "HH:mm"
   end: string;   // "HH:mm"  [start,end)
@@ -54,7 +56,7 @@ export function computeAvailableStartTimes(args: {
   bufferMin: number;
   stepMin?: number;
 }): string[] {
-  const step = args.stepMin ?? 15;
+  const step = args.stepMin ?? SLOT_INTERVAL_MINUTES;
   const blockMin = args.durationMin + args.bufferMin;
 
   if (step <= 0) return [];
