@@ -38,10 +38,6 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function defaultHandle(userId: string) {
-  return `shop-${userId.replace(/-/g, "").slice(0, 10)}`;
-}
-
 export async function bootstrapOwner(
   supabase: SupabaseServerClient,
   user: { id: string; email?: string | null },
@@ -142,45 +138,16 @@ export async function bootstrapOwner(
     }
 
     const organizationId = parsed.organizationId;
-    let handle = parsed.handle;
+    const handle = parsed.handle;
 
-    if (!handle) {
-      const baseHandle = defaultHandle(user.id);
-
-      for (let suffix = 0; suffix < 3; suffix += 1) {
-        const candidate = suffix === 0 ? baseHandle : `${baseHandle}-${suffix + 1}`;
-        const { data: handleData, error: handleError } = await supabase.rpc("set_my_handle", {
-          p_handle: candidate,
-        });
-
-        if (handleError) {
-          console.error(`[${source}] default handle save failed`, {
-            userId: user.id,
-            organizationId,
-            candidate,
-            message: handleError.message,
-            code: handleError.code,
-          });
-          continue;
-        }
-
-        const handleRow = Array.isArray(handleData) ? handleData[0] : handleData;
-        handle = (handleRow?.handle as string | null) ?? candidate;
-        console.log(`[${source}] default handle saved`, {
-          userId: user.id,
-          organizationId,
-          handle,
-        });
-        break;
-      }
-
-      if (!handle) {
-        console.error(`[${source}] handle setup skipped after retries`, {
-          userId: user.id,
-          organizationId,
-        });
-      }
-    }
+    console.log("[bootstrap] rpc success", {
+      source,
+      attempt,
+      userId: user.id,
+      email: user.email ?? null,
+      organizationId,
+      handle,
+    });
 
     console.log("[bootstrap] success", {
       source,

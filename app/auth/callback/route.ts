@@ -1,6 +1,5 @@
 // app/auth/callback/route.ts
 import { NextResponse } from "next/server";
-import { bootstrapOwner } from "@/lib/owner/bootstrapOwner";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function safeNext(next: string | null) {
@@ -34,38 +33,6 @@ export async function GET(req: Request) {
     failureUrl.searchParams.set("auth", "fail");
     failureUrl.searchParams.set("reason", error.message);
     return NextResponse.redirect(failureUrl);
-  }
-
-  if (flow === "signup") {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      console.error("[onboarding] user check failed", {
-        source: "auth/callback",
-        hasUserId: Boolean(user?.id),
-        email: user?.email ?? null,
-        message: userError?.message ?? "not authenticated after callback",
-      });
-    } else {
-      const bootstrap = await bootstrapOwner(
-        supabase,
-        { id: user.id, email: user.email },
-        "auth/callback"
-      );
-
-      if (bootstrap.error || !bootstrap.organizationId) {
-        console.error("[onboarding] bootstrap failed", {
-          source: "auth/callback",
-          userId: user.id,
-          email: user.email ?? null,
-          error: bootstrap.error,
-          hasOrganizationId: Boolean(bootstrap.organizationId),
-        });
-      }
-    }
   }
 
   return NextResponse.redirect(new URL(next, url.origin));

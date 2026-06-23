@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import { bootstrapOwner } from "@/lib/owner/bootstrapOwner";
+import { getOnboardingBootstrapState } from "@/features/onboarding/bootstrapState";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import OnboardingBootstrapRetry from "./OnboardingBootstrapRetry";
 import OnboardingFlow from "./OnboardingFlow";
 
 export const dynamic = "force-dynamic";
@@ -20,48 +21,33 @@ export default async function OnboardingPage() {
     redirect("/login");
   }
 
-  const { organizationId, handle, error } = await bootstrapOwner(
-    supabase,
-    { id: user.id, email: user.email },
-    "onboarding"
-  );
+  const { data: membership, error: membershipError } = await supabase
+    .from("organization_members")
+    .select("organization_id, role")
+    .eq("user_id", user.id)
+    .eq("role", "owner")
+    .maybeSingle();
 
-  if (error || !organizationId) {
-    console.error("[onboarding] bootstrap failed", {
+  const organizationId =
+    typeof membership?.organization_id === "string" ? membership.organization_id : null;
+
+  const bootstrapState = getOnboardingBootstrapState({
+    userId: user.id,
+    organizationId,
+  });
+
+  if (membershipError || bootstrapState === "retry") {
+    console.error("[onboarding] missing organization; rendering bootstrap retry", {
       source: "onboarding",
       userId: user.id,
       email: user.email ?? null,
-      error,
-      hasOrganizationId: Boolean(organizationId),
+      message: membershipError?.message ?? "owner organization not found",
+      code: membershipError?.code ?? null,
+      details: membershipError?.details ?? null,
+      hint: membershipError?.hint ?? null,
     });
 
-    return (
-      <main className="soft-page-bg flex items-center px-4 py-8 text-slate-950">
-        <div className="glass-card mx-auto w-full max-w-md rounded-[28px] p-6 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff5e6] text-2xl font-black text-[#b7781f]">
-            !
-          </div>
-          <h1 className="mt-5 text-2xl font-black tracking-[-0.04em]">
-            초기 설정을 불러오지 못했어요.
-          </h1>
-          <p className="mt-2 text-sm font-medium leading-6 text-gray-500">
-            다시 시도해 주세요. 문제가 계속되면 다시 로그인한 뒤 진행해 주세요.
-          </p>
-          <a
-            href="/onboarding"
-            className="brand-button mt-6 flex min-h-12 w-full items-center justify-center rounded-2xl px-5 text-sm font-black"
-          >
-            다시 시도
-          </a>
-          <a
-            href="/login"
-            className="brand-text mt-2 flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-bold"
-          >
-            로그인으로 돌아가기
-          </a>
-        </div>
-      </main>
-    );
+    return <OnboardingBootstrapRetry />;
   }
 
   const [organizationResult, serviceResult, availabilityResult] = await Promise.all([
@@ -84,6 +70,22 @@ export default async function OnboardingPage() {
   ]);
 
   const organization = organizationResult.data;
+
+  if (organizationResult.error || !organization) {
+    console.error("[onboarding] missing organization; rendering bootstrap retry", {
+      source: "onboarding",
+      userId: user.id,
+      email: user.email ?? null,
+      organizationId,
+      message: organizationResult.error?.message ?? "organization row not found",
+      code: organizationResult.error?.code ?? null,
+      details: organizationResult.error?.details ?? null,
+      hint: organizationResult.error?.hint ?? null,
+    });
+
+    return <OnboardingBootstrapRetry />;
+  }
+
   const services = serviceResult.data ?? [];
   const availability = availabilityResult.data ?? [];
 
@@ -92,7 +94,7 @@ export default async function OnboardingPage() {
       initialName={(organization?.name as string | null) ?? ""}
       initialLocation={(organization?.location_text as string | null) ?? ""}
       initialNotice={(organization?.notice_text as string | null) ?? ""}
-      initialHandle={(organization?.handle as string | null) ?? handle ?? ""}
+      initialHandle={(organization.handle as string | null) ?? ""}
       initialServices={services.map((service) => ({
         id: String(service.id),
         name: String(service.name ?? ""),
