@@ -34,6 +34,7 @@ export default function ProfileEditor({
   const [loadingTheme, setLoadingTheme] = useState(false);
 
   const [msg, setMsg] = useState("");
+  const [themeMsg, setThemeMsg] = useState("");
 
   const [shopName, setShopName] = useState(initialName ?? "");
   const [handle, setHandle] = useState(initialHandle ?? "");
@@ -158,7 +159,7 @@ export default function ProfileEditor({
 
   async function onSaveTheme() {
     setLoadingTheme(true);
-    setMsg("");
+    setThemeMsg("");
 
     try {
       const res = await fetch("/api/settings/link-theme", {
@@ -169,14 +170,14 @@ export default function ProfileEditor({
       const json: { error?: string } = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setMsg(json.error ?? "예약 링크 테마 저장 중 오류가 발생했습니다.");
+        setThemeMsg(json.error ?? "예약 링크 테마 저장 중 오류가 발생했습니다.");
         return;
       }
 
-      setMsg("인스타 예약 링크 테마가 저장되었습니다.");
+      setThemeMsg("인스타 예약 링크 테마가 저장되었습니다.");
       router.refresh();
     } catch {
-      setMsg("예약 링크 테마 저장 중 오류가 발생했습니다.");
+      setThemeMsg("예약 링크 테마 저장 중 오류가 발생했습니다.");
     } finally {
       setLoadingTheme(false);
     }
@@ -350,6 +351,17 @@ export default function ProfileEditor({
         >
           {loadingTheme ? "저장 중..." : "선택한 테마 저장"}
         </button>
+        {themeMsg ? (
+          <div
+            className={`mt-3 rounded-xl px-4 py-3 text-sm font-bold [overflow-wrap:anywhere] ${
+              themeMsg.includes("오류") || themeMsg.includes("지원하지")
+                ? "bg-red-50 text-red-700"
+                : "brand-chip"
+            }`}
+          >
+            {themeMsg}
+          </div>
+        ) : null}
       </div>
 
       <div className="brand-gradient rounded-[24px] p-5 text-white shadow-[0_14px_30px_rgba(0,193,255,0.22)]">
