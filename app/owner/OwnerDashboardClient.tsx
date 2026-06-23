@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import LogoutButton from "./LogoutButton";
+import OpenSlotShareCard from "./OpenSlotShareCard";
 
 export type SmsDisplayStatus = "success" | "partial" | "failed" | "none";
 
@@ -231,6 +232,12 @@ export default function OwnerDashboardClient({
               )}
             </div>
           </section>
+
+          <OpenSlotShareCard
+            todayISO={todayISO}
+            bookingUrl={bookingUrl}
+            canLink={canLink}
+          />
 
           {incompleteSettings.length > 0 ? (
             <section className="mt-2.5 flex items-center gap-2 overflow-x-auto rounded-[18px] border border-white/65 bg-white/30 px-3 py-2.5 backdrop-blur-lg">
