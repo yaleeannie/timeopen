@@ -108,7 +108,7 @@ export const PUBLIC_BOOKING_THEMES: Record<LinkTheme, ThemeDefinition> = {
     variables: {
       "--brand-primary": "#00C1FF",
       "--brand-accent": "#00D6F7",
-      "--brand-ink": "#009ED3",
+      "--brand-ink": "#00C9FF",
       "--brand-contrast": "#FFFFFF",
       "--brand-soft": "#e9faff",
       "--brand-border": "rgba(125, 223, 255, 0.48)",
