@@ -9,9 +9,14 @@ export default async function OnboardingPage() {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (userError || !user) {
+    console.error("[onboarding] user check failed", {
+      hasUserId: Boolean(user?.id),
+      message: userError?.message ?? "not authenticated",
+    });
     redirect("/login");
   }
 
@@ -22,9 +27,10 @@ export default async function OnboardingPage() {
   );
 
   if (error || !organizationId) {
-    console.error("[bootstrap] failed", {
+    console.error("[onboarding] bootstrap failed", {
       source: "onboarding",
       userId: user.id,
+      email: user.email ?? null,
       error,
       hasOrganizationId: Boolean(organizationId),
     });

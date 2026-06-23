@@ -12,8 +12,10 @@ export async function POST() {
   } = await supabase.auth.getUser();
 
   if (userErr || !user) {
-    console.error("[api/bootstrap] user lookup failed", {
+    console.error("[bootstrap] no session", {
+      source: "api/bootstrap",
       hasUserId: Boolean(user?.id),
+      email: user?.email ?? null,
       message: userErr?.message ?? "not authenticated",
     });
     return NextResponse.json({ error: "not authenticated" }, { status: 401 });
@@ -26,9 +28,12 @@ export async function POST() {
   );
 
   if (result.error || !result.organizationId) {
-    console.error("[api/bootstrap] bootstrap failed", {
+    console.error("[bootstrap] result empty", {
+      source: "api/bootstrap",
       userId: user.id,
+      email: user.email ?? null,
       error: result.error,
+      hasOrganizationId: Boolean(result.organizationId),
     });
     return NextResponse.json(
       { error: result.error ?? "bootstrap_owner returned empty" },

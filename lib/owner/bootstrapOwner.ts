@@ -8,6 +8,32 @@ type BootstrapOwnerResult = {
   error: string | null;
 };
 
+export type BootstrapOwnerRpcRow = {
+  organization_id?: unknown;
+  handle?: unknown;
+};
+
+export function parseBootstrapOwnerRpcResult(data: unknown):
+  | { ok: true; organizationId: string; handle: string | null }
+  | { ok: false; error: string } {
+  const row = Array.isArray(data) ? data[0] : data;
+
+  if (!row || typeof row !== "object") {
+    return { ok: false, error: "bootstrap_owner returned empty result" };
+  }
+
+  const typedRow = row as BootstrapOwnerRpcRow;
+  const organizationId =
+    typeof typedRow.organization_id === "string" ? typedRow.organization_id : null;
+  const handle = typeof typedRow.handle === "string" ? typedRow.handle : null;
+
+  if (!organizationId) {
+    return { ok: false, error: "bootstrap_owner returned no organization_id" };
+  }
+
+  return { ok: true, organizationId, handle };
+}
+
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -24,6 +50,7 @@ export async function bootstrapOwner(
   console.log(`[${source}] bootstrap start`, {
     hasUserId: Boolean(user.id),
     userId: user.id,
+    email: user.email ?? null,
   });
 
   const { data: existingMembership, error: membershipError } = await supabase
@@ -53,10 +80,11 @@ export async function bootstrapOwner(
 
     if (error) {
       lastError = error.message;
-      console.error("[bootstrap] failed", {
+      console.error("[bootstrap] rpc failed", {
         source,
         attempt,
         userId: user.id,
+        email: user.email ?? null,
         message: error.message,
         code: error.code,
         details: error.details,
@@ -80,24 +108,31 @@ export async function bootstrapOwner(
       continue;
     }
 
-    const row = Array.isArray(data) ? data[0] : data;
-    const organizationId = (row?.organization_id as string | null) ?? null;
-    let handle = (row?.handle as string | null) ?? null;
+    const parsed = parseBootstrapOwnerRpcResult(data);
 
     console.log(`[${source}] bootstrap_owner result`, {
       attempt,
       userId: user.id,
-      organizationId,
-      handle,
-      returnedEmpty: !row,
+      email: user.email ?? null,
+      organizationId: parsed.ok ? parsed.organizationId : null,
+      handle: parsed.ok ? parsed.handle : null,
+      returnedEmpty: !parsed.ok,
     });
 
-    if (!organizationId) {
-      lastError = "bootstrap_owner returned no organization_id";
+    if (!parsed.ok) {
+      lastError = parsed.error;
+      console.error("[bootstrap] result empty", {
+        source,
+        attempt,
+        userId: user.id,
+        email: user.email ?? null,
+        error: parsed.error,
+        data,
+      });
       console.error(`[${source}] organization creation returned empty`, {
         attempt,
         userId: user.id,
-        row: row ?? null,
+        row: data ?? null,
       });
 
       if (attempt < 3) {
@@ -105,6 +140,9 @@ export async function bootstrapOwner(
       }
       continue;
     }
+
+    const organizationId = parsed.organizationId;
+    let handle = parsed.handle;
 
     if (!handle) {
       const baseHandle = defaultHandle(user.id);
@@ -144,6 +182,15 @@ export async function bootstrapOwner(
       }
     }
 
+    console.log("[bootstrap] success", {
+      source,
+      attempt,
+      userId: user.id,
+      email: user.email ?? null,
+      organizationId,
+      handle,
+    });
+
     return { organizationId, handle, error: null };
   }
 
@@ -182,6 +229,14 @@ export async function bootstrapOwner(
         organizationId: recoveredOrganization.id,
         handle: recoveredOrganization.handle ?? null,
       });
+      console.log("[bootstrap] success", {
+        source,
+        recovered: true,
+        userId: user.id,
+        email: user.email ?? null,
+        organizationId: recoveredOrganization.id,
+        handle: recoveredOrganization.handle ?? null,
+      });
 
       return {
         organizationId: String(recoveredOrganization.id),
@@ -197,9 +252,10 @@ export async function bootstrapOwner(
     membershipLookupError: membershipError?.message ?? null,
     lastError,
   });
-  console.error("[bootstrap] failed", {
+  console.error("[bootstrap] result empty", {
     source,
     userId: user.id,
+    email: user.email ?? null,
     existingOrganizationId: existingMembership?.organization_id ?? null,
     lastError,
   });
