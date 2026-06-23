@@ -409,7 +409,7 @@ export default function OwnerDashboardClient({
             </h2>
             <div className="grid grid-cols-4 gap-2">
               <QuickLink href="/reservations" icon="✓" label="예약관리" />
-              <QuickLink href="/settings/services" icon="+" label="메뉴판" />
+              <QuickLink href="/settings/services" icon="+" label="서비스 관리" />
               <QuickLink href="/settings/availability" icon="◷" label="영업시간" />
               <QuickLink href="/settings/profile" icon="···" label="샵 프로필" />
             </div>

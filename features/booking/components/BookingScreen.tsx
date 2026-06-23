@@ -381,7 +381,7 @@ export default function BookingScreen({ handle }: Props) {
           {orgName || `@${handle}`}
         </div>
         <p className="mt-1 text-xs font-medium leading-5 text-slate-500">
-          아래 메뉴판에서 원하는 메뉴와 시간을 선택해주세요.
+          원하는 서비스를 고르고 예약 가능한 시간을 확인해보세요.
         </p>
       </section>
 
@@ -464,6 +464,17 @@ export default function BookingScreen({ handle }: Props) {
                     {item.duration_min ? t("minutes", { count: item.duration_min }) : ""}
                     {item.price != null ? ` · ${formatWon(item.price)}` : ""}
                   </div>
+                  {item.description ? (
+                    <p
+                      className={`mt-2 whitespace-pre-line text-sm leading-5 ${
+                        active
+                          ? "[color:var(--brand-contrast)] opacity-85"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      {item.description}
+                    </p>
+                  ) : null}
                 </button>
               );
             })}

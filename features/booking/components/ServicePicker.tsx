@@ -3,6 +3,7 @@
 type ServiceItem = {
   id: string;
   name: string;
+  description?: string | null;
   durationMin?: number;
   duration_min?: number;
   price?: number | null;
@@ -19,7 +20,7 @@ export default function ServicePicker({ services, value, onChange }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="text-sm font-semibold text-gray-900">메뉴판</div>
+      <div className="text-sm font-semibold text-gray-900">서비스 선택</div>
 
       <div
         className={
@@ -57,6 +58,15 @@ export default function ServicePicker({ services, value, onChange }: Props) {
                 {duration ? `${duration}분` : ""}
                 {s.price != null ? ` · ${s.price.toLocaleString()}원` : ""}
               </div>
+              {s.description ? (
+                <p
+                  className={`mt-2 line-clamp-2 text-sm leading-5 ${
+                    isActive ? "text-gray-200" : "text-gray-500"
+                  }`}
+                >
+                  {s.description}
+                </p>
+              ) : null}
             </button>
           );
         })}

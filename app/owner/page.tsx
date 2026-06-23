@@ -216,7 +216,7 @@ export default async function OwnerPage() {
 
   const incompleteSettings: IncompleteSetting[] = [
     (serviceCountResult.count ?? 0) === 0
-      ? { title: "메뉴판", href: "/settings/services" }
+      ? { title: "서비스", href: "/settings/services" }
       : null,
     (openDayCountResult.count ?? 0) === 0
       ? { title: "영업시간", href: "/settings/availability" }
@@ -266,8 +266,8 @@ export default async function OwnerPage() {
     end: formatReservationTime(row.end_time, row.end_at),
     customer: row.customer_name?.trim() || "고객명 미입력",
     service: row.service_id
-      ? serviceNameMap.get(row.service_id) ?? "메뉴 미지정"
-      : "메뉴 미지정",
+      ? serviceNameMap.get(row.service_id) ?? "서비스 미지정"
+      : "서비스 미지정",
     status: row.status ?? "confirmed",
     smsStatus: getSmsDisplayStatus(smsLogsByReservation.get(row.id) ?? []),
   }));

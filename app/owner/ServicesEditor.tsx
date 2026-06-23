@@ -17,6 +17,7 @@ type ServiceRow = {
   id: string;
   name: string;
   name_translations: ServiceNameTranslations;
+  description: string | null;
   duration_min: number;
   price: number | null;
   active: boolean;
@@ -40,7 +41,7 @@ function TranslationFields({
   return (
     <details className={`rounded-2xl border p-3 ${tone === "cyan" ? "border-white/35 bg-white/15" : "glass-card"}`}>
       <summary className={`cursor-pointer text-sm font-black ${labelClass}`}>
-        외국어 메뉴명
+        외국어 서비스명
       </summary>
       <p className={`mt-2 text-xs font-medium leading-5 ${tone === "cyan" ? "text-white/75" : "text-gray-400"}`}>
         다국어 예약 화면은 베타로 제공 중이에요.
@@ -74,6 +75,7 @@ export default function ServicesEditor({ organizationId }: Props) {
 
   const [rows, setRows] = useState<ServiceRow[]>([]);
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [durationMin, setDurationMin] = useState("");
   const [price, setPrice] = useState("");
   const [nameTranslations, setNameTranslations] = useState<ServiceNameTranslations>({});
@@ -81,6 +83,7 @@ export default function ServicesEditor({ organizationId }: Props) {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [editDurationMin, setEditDurationMin] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editNameTranslations, setEditNameTranslations] = useState<ServiceNameTranslations>({});
@@ -88,7 +91,7 @@ export default function ServicesEditor({ organizationId }: Props) {
   async function load() {
     const { data, error } = await supabase
       .from("services")
-      .select("id, name, name_translations, duration_min, price, active")
+      .select("id, name, name_translations, description, duration_min, price, active")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true });
 
@@ -108,7 +111,7 @@ export default function ServicesEditor({ organizationId }: Props) {
     setMsg("");
 
     if (!name.trim()) {
-      setMsg("메뉴명을 입력해주세요.");
+      setMsg("서비스명을 입력해주세요.");
       return;
     }
 
@@ -122,6 +125,7 @@ export default function ServicesEditor({ organizationId }: Props) {
       organization_id: organizationId,
       name: name.trim(),
       name_translations: normalizeServiceNameTranslations(nameTranslations),
+      description: description.trim() || null,
       duration_min: duration,
       price: price.trim() ? Number(price) : null,
       active: true,
@@ -133,6 +137,7 @@ export default function ServicesEditor({ organizationId }: Props) {
     }
 
     setName("");
+    setDescription("");
     setDurationMin("");
     setPrice("");
     setNameTranslations({});
@@ -143,6 +148,7 @@ export default function ServicesEditor({ organizationId }: Props) {
   function startEdit(row: ServiceRow) {
     setEditingId(row.id);
     setEditName(row.name);
+    setEditDescription(row.description ?? "");
     setEditNameTranslations(normalizeServiceNameTranslations(row.name_translations));
     setEditDurationMin(String(row.duration_min));
     setEditPrice(row.price != null ? String(row.price) : "");
@@ -152,6 +158,7 @@ export default function ServicesEditor({ organizationId }: Props) {
   function cancelEdit() {
     setEditingId(null);
     setEditName("");
+    setEditDescription("");
     setEditDurationMin("");
     setEditPrice("");
     setEditNameTranslations({});
@@ -161,7 +168,7 @@ export default function ServicesEditor({ organizationId }: Props) {
     setMsg("");
 
     if (!editName.trim()) {
-      setMsg("메뉴명을 입력해주세요.");
+      setMsg("서비스명을 입력해주세요.");
       return;
     }
 
@@ -176,6 +183,7 @@ export default function ServicesEditor({ organizationId }: Props) {
       .update({
         name: editName.trim(),
         name_translations: normalizeServiceNameTranslations(editNameTranslations),
+        description: editDescription.trim() || null,
         duration_min: duration,
         price: editPrice.trim() ? Number(editPrice) : null,
       })
@@ -209,7 +217,7 @@ export default function ServicesEditor({ organizationId }: Props) {
   }
 
   async function deleteService(id: string) {
-    const ok = window.confirm("이 메뉴를 삭제할까요?");
+    const ok = window.confirm("이 서비스를 삭제할까요?");
     if (!ok) return;
 
     setMsg("");
@@ -234,15 +242,26 @@ export default function ServicesEditor({ organizationId }: Props) {
   return (
     <section className="min-w-0">
       <div className="brand-gradient mb-6 rounded-[24px] p-5 text-white shadow-[0_14px_30px_rgba(0,193,255,0.22)]">
-        <div className="mb-4 text-lg font-black">새 메뉴</div>
+        <div className="mb-4 text-lg font-black">새 서비스</div>
         <div className="grid gap-4">
         <div>
-          <div className="mb-1.5 text-sm font-bold text-white/90">메뉴명</div>
+          <div className="mb-1.5 text-sm font-bold text-white/90">서비스명</div>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="예: 커트"
             className="min-h-11 w-full min-w-0 rounded-xl border border-white/30 bg-white px-3 py-2.5 text-base text-gray-900 outline-none"
+          />
+        </div>
+
+        <div>
+          <div className="mb-1.5 text-sm font-bold text-white/90">서비스 설명 (선택)</div>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="예: 손톱 상태 상담 후 맞춤 케어를 진행해요."
+            rows={3}
+            className="w-full min-w-0 resize-none rounded-xl border border-white/30 bg-white px-3 py-2.5 text-base text-gray-900 outline-none"
           />
         </div>
 
@@ -279,7 +298,7 @@ export default function ServicesEditor({ organizationId }: Props) {
           onClick={addService}
           className="brand-outline min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-black shadow-sm"
         >
-          메뉴 저장
+          서비스 저장
         </button>
         </div>
       </div>
@@ -287,7 +306,7 @@ export default function ServicesEditor({ organizationId }: Props) {
       {msg ? <div className="brand-chip mb-4 rounded-xl px-4 py-3 text-sm font-bold [overflow-wrap:anywhere]">{msg}</div> : null}
 
       <div className="mb-3 flex items-center justify-between px-1">
-        <div className="text-base font-black">메뉴판</div>
+        <div className="text-base font-black">서비스</div>
         <div className="text-sm font-bold text-gray-400">{rows.length}개</div>
       </div>
       <div className="grid gap-3">
@@ -302,12 +321,23 @@ export default function ServicesEditor({ organizationId }: Props) {
               {isEditing ? (
                 <div className="grid gap-4">
                   <div>
-                    <div className="mb-1.5 text-sm font-bold text-gray-700">메뉴명</div>
+                    <div className="mb-1.5 text-sm font-bold text-gray-700">서비스명</div>
                     <input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      placeholder="메뉴명"
+                      placeholder="서비스명"
                       className="brand-input min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="mb-1.5 text-sm font-bold text-gray-700">서비스 설명 (선택)</div>
+                    <textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      placeholder="고객에게 보여질 서비스 설명"
+                      rows={3}
+                      className="brand-input w-full min-w-0 resize-none rounded-xl px-3 py-2.5 text-base"
                     />
                   </div>
 
@@ -362,6 +392,11 @@ export default function ServicesEditor({ organizationId }: Props) {
                     <div className="mt-1 text-sm text-gray-500">
                       {row.duration_min}분 {row.price != null ? `· ${row.price.toLocaleString()}원` : ""}
                     </div>
+                    {row.description ? (
+                      <p className="mt-2 whitespace-pre-line text-sm leading-5 text-gray-500">
+                        {row.description}
+                      </p>
+                    ) : null}
                     <div className={`mt-1 text-sm font-bold ${row.active ? "brand-text" : "text-gray-400"}`}>
                       {row.active ? "활성" : "비활성"}
                     </div>

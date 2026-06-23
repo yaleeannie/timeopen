@@ -74,7 +74,7 @@ export default function SignupPage() {
   return (
     <AuthShell
       title="인스타 예약 링크를 만들고 시작해보세요"
-      description="이메일 인증 후 샵 정보, 메뉴판, 영업시간을 차례로 설정할 수 있어요."
+      description="이메일 인증 후 샵 정보, 서비스, 영업시간을 차례로 설정할 수 있어요."
     >
           {sent ? (
             <div className="text-sm font-bold leading-6 text-gray-900">

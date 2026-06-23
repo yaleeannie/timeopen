@@ -6,6 +6,7 @@ export type ServiceRow = {
   organization_id: string;
   name: string;
   name_translations: ServiceNameTranslations;
+  description: string | null;
   duration_min: number;
   price: number | null;
   active: boolean;

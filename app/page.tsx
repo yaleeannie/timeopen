@@ -8,7 +8,7 @@ const coreFeatures = [
     number: "01",
     title: "인스타 프로필용 예약 링크",
     description:
-      "프로필 링크를 누른 고객이 로그인 없이 메뉴와 시간을 고르고 바로 예약해요.",
+      "프로필 링크를 누른 고객이 로그인 없이 서비스와 시간을 고르고 바로 예약해요.",
   },
   {
     number: "02",
@@ -193,7 +193,7 @@ export default async function Page() {
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-base font-medium leading-7 text-slate-600 sm:text-lg sm:leading-8 lg:mx-0">
               인스타로 예약받는 1인샵을 위한 간편 예약 링크. 고객은 로그인 없이
-              메뉴와 시간을 고르고, 사장님은 DM 없이 예약을 관리해요.
+              서비스와 시간을 고르고, 사장님은 DM 없이 예약을 관리해요.
             </p>
 
             <div className="mx-auto mt-8 grid max-w-md gap-3 sm:grid-cols-2 lg:mx-0">
@@ -230,7 +230,7 @@ export default async function Page() {
                 DM, 전화, 카톡 예약이 흩어져 있나요?
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-sm font-medium leading-7 text-slate-500 sm:text-base">
-                프로필에 TimeOpen 링크 하나만 올려두세요. 고객은 메뉴와 가능한 시간을
+                프로필에 TimeOpen 링크 하나만 올려두세요. 고객은 서비스와 가능한 시간을
                 직접 고르고, 사장님은 흩어진 DM 대신 확정된 예약만 확인할 수 있어요.
               </p>
             </div>
@@ -277,7 +277,7 @@ export default async function Page() {
                 한 화면에 정리해요
               </h2>
               <p className="mt-4 text-sm font-medium leading-7 text-slate-500 sm:text-base">
-                메뉴판, 예약 현황, 문자 발송 상태와 베타 다국어 예약 화면을 복잡한
+                서비스, 예약 현황, 문자 발송 상태와 베타 다국어 예약 화면을 복잡한
                 도구 없이 TimeOpen 안에서 관리할 수 있어요.
               </p>
             </div>
