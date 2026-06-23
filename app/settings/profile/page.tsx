@@ -21,7 +21,7 @@ export default async function ProfilePage() {
 
   const { data: orgRow } = await supabase
     .from("organizations")
-    .select("name, handle, location_text, notice_text, link_theme")
+    .select("name, handle, location_text, notice_text, link_theme, booking_enabled")
     .eq("id", organizationId)
     .maybeSingle();
 
@@ -41,6 +41,7 @@ export default async function ProfilePage() {
             initialLocation={orgRow?.location_text ?? ""}
             initialNotice={orgRow?.notice_text ?? ""}
             initialTheme={normalizeLinkTheme(orgRow?.link_theme)}
+            initialBookingEnabled={orgRow?.booking_enabled !== false}
           />
           <nav className="brand-nav mt-7 grid grid-cols-4 gap-1 rounded-2xl p-2">
             <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">대시보드</a>

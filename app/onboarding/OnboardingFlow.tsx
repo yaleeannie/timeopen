@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import TimeSelect from "@/components/TimeSelect";
 import { getBookingUrl } from "@/lib/siteUrl";
@@ -45,6 +45,12 @@ type ServiceInput = {
   price: string;
   durationMin: string;
 };
+
+type HandleAvailability =
+  | { state: "idle"; message: string; available: false }
+  | { state: "checking"; message: string; available: false }
+  | { state: "available"; message: string; available: true }
+  | { state: "invalid" | "taken" | "error"; message: string; available: false };
 
 const WEEKDAYS = [
   { value: 1, label: "월" },
@@ -156,11 +162,98 @@ export default function OnboardingFlow({
     firstOpenAvailability?.breakEndTime ?? ""
   );
   const [handle, setHandle] = useState(initialHandle);
+  const [handleAvailability, setHandleAvailability] = useState<HandleAvailability>({
+    state: "idle",
+    message: "",
+    available: false,
+  });
 
   const bookingUrl = useMemo(
     () => (handle ? getBookingUrl(handle) : "https://timeopen.app/u/your-shop"),
     [handle]
   );
+
+  useEffect(() => {
+    if (step !== 3) return;
+
+    const validation = validateHandleValue(handle);
+
+    if (!handle.trim()) {
+      setHandleAvailability({ state: "idle", message: "", available: false });
+      return;
+    }
+
+    if (!validation.ok) {
+      setHandleAvailability({
+        state: "invalid",
+        message: validation.error,
+        available: false,
+      });
+      return;
+    }
+
+    setHandleAvailability({
+      state: "checking",
+      message: "예약 링크를 확인하고 있어요.",
+      available: false,
+    });
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ handle: validation.value });
+        const response = await fetch(`/api/settings/handle?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const json = await response.json().catch(() => ({}));
+
+        if (!response.ok || !json?.ok) {
+          setHandleAvailability({
+            state: "error",
+            message: "예약 링크 확인 중 오류가 발생했어요.",
+            available: false,
+          });
+          return;
+        }
+
+        if (json.valid === false) {
+          setHandleAvailability({
+            state: "invalid",
+            message: json.reason ?? "영문 소문자, 숫자, 하이픈(-), 언더스코어(_)만 사용할 수 있어요.",
+            available: false,
+          });
+          return;
+        }
+
+        if (json.available === true) {
+          setHandleAvailability({
+            state: "available",
+            message: "사용 가능한 예약 링크예요.",
+            available: true,
+          });
+          return;
+        }
+
+        setHandleAvailability({
+          state: "taken",
+          message: "이미 사용 중인 예약 링크예요.",
+          available: false,
+        });
+      } catch (checkError) {
+        if ((checkError as Error).name === "AbortError") return;
+        setHandleAvailability({
+          state: "error",
+          message: "예약 링크 확인 중 오류가 발생했어요.",
+          available: false,
+        });
+      }
+    }, 350);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [handle, step]);
 
   function moveTo(nextStep: number) {
     setError("");
@@ -327,6 +420,10 @@ export default function OnboardingFlow({
 
     if (!validation.ok) {
       throw new Error(validation.error);
+    }
+
+    if (!handleAvailability.available) {
+      throw new Error(handleAvailability.message || "예약 링크를 다시 확인해주세요.");
     }
 
     await postJson("/api/settings/handle", { handle: validation.value });
@@ -707,9 +804,7 @@ export default function OnboardingFlow({
                     <input
                       value={handle}
                       onChange={(event) =>
-                        setHandle(
-                          normalizeHandleValue(event.target.value).replace(/[^a-z0-9_-]/g, "")
-                        )
+                        setHandle(normalizeHandleValue(event.target.value))
                       }
                       placeholder="my-shop"
                       maxLength={FIELD_LIMITS.handleMax}
@@ -719,6 +814,19 @@ export default function OnboardingFlow({
                   <span className="mt-2 block text-xs font-medium leading-5 text-gray-400">
                     영어 소문자, 숫자, 하이픈(-), 언더스코어(_)를 3~30자로 입력해주세요.
                   </span>
+                  {handleAvailability.message ? (
+                    <span
+                      className={`mt-2 block rounded-xl px-3 py-2 text-xs font-black ${
+                        handleAvailability.state === "available"
+                          ? "brand-chip"
+                          : handleAvailability.state === "checking"
+                            ? "brand-soft"
+                            : "bg-red-50 text-red-700"
+                      }`}
+                    >
+                      {handleAvailability.message}
+                    </span>
+                  ) : null}
                 </label>
 
                 <div className="overflow-hidden rounded-[22px] bg-gradient-to-br from-[#eefcfa] to-[#eef8fd] p-4">
@@ -777,7 +885,7 @@ export default function OnboardingFlow({
                 <button
                   type="button"
                   onClick={() => finish("dashboard")}
-                  disabled={saving}
+                  disabled={saving || !handleAvailability.available}
                   className="brand-button min-h-14 rounded-2xl px-4 text-base font-black disabled:opacity-50"
                 >
                   {saving ? "저장 중..." : "설정 완료"}
@@ -794,7 +902,7 @@ export default function OnboardingFlow({
                   <button
                     type="button"
                     onClick={() => finish("preview")}
-                    disabled={saving}
+                    disabled={saving || !handleAvailability.available}
                     className="brand-outline min-h-11 rounded-xl px-3 text-sm font-black disabled:opacity-50"
                   >
                     URL 확인하기

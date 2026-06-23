@@ -15,12 +15,32 @@ export const FIELD_LIMITS = {
   handleMax: 30,
 } as const;
 
+export const RESERVED_HANDLES = new Set([
+  "admin",
+  "api",
+  "auth",
+  "login",
+  "signup",
+  "owner",
+  "onboarding",
+  "settings",
+  "reservations",
+  "u",
+  "beta",
+  "support",
+  "contact",
+  "help",
+  "terms",
+  "privacy",
+  "timeopen",
+]);
+
 export function normalizeHandleValue(value: string) {
   return value.trim().toLowerCase();
 }
 
 export function isValidHandleValue(value: string) {
-  return /^[a-z0-9_-]{3,30}$/.test(value);
+  return /^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$/.test(value);
 }
 
 export function validateHandleValue(value: string) {
@@ -33,7 +53,14 @@ export function validateHandleValue(value: string) {
   if (!isValidHandleValue(handle)) {
     return {
       ok: false as const,
-      error: "인스타 예약 링크 주소는 영어 소문자, 숫자, 하이픈(-), 언더스코어(_)를 사용해 3~30자로 입력해주세요.",
+      error: "영문 소문자, 숫자, 하이픈(-), 언더스코어(_)만 사용할 수 있어요.",
+    };
+  }
+
+  if (RESERVED_HANDLES.has(handle)) {
+    return {
+      ok: false as const,
+      error: "사용할 수 없는 예약 링크예요.",
     };
   }
 

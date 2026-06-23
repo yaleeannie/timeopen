@@ -11,6 +11,7 @@ import {
 import {
   FIELD_LIMITS,
   normalizeHandleValue,
+  validateHandleValue,
 } from "@/features/validation/fieldLimits";
 
 type Props = {
@@ -20,7 +21,14 @@ type Props = {
   initialName?: string;
   initialHandle?: string;
   initialTheme: LinkTheme;
+  initialBookingEnabled: boolean;
 };
+
+type HandleAvailability =
+  | { state: "idle"; message: string; available: false }
+  | { state: "checking"; message: string; available: false }
+  | { state: "available"; message: string; available: true }
+  | { state: "invalid" | "taken" | "error"; message: string; available: false };
 
 export default function ProfileEditor({
   organizationId,
@@ -29,6 +37,7 @@ export default function ProfileEditor({
   initialName = "",
   initialHandle = "",
   initialTheme,
+  initialBookingEnabled,
 }: Props) {
   const router = useRouter();
 
@@ -36,15 +45,23 @@ export default function ProfileEditor({
   const [loadingHandle, setLoadingHandle] = useState(false);
   const [loadingExtra, setLoadingExtra] = useState(false);
   const [loadingTheme, setLoadingTheme] = useState(false);
+  const [loadingBookingStatus, setLoadingBookingStatus] = useState(false);
 
   const [msg, setMsg] = useState("");
   const [themeMsg, setThemeMsg] = useState("");
+  const [bookingStatusMsg, setBookingStatusMsg] = useState("");
+  const [handleAvailability, setHandleAvailability] = useState<HandleAvailability>({
+    state: "idle",
+    message: "",
+    available: false,
+  });
 
   const [shopName, setShopName] = useState(initialName ?? "");
   const [handle, setHandle] = useState(initialHandle ?? "");
   const [locationText, setLocationText] = useState(initialLocation ?? "");
   const [noticeText, setNoticeText] = useState(initialNotice ?? "");
   const [linkTheme, setLinkTheme] = useState<LinkTheme>(initialTheme);
+  const [bookingEnabled, setBookingEnabled] = useState(initialBookingEnabled);
 
   useEffect(() => {
     setShopName(initialName ?? "");
@@ -65,6 +82,90 @@ export default function ProfileEditor({
   useEffect(() => {
     setLinkTheme(initialTheme);
   }, [initialTheme]);
+
+  useEffect(() => {
+    setBookingEnabled(initialBookingEnabled);
+  }, [initialBookingEnabled]);
+
+  useEffect(() => {
+    const validation = validateHandleValue(handle);
+
+    if (!handle.trim()) {
+      setHandleAvailability({ state: "idle", message: "", available: false });
+      return;
+    }
+
+    if (!validation.ok) {
+      setHandleAvailability({
+        state: "invalid",
+        message: validation.error,
+        available: false,
+      });
+      return;
+    }
+
+    setHandleAvailability({
+      state: "checking",
+      message: "예약 링크를 확인하고 있어요.",
+      available: false,
+    });
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ handle: validation.value });
+        const res = await fetch(`/api/settings/handle?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok || !json?.ok) {
+          setHandleAvailability({
+            state: "error",
+            message: "예약 링크 확인 중 오류가 발생했어요.",
+            available: false,
+          });
+          return;
+        }
+
+        if (json.valid === false) {
+          setHandleAvailability({
+            state: "invalid",
+            message: json.reason ?? "영문 소문자, 숫자, 하이픈(-), 언더스코어(_)만 사용할 수 있어요.",
+            available: false,
+          });
+          return;
+        }
+
+        if (json.available === true) {
+          setHandleAvailability({
+            state: "available",
+            message: "사용 가능한 예약 링크예요.",
+            available: true,
+          });
+          return;
+        }
+
+        setHandleAvailability({
+          state: "taken",
+          message: "이미 사용 중인 예약 링크예요.",
+          available: false,
+        });
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return;
+        setHandleAvailability({
+          state: "error",
+          message: "예약 링크 확인 중 오류가 발생했어요.",
+          available: false,
+        });
+      }
+    }, 350);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [handle]);
 
   async function onSaveName() {
     setLoadingName(true);
@@ -94,6 +195,17 @@ export default function ProfileEditor({
   }
 
   async function onSaveHandle() {
+    const validation = validateHandleValue(handle);
+    if (!validation.ok) {
+      setMsg(validation.error);
+      return;
+    }
+
+    if (!handleAvailability.available) {
+      setMsg(handleAvailability.message || "예약 링크를 다시 확인해주세요.");
+      return;
+    }
+
     setLoadingHandle(true);
     setMsg("");
 
@@ -101,7 +213,7 @@ export default function ProfileEditor({
       const res = await fetch("/api/settings/handle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ handle }),
+        body: JSON.stringify({ handle: validation.value }),
       });
 
       const json = await res.json().catch(() => ({}));
@@ -187,6 +299,35 @@ export default function ProfileEditor({
     }
   }
 
+  async function onSaveBookingStatus(nextEnabled = bookingEnabled) {
+    setLoadingBookingStatus(true);
+    setBookingStatusMsg("");
+
+    try {
+      const res = await fetch("/api/settings/booking-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_enabled: nextEnabled }),
+      });
+      const json: { error?: string } = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setBookingStatusMsg(json.error ?? "예약 접수 상태 저장 중 오류가 발생했습니다.");
+        return;
+      }
+
+      setBookingEnabled(nextEnabled);
+      setBookingStatusMsg(
+        nextEnabled ? "예약 접수 상태가 켜졌습니다." : "예약 접수를 잠시 중지했습니다."
+      );
+      router.refresh();
+    } catch {
+      setBookingStatusMsg("예약 접수 상태 저장 중 오류가 발생했습니다.");
+    } finally {
+      setLoadingBookingStatus(false);
+    }
+  }
+
   return (
     <section className="grid min-w-0 gap-5">
       <div className="glass-card rounded-[24px] p-4">
@@ -218,7 +359,7 @@ export default function ProfileEditor({
         <input
           value={handle}
           onChange={(e) => {
-            const v = normalizeHandleValue(e.target.value).replace(/[^a-z0-9_-]/g, "");
+            const v = normalizeHandleValue(e.target.value);
             setHandle(v);
           }}
           placeholder="예: jisu_hair"
@@ -238,11 +379,25 @@ export default function ProfileEditor({
           {handle ? getBookingUrl(handle) : "-"}
         </div>
 
+        {handleAvailability.message ? (
+          <div
+            className={`mt-2 rounded-xl px-3 py-2 text-xs font-black ${
+              handleAvailability.state === "available"
+                ? "brand-chip"
+                : handleAvailability.state === "checking"
+                  ? "brand-soft"
+                  : "bg-red-50 text-red-700"
+            }`}
+          >
+            {handleAvailability.message}
+          </div>
+        ) : null}
+
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={onSaveHandle}
-            disabled={loadingHandle}
+            disabled={loadingHandle || !handleAvailability.available}
             className="brand-button min-h-11 rounded-xl px-3 py-2.5 text-sm font-black disabled:opacity-60"
           >
             {loadingHandle ? "저장 중..." : "인스타 예약 링크 저장"}
@@ -259,6 +414,69 @@ export default function ProfileEditor({
         </div>
       </div>
 
+      </div>
+
+      <div className="glass-card rounded-[24px] p-4">
+        <div className="text-base font-black">예약 접수 상태</div>
+        <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
+          여행, 휴무, 내부 일정이 있을 때 예약 링크를 잠시 닫을 수 있어요.
+        </p>
+
+        <div className="mt-4 grid gap-2">
+          {[
+            {
+              value: true,
+              title: "예약 받는 중",
+              description: "고객이 인스타 예약 링크에서 바로 예약할 수 있어요.",
+            },
+            {
+              value: false,
+              title: "예약 잠시 중지",
+              description: "고객에게는 예약을 잠시 받고 있지 않다는 안내가 보여요.",
+            },
+          ].map((option) => {
+            const selected = bookingEnabled === option.value;
+            return (
+              <button
+                key={option.title}
+                type="button"
+                onClick={() => void onSaveBookingStatus(option.value)}
+                disabled={loadingBookingStatus}
+                className={`rounded-2xl border px-4 py-3 text-left transition disabled:opacity-60 ${
+                  selected
+                    ? "border-[#00C1FF] bg-[#E9FAFF] shadow-[0_10px_26px_rgba(0,193,255,0.14)]"
+                    : "border-white/80 bg-white/55 hover:border-[#00C1FF]/45"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-black text-slate-900">{option.title}</div>
+                  <span
+                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
+                      selected ? "brand-selected" : "border border-slate-200 bg-white text-transparent"
+                    }`}
+                  >
+                    ✓
+                  </span>
+                </div>
+                <p className="mt-1 text-xs font-medium leading-5 text-gray-500">
+                  {option.description}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+
+        {bookingStatusMsg ? (
+          <div
+            className={`mt-3 rounded-xl px-4 py-3 text-sm font-bold ${
+              bookingStatusMsg.includes("오류")
+                ? "bg-red-50 text-red-700"
+                : "brand-chip"
+            }`}
+          >
+            {bookingStatusMsg}
+          </div>
+        ) : null}
       </div>
 
       <div className="glass-card rounded-[24px] p-4">

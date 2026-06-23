@@ -54,9 +54,7 @@ export default function HandleSetup() {
 
       <input
         value={handle}
-        onChange={(e) =>
-          setHandle(normalizeHandleValue(e.target.value).replace(/[^a-z0-9_-]/g, ""))
-        }
+        onChange={(e) => setHandle(normalizeHandleValue(e.target.value))}
         placeholder="예) my-shop"
         style={{ width: 320, padding: 12, border: "1px solid #ccc", borderRadius: 10 }}
       />

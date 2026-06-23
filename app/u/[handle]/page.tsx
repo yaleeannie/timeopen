@@ -12,7 +12,7 @@ export default async function UserBookingPage({ params }: Props) {
   const supabase = await createSupabaseServerClient();
   const { data: organization } = await supabase
     .from("organizations")
-    .select("link_theme, booking_slot_mode")
+    .select("name, display_name, location_text, notice_text, link_theme, booking_slot_mode, booking_enabled")
     .eq("handle", handle.trim().toLowerCase())
     .maybeSingle();
 
@@ -21,6 +21,10 @@ export default async function UserBookingPage({ params }: Props) {
       handle={handle}
       linkTheme={normalizeLinkTheme(organization?.link_theme)}
       bookingSlotMode={normalizeBookingSlotMode(organization?.booking_slot_mode)}
+      bookingEnabled={organization?.booking_enabled !== false}
+      shopName={(organization?.name ?? organization?.display_name ?? "") as string}
+      locationText={(organization?.location_text ?? "") as string}
+      noticeText={(organization?.notice_text ?? "") as string}
     />
   );
 }

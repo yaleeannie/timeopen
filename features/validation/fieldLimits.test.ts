@@ -105,3 +105,11 @@ test("validates handles with underscores and 3 to 30 characters", () => {
   assert.equal(validateHandleValue("a".repeat(31)).ok, false);
   assert.equal(validateHandleValue("My Shop").ok, false);
 });
+
+test("rejects reserved handles and edge punctuation", () => {
+  assert.equal(validateHandleValue("admin").ok, false);
+  assert.equal(validateHandleValue("timeopen").ok, false);
+  assert.equal(validateHandleValue("-myshop").ok, false);
+  assert.equal(validateHandleValue("myshop_").ok, false);
+  assert.equal(validateHandleValue("내샵").ok, false);
+});
