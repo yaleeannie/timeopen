@@ -32,7 +32,12 @@ export default function BookingCta({ selection, onReserve, canReserve = true }: 
         type="button"
         disabled={!ready}
         onClick={onReserve}
-        className="brand-button min-h-11 shrink-0 rounded-xl px-5 py-3 text-sm font-black transition disabled:cursor-not-allowed disabled:bg-[#b8dfe8] disabled:opacity-100"
+        className={[
+          "min-h-11 shrink-0 rounded-xl px-5 py-3 text-sm font-black transition",
+          ready
+            ? "brand-button"
+            : "cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400",
+        ].join(" ")}
       >
         {t("book")}
       </button>

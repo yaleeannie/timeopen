@@ -32,7 +32,7 @@ export const BOOKING_LOCALE_LABELS: Record<BookingLocale, string> = {
 
 const ko = {
   language: "언어",
-  book: "샵 예약하기",
+  book: "예약하기",
   bookingSubtitle: "로그인 없이 서비스와 방문 시간을 고르고 예약할 수 있어요.",
   service: "서비스",
   selectService: "서비스 선택",
