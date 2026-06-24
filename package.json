@@ -11,7 +11,8 @@
     "test": "node --import tsx --test",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "legal:preview": "tsx scripts/legal/previewLegalNoticeEmail.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
