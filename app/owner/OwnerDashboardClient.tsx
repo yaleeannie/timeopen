@@ -18,6 +18,7 @@ export type DashboardReservation = {
   start: string;
   end: string;
   customer: string;
+  phone: string;
   service: string;
   status: string;
   smsStatus: SmsDisplayStatus;
@@ -362,15 +363,15 @@ export default function OwnerDashboardClient({
                   <a
                     key={reservation.id}
                     href={`/reservations?date=${selectedDate}`}
-                    className="relative grid min-w-0 grid-cols-[70px_1fr] gap-2"
+                    className="relative grid min-w-0 grid-cols-[64px_1fr] gap-2"
                   >
-                    <div className="relative z-10 pt-4 text-center">
+                    <div className="relative z-10 pt-3 text-center">
                       <div className="brand-outline inline-flex min-h-8 items-center rounded-full px-2 text-xs font-black shadow-sm backdrop-blur-xl">
                         {reservation.start}
                       </div>
                     </div>
                     <article
-                      className={`relative min-w-0 overflow-hidden rounded-[20px] border bg-white/50 p-3.5 shadow-[0_12px_34px_rgba(70,105,125,0.08)] backdrop-blur-xl transition hover:bg-white/65 ${
+                      className={`relative min-w-0 overflow-hidden rounded-[18px] border bg-white/50 p-3 shadow-[0_12px_34px_rgba(70,105,125,0.08)] backdrop-blur-xl transition hover:bg-white/65 ${
                         reservation.status === "cancelled" || reservation.status === "canceled"
                           ? "border-white/60 opacity-60"
                           : "border-white/75"
@@ -394,11 +395,15 @@ export default function OwnerDashboardClient({
                         </span>
                       </div>
 
-                      <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
-                        <span className="truncate text-xs font-bold text-slate-400">
+                      <div className="mt-2 grid gap-1 text-xs font-bold text-slate-500">
+                        <span className="truncate">
                           {reservation.start}
                           {reservation.end ? ` ~ ${reservation.end}` : ""}
                         </span>
+                        <span className="truncate">연락처 {reservation.phone}</span>
+                      </div>
+
+                      <div className="mt-2 flex min-w-0 items-center justify-end gap-2 border-t border-white/70 pt-2">
                         <span
                           className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-black ${smsStatusStyle(
                             reservation.smsStatus

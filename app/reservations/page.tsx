@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
+import ReservationsClient, { type ReservationCardItem } from "./ReservationsClient";
 
 type ReservationRow = {
   id: string;
@@ -408,6 +409,19 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const selectedReservations = groupedReservations.find(
     ([date]) => date === selectedDate
   )?.[1] ?? [];
+  const selectedReservationCards: ReservationCardItem[] = selectedReservations.map(
+    ({ row, date, start, end, serviceName, smsStatus }) => ({
+      id: row.id,
+      status: row.status,
+      customerName: displayValue(row.customer_name),
+      customerPhone: displayValue(row.customer_phone),
+      serviceName: serviceName === "-" ? "서비스 미지정" : serviceName,
+      date,
+      start: start === "-" ? "" : start,
+      end: end === "-" ? "" : end,
+      smsStatus,
+    })
+  );
 
   return (
     <main className="soft-page-bg overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
@@ -521,114 +535,10 @@ export default async function ReservationsPage({ searchParams }: Props) {
           </div>
         </section>
 
-        <div className="mb-3 flex items-baseline justify-between gap-3 px-1">
-          <h2 className="min-w-0 text-base font-black">
-            {formatDateLabel(selectedDate)}
-          </h2>
-          <span className="brand-chip shrink-0 rounded-full px-2.5 py-1 text-xs font-bold">
-            {selectedReservations.length}건
-          </span>
-        </div>
-
-        {selectedReservations.length === 0 ? (
-          <div className="glass-card rounded-[24px] px-5 py-10 text-center">
-            <div className="brand-soft mx-auto flex h-11 w-11 items-center justify-center rounded-2xl text-xl">
-              ◷
-            </div>
-            <div className="mt-3 text-base font-black">이 날짜에는 예약이 없어요.</div>
-            <div className="mt-1 text-sm leading-6 text-gray-500">
-              캘린더에서 다른 날짜를 선택해 예약 일정을 확인해보세요.
-            </div>
-          </div>
-        ) : (
-          <section aria-label="선택한 날짜 예약">
-            <div className="relative space-y-2.5 before:absolute before:bottom-5 before:left-[35px] before:top-5 before:w-px before:bg-gradient-to-b before:from-[#00d6f7]/15 before:via-[#00c1ff]/60 before:to-[#00c1ff]/15">
-              {selectedReservations.map(({ row, start, end, serviceName, smsStatus }) => (
-                <div
-                  key={row.id}
-                  className="relative grid min-w-0 grid-cols-[70px_1fr] gap-2"
-                >
-                  <div className="relative z-10 pt-4 text-center">
-                    <div className="brand-outline inline-flex min-h-8 items-center rounded-full px-2 text-xs font-black shadow-sm backdrop-blur-xl">
-                      {start}
-                    </div>
-                  </div>
-
-                  <article
-                    className={`glass-card min-w-0 rounded-[20px] p-3.5 ${
-                      row.status === "cancelled" || row.status === "canceled"
-                        ? "opacity-60"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex min-w-0 items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-black text-slate-900">
-                          {displayValue(row.customer_name)}
-                        </div>
-                        <div className="mt-0.5 truncate text-xs font-bold text-slate-500">
-                          {serviceName === "-" ? "서비스 미지정" : serviceName}
-                        </div>
-                      </div>
-
-                      <span
-                        style={{
-                          border: "1px solid",
-                          borderRadius: 999,
-                          padding: "3px 7px",
-                          fontSize: 11,
-                          fontWeight: 800,
-                          ...statusStyle(row.status),
-                        }}
-                      >
-                        {formatStatus(row.status)}
-                      </span>
-                    </div>
-
-                    <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
-                      <span className="truncate text-xs font-bold text-slate-400">
-                        {formatTimeRange(start, end)}
-                      </span>
-                      <span
-                        style={{
-                          border: "1px solid",
-                          borderRadius: 999,
-                          padding: "3px 7px",
-                          fontSize: 11,
-                          fontWeight: 800,
-                          ...smsStatusStyle(smsStatus),
-                        }}
-                      >
-                        {smsStatusLabel(smsStatus)}
-                      </span>
-                    </div>
-
-                    <div className="mt-2 flex min-w-0 items-center justify-between gap-2 border-t border-white/70 pt-2">
-                      <span className="min-w-0 truncate text-xs font-medium text-slate-500">
-                        {displayValue(row.customer_phone)}
-                      </span>
-                      {row.status === "confirmed" ? (
-                        <form action="/api/reservations/cancel" method="post">
-                          <input
-                            type="hidden"
-                            name="reservationId"
-                            value={String(row.id)}
-                          />
-                          <button
-                            type="submit"
-                            className="min-h-9 shrink-0 rounded-xl px-2.5 text-xs font-bold text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
-                          >
-                            예약 취소
-                          </button>
-                        </form>
-                      ) : null}
-                    </div>
-                  </article>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        <ReservationsClient
+          selectedDateLabel={formatDateLabel(selectedDate)}
+          reservations={selectedReservationCards}
+        />
         <nav className="brand-nav mt-7 grid grid-cols-4 gap-1 rounded-2xl p-2">
           <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">대시보드</a>
           <a href="/reservations" className="brand-chip flex min-h-11 items-center justify-center rounded-xl text-sm font-black">예약관리</a>

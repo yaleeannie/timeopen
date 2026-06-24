@@ -24,6 +24,7 @@ type ReservationRow = {
   status: string | null;
   service_id: string | null;
   customer_name: string | null;
+  customer_phone: string | null;
 };
 
 type SmsLogRow = {
@@ -172,7 +173,7 @@ export default async function OwnerPage() {
       supabase
         .from("reservations")
         .select(
-          "id, date, start_time, end_time, start_at, end_at, status, service_id, customer_name"
+          "id, date, start_time, end_time, start_at, end_at, status, service_id, customer_name, customer_phone"
         )
         .eq("organization_id", organizationId)
         .gte("date", queryStart)
@@ -275,6 +276,7 @@ export default async function OwnerPage() {
     start: formatReservationTime(row.start_time, row.start_at) || "시간 미정",
     end: formatReservationTime(row.end_time, row.end_at),
     customer: row.customer_name?.trim() || "고객명 미입력",
+    phone: row.customer_phone?.trim() || "연락처 미입력",
     service: row.service_id
       ? serviceNameMap.get(row.service_id) ?? "서비스 미지정"
       : "서비스 미지정",
