@@ -75,15 +75,15 @@ export function usePublicBookingI18n() {
 }
 
 export function BookingLanguageSelect() {
-  const { locale, setLocale, t } = usePublicBookingI18n();
+  const { locale, setLocale } = usePublicBookingI18n();
 
   return (
     <label className="brand-chip inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold shadow-sm">
-      <span>{t("language")}</span>
+      <span>Language</span>
       <select
         value={locale}
         onChange={(event) => setLocale(event.target.value as BookingLocale)}
-        aria-label={t("language")}
+        aria-label="Language"
         className="max-w-[150px] bg-transparent text-xs font-bold text-gray-700 outline-none"
       >
         {BOOKING_LOCALES.map((item) => (

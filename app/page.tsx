@@ -55,7 +55,7 @@ const managementFeatures = [
   {
     icon: "文",
     title: "다국어 예약 화면",
-    description: "다국어 예약 화면은 베타로 제공 중이에요.",
+    description: "다국어 예약은 준비 중이에요.",
   },
 ];
 

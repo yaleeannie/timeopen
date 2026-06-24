@@ -44,12 +44,15 @@ function PublicBookingPageContent({
     >
       <div className={`${theme.shell} mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] sm:rounded-[36px]`}>
         <div className="px-4 pb-7 pt-6 sm:px-6 sm:pb-9 sm:pt-8">
-          <div className="mb-3 flex justify-end">
-            <div className="text-right">
+          <div className="mb-4 flex min-w-0 items-start justify-between gap-3">
+            <div className="shrink-0 pt-2 text-sm font-black tracking-[-0.03em] text-[#00C9FF]">
+              TimeOpen
+            </div>
+            <div className="min-w-0 text-right">
               <BookingLanguageSelect />
               {locale === "ko" ? (
                 <p className="mt-1 text-[10px] font-medium text-slate-400">
-                  다국어 예약 화면은 베타로 제공 중이에요.
+                  다국어 예약은 준비 중이에요.
                 </p>
               ) : null}
             </div>
