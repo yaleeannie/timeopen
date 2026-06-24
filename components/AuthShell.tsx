@@ -52,6 +52,15 @@ export default function AuthShell({
             >
               ← TimeOpen 홈으로
             </a>
+            <div className="mt-3 flex items-center justify-center gap-3 text-[11px] font-bold text-slate-400">
+              <a href="/terms" className="transition hover:text-[#00A4D9]">
+                이용약관
+              </a>
+              <span aria-hidden="true">·</span>
+              <a href="/privacy" className="transition hover:text-[#00A4D9]">
+                개인정보 처리방침
+              </a>
+            </div>
           </div>
         </div>
       </div>

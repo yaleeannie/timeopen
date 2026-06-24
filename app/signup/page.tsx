@@ -12,8 +12,25 @@ export default function SignupPage() {
   const [msg, setMsg] = useState<string>("");
   const [sent, setSent] = useState(false);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  const [marketingAgreed, setMarketingAgreed] = useState(false);
+
+  const requiredConsentsAgreed = termsAgreed && privacyAgreed;
+  const allConsentsAgreed = termsAgreed && privacyAgreed && marketingAgreed;
+
+  function setAllConsents(next: boolean) {
+    setTermsAgreed(next);
+    setPrivacyAgreed(next);
+    setMarketingAgreed(next);
+  }
 
   async function onSignup() {
+  if (!requiredConsentsAgreed) {
+    setMsg("필수 약관과 개인정보 수집·이용에 동의해 주세요.");
+    return;
+  }
+
   const emailValidation = validateEmail(email);
   if (!emailValidation.ok) {
     setMsg(emailValidation.error);
@@ -143,10 +160,78 @@ export default function SignupPage() {
                 className="brand-input mb-5 min-h-12 w-full min-w-0 rounded-2xl px-4 py-3 text-base"
               />
 
+              <div className="mb-5 rounded-2xl border border-white/70 bg-white/55 p-3 text-sm font-bold text-slate-700 shadow-sm">
+                <label className="flex min-w-0 items-start gap-3 rounded-xl px-1 py-2">
+                  <input
+                    type="checkbox"
+                    checked={allConsentsAgreed}
+                    onChange={(e) => setAllConsents(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#00C9FF]"
+                  />
+                  <span>모두 동의</span>
+                </label>
+
+                <div className="my-2 h-px bg-slate-200/70" />
+
+                <label className="flex min-w-0 items-start gap-3 rounded-xl px-1 py-2">
+                  <input
+                    type="checkbox"
+                    checked={termsAgreed}
+                    onChange={(e) => setTermsAgreed(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#00C9FF]"
+                  />
+                  <span className="min-w-0 leading-5">
+                    [필수]{" "}
+                    <a
+                      href="/terms"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="brand-text underline underline-offset-2"
+                    >
+                      이용약관
+                    </a>
+                    에 동의합니다.
+                  </span>
+                </label>
+
+                <label className="flex min-w-0 items-start gap-3 rounded-xl px-1 py-2">
+                  <input
+                    type="checkbox"
+                    checked={privacyAgreed}
+                    onChange={(e) => setPrivacyAgreed(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#00C9FF]"
+                  />
+                  <span className="min-w-0 leading-5">
+                    [필수]{" "}
+                    <a
+                      href="/privacy"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="brand-text underline underline-offset-2"
+                    >
+                      개인정보 수집·이용
+                    </a>
+                    에 동의합니다.
+                  </span>
+                </label>
+
+                <label className="flex min-w-0 items-start gap-3 rounded-xl px-1 py-2">
+                  <input
+                    type="checkbox"
+                    checked={marketingAgreed}
+                    onChange={(e) => setMarketingAgreed(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#00C9FF]"
+                  />
+                  <span className="min-w-0 leading-5">
+                    [선택] 베타 소식 및 서비스 안내를 이메일로 받아봅니다.
+                  </span>
+                </label>
+              </div>
+
               <button
                 type="button"
                 onClick={onSignup}
-                disabled={loading}
+                disabled={loading || !requiredConsentsAgreed}
                 className="brand-button min-h-12 w-full rounded-2xl px-4 py-3 text-base font-black disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "처리 중..." : "회원가입"}

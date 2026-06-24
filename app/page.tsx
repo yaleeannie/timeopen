@@ -353,6 +353,12 @@ export default async function Page() {
             <a href="/signup" className="transition hover:text-[#00A4D9]">
               회원가입
             </a>
+            <a href="/terms" className="transition hover:text-[#00A4D9]">
+              이용약관
+            </a>
+            <a href="/privacy" className="transition hover:text-[#00A4D9]">
+              개인정보 처리방침
+            </a>
           </div>
         </footer>
       </div>
