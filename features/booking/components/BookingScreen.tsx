@@ -689,7 +689,8 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
               </p>
               <p>
                 <span className="font-black text-slate-600">보유 기간:</span>{" "}
-                예약 관리 및 분쟁 대응을 위해 필요한 기간 동안 보관 후
+                예약 관리 및 분쟁 대응을 위해 필요한 기간 동안 보관하며,
+                보유 목적이 달성되면 관련 법령 및 내부 기준에 따라
                 파기합니다.
               </p>
               <p>
