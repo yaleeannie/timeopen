@@ -29,6 +29,7 @@ export type IncompleteSetting = {
 };
 
 export type PlanDisplayInfo = {
+  planType?: string;
   label: string;
   helperText: string;
   billingNotice: string;
@@ -134,6 +135,11 @@ export default function OwnerDashboardClient({
   const selectedReservations = reservationsByDate.get(selectedDate) ?? [];
   const selectedDateInfo =
     scheduleDates.find((date) => date.iso === selectedDate) ?? scheduleDates[0];
+  const isBetaPlan = planDisplay.planType === "beta";
+  const compactPlanHelper = isBetaPlan
+    ? "베타 기간 무료 · 정식 유료 전환 전 안내"
+    : planDisplay.helperText;
+  const compactPlanBadge = isBetaPlan ? "자동 결제 없음" : planDisplay.billingNotice;
 
   async function copyBookingLink() {
     if (!canLink || !bookingUrl) return;
@@ -177,8 +183,27 @@ export default function OwnerDashboardClient({
             <LogoutButton />
           </header>
 
+          <section className="glass-card mt-5 rounded-[18px] px-3.5 py-3">
+            <div className="flex min-h-12 min-w-0 items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[11px] font-black text-slate-400">현재 플랜</div>
+                <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="text-sm font-black text-slate-950">
+                    {planDisplay.label}
+                  </span>
+                  <span className="text-xs font-bold text-slate-500">
+                    {compactPlanHelper}
+                  </span>
+                </div>
+              </div>
+              <span className="brand-chip max-w-[120px] shrink-0 truncate rounded-full px-2.5 py-1 text-[10px] font-black sm:max-w-[180px]">
+                {compactPlanBadge}
+              </span>
+            </div>
+          </section>
+
           <section
-            className={`mt-5 grid gap-2.5 ${
+            className={`mt-2.5 grid gap-2.5 ${
               incompleteSettings.length > 0 ? "grid-cols-2" : "grid-cols-1"
             }`}
             aria-label="대시보드 요약"
@@ -237,43 +262,6 @@ export default function OwnerDashboardClient({
                   만들기
                 </a>
               )}
-            </div>
-          </section>
-
-          <section className="glass-card mt-2.5 rounded-[20px] px-3.5 py-3">
-            <div className="flex min-w-0 items-start gap-3">
-              <div className="brand-soft flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-xs font-black">
-                PLAN
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-black text-slate-400">현재 플랜</div>
-                <div className="mt-0.5 text-sm font-black text-slate-900">
-                  {planDisplay.label}
-                </div>
-                <p className="mt-1 text-xs font-medium leading-5 text-slate-500">
-                  {planDisplay.helperText}
-                </p>
-                <p className="mt-1 text-[11px] font-bold leading-5 text-slate-400">
-                  {planDisplay.billingNotice}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="glass-card mt-2.5 rounded-[20px] px-3.5 py-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-black text-slate-900">빈 시간 공유</div>
-                <p className="mt-0.5 text-xs font-medium leading-5 text-slate-500">
-                  오늘 가능한 시간을 인스타 스토리나 DM에 빠르게 공유해보세요.
-                </p>
-              </div>
-              <a
-                href="/owner/open-slot"
-                className="brand-chip flex min-h-9 shrink-0 items-center rounded-xl px-3 text-xs font-black shadow-sm"
-              >
-                빈 시간 만들기
-              </a>
             </div>
           </section>
 
@@ -429,6 +417,23 @@ export default function OwnerDashboardClient({
                 ))}
               </div>
             )}
+          </section>
+
+          <section className="glass-card mt-5 rounded-[20px] px-3.5 py-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-black text-slate-900">빈 시간 공유</div>
+                <p className="mt-0.5 text-xs font-medium leading-5 text-slate-500">
+                  오늘 가능한 시간을 인스타 스토리나 DM에 빠르게 공유해보세요.
+                </p>
+              </div>
+              <a
+                href="/owner/open-slot"
+                className="brand-chip flex min-h-9 shrink-0 items-center rounded-xl px-3 text-xs font-black shadow-sm"
+              >
+                빈 시간 만들기
+              </a>
+            </div>
           </section>
 
           <section className="mt-7" aria-labelledby="quick-links">
