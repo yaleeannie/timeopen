@@ -16,6 +16,10 @@ import {
   getBookingSlotStepMinutes,
   type BookingSlotMode,
 } from "@/features/booking/slotMode";
+import {
+  buildBookingTimeSelectionKey,
+  getEarliestAvailableTime,
+} from "@/features/booking/timeSelection";
 import type { WeeklySchedule } from "@/features/availability/weeklySchedule";
 
 import { fetchBusyFromDb } from "@/features/availability/fetchBusyFromDb";
@@ -102,9 +106,6 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
 
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
 
-  const [showEarliestHint, setShowEarliestHint] = useState(false);
-  const earliestHintKeyRef = useRef<string | null>(null);
-
   const userPickedTimeRef = useRef(false);
   const computedKeyRef = useRef<string | null>(null);
   const reqIdRef = useRef(0);
@@ -136,19 +137,17 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
   [services, serviceId]
   );
   const currentKey = useMemo(() => {
-    if (!organizationId || !dateISO || !serviceId) return null;
-    return `${organizationId}_${dateISO}_${serviceId}`;
-  }, [organizationId, dateISO, serviceId]);
+    return buildBookingTimeSelectionKey({
+      organizationId,
+      dateISO,
+      serviceId,
+      bookingSlotMode,
+      durationMin: service?.duration_min ?? null,
+      cleanupMin: service?.cleanup_min ?? 0,
+    });
+  }, [bookingSlotMode, organizationId, dateISO, serviceId, service?.duration_min, service?.cleanup_min]);
 
   const isTimesReadyForCurrent = currentKey != null && computedKeyRef.current === currentKey;
-
-  const shouldShowEarliestHint =
-    showEarliestHint &&
-    currentKey != null &&
-    earliestHintKeyRef.current === currentKey &&
-    isTimesReadyForCurrent &&
-    time != null &&
-    availableTimes[0] === time;
 
   const ctaSelection = useMemo(() => {
     if (isTimesReadyForCurrent) {
@@ -199,7 +198,16 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
 
     const myReq = ++reqIdRef.current;
     const cleanupMin = Number(nextService.cleanup_min ?? 0);
-    const key = `${organizationId}_${nextDateISO}_${nextServiceId}_${bookingSlotMode}_${cleanupMin}`;
+    const key = buildBookingTimeSelectionKey({
+      organizationId,
+      dateISO: nextDateISO,
+      serviceId: nextServiceId,
+      bookingSlotMode,
+      durationMin: nextService.duration_min,
+      cleanupMin,
+    });
+
+    if (!key) return;
 
     setIsTimesLoading(true);
     setNoTimesForCurrent(false);
@@ -218,8 +226,6 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
       if (holiday?.isClosed) {
         setAvailableTimes([]);
         setTime(null);
-        setShowEarliestHint(false);
-        earliestHintKeyRef.current = null;
         computedKeyRef.current = key;
         setNoTimesForCurrent(true);
         setHolidayClosedForCurrent(true);
@@ -258,22 +264,15 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
       computedKeyRef.current = key;
       setNoTimesForCurrent(result.length === 0);
 
-      const first = result[0] ?? null;
+      const first = getEarliestAvailableTime(result);
 
       if (!userPickedTimeRef.current) {
         setTime(first);
-        setShowEarliestHint(first != null);
-        earliestHintKeyRef.current = key;
       } else {
         const stillValid = time != null && result.includes(time);
         if (!stillValid) {
           userPickedTimeRef.current = false;
           setTime(first);
-          setShowEarliestHint(first != null);
-          earliestHintKeyRef.current = key;
-        } else {
-          setShowEarliestHint(false);
-          earliestHintKeyRef.current = null;
         }
       }
     } catch (error) {
@@ -292,11 +291,11 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
   useEffect(() => {
     if (!organizationId || !weeklySchedule || !dateISO || !serviceId) return;
 
-    const key = `${organizationId}_${dateISO}_${serviceId}`;
+    const key = currentKey;
     if (computedKeyRef.current === key) return;
 
     void recomputeTimes(dateISO, serviceId);
-  }, [bookingSlotMode, organizationId, weeklySchedule, dateISO, serviceId, services]);
+  }, [currentKey, organizationId, weeklySchedule, dateISO, serviceId, services]);
 
   async function onReserve() {
     setMsg("");
@@ -383,7 +382,6 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
     window.location.href = `/u/${handle}/confirmed?rid=${encodeURIComponent(String(rid))}`;
   }
 
-  const hintSlotHeight = 18;
   const canContinueFromService = serviceId != null;
   const canContinueFromDatetime =
     dateISO != null && time != null && isTimesReadyForCurrent;
@@ -520,18 +518,6 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
         <div className="border-t border-[#edf5f7] pt-4">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-bold text-gray-900">{t("selectTime")}</div>
-            <div
-              className="text-right text-[11px] font-bold"
-              style={{
-                color: "var(--brand-primary)",
-                opacity: shouldShowEarliestHint ? 1 : 0,
-                transition: "opacity 160ms ease",
-                pointerEvents: "none",
-                minHeight: hintSlotHeight,
-              }}
-            >
-              {t("earliestTime")}
-            </div>
           </div>
 
           <div className="booking-time-tone mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:px-4 [&_button]:font-bold">
@@ -566,14 +552,12 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
               <TimePicker
                 times={availableTimes}
                 value={time}
+                recommendedTime={getEarliestAvailableTime(availableTimes)}
                 onChange={(t) => {
                   if (!isTimesReadyForCurrent) return;
 
                   userPickedTimeRef.current = true;
                   setTime(t);
-
-                  setShowEarliestHint(false);
-                  earliestHintKeyRef.current = null;
                 }}
               />
             )}

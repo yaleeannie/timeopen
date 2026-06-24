@@ -30,7 +30,7 @@ export default function TimePicker({
   disabled,
   requiredMin,
   onChange,
-  recommendedTime, // ✅ 이게 빠져 있었음
+  recommendedTime,
 }: Props) {
   const { t } = usePublicBookingI18n();
   // 1) 서비스/날짜를 안 골랐으면 안내
@@ -97,17 +97,16 @@ export default function TimePicker({
           >
             <span>{time}</span>
 
-            {/* ✅ 추천 배지 */}
             {isRecommended && (
               <span
-                className="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                className="mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold sm:ml-2 sm:mt-0"
                 style={{
                   border: `1px solid ${colors.border.default}`,
                   background: colors.background.base,
                   color: colors.text.secondary,
                 }}
               >
-                {t("recommended")}
+                {t("earliestTime")}
               </span>
             )}
           </button>

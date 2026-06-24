@@ -44,7 +44,7 @@ const ko = {
   selectDatePrompt: "날짜를 선택해주세요",
   nextDays: "향후 {days}일",
   selectTime: "시간 선택",
-  earliestTime: "가장 빠른 시간",
+  earliestTime: "예약 가능한 가장 빠른 시간이에요",
   selectServiceAndDate: "서비스와 날짜를 먼저 선택해주세요",
   loadingTimes: "가능한 시간을 불러오는 중...",
   noTimes: "가능한 시간이 없어요",
