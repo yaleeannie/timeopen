@@ -255,43 +255,51 @@ function ReservationCard({
             </div>
           </>
         ) : (
-          <div className="space-y-2.5">
-            <div className="grid gap-3">
-              <section>
+          <div className="min-w-0 space-y-2">
+            <div className="grid min-w-0 gap-2.5">
+              <section className="min-w-0">
                 <div className="mb-1.5 text-xs font-black text-slate-700">서비스 선택</div>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {services.map((service) => {
-                    const selected = form.serviceId === service.id;
-                    return (
-                      <button
-                        key={service.id}
-                        type="button"
-                        onClick={() =>
-                          setForm((prev) => ({
-                            ...prev,
-                            serviceId: service.id,
-                            startTime:
-                              service.id === prev.serviceId ? prev.startTime : "",
-                          }))
-                        }
-                        className={`min-w-[132px] rounded-2xl border px-3 py-2 text-left transition ${
-                          selected
-                            ? "brand-selected"
-                            : "border-white/80 bg-white/65 text-slate-700 hover:bg-white"
-                        }`}
-                      >
-                        <div className="truncate text-xs font-black">{service.name}</div>
-                        <div className={`mt-0.5 text-[11px] font-bold ${selected ? "text-white/85" : "text-slate-500"}`}>
-                          {service.durationMin}분
-                          {formatPrice(service.price) ? ` · ${formatPrice(service.price)}` : ""}
-                        </div>
-                      </button>
-                    );
-                  })}
+                <div className="-mx-1 overflow-x-auto px-1 pb-1">
+                  <div className="flex w-max max-w-none gap-2">
+                    {services.map((service) => {
+                      const selected = form.serviceId === service.id;
+                      return (
+                        <button
+                          key={service.id}
+                          type="button"
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              serviceId: service.id,
+                              startTime:
+                                service.id === prev.serviceId ? prev.startTime : "",
+                            }))
+                          }
+                          className={`w-[142px] shrink-0 rounded-2xl border px-3 py-2 text-left transition ${
+                            selected
+                              ? "brand-selected"
+                              : "border-white/80 bg-white/65 text-slate-700 hover:bg-white"
+                          }`}
+                        >
+                          <div className="truncate text-xs font-black">{service.name}</div>
+                          <div
+                            className={`mt-0.5 text-[11px] font-bold ${
+                              selected ? "text-white/85" : "text-slate-500"
+                            }`}
+                          >
+                            {service.durationMin}분
+                            {formatPrice(service.price)
+                              ? ` · ${formatPrice(service.price)}`
+                              : ""}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </section>
 
-              <section>
+              <section className="min-w-0">
                 <label className="grid gap-1 text-xs font-black text-slate-700">
                   날짜 선택
                   <input
@@ -300,12 +308,12 @@ function ReservationCard({
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, date: event.target.value, startTime: "" }))
                     }
-                    className="min-h-10 rounded-xl border border-white/80 bg-white/70 px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
+                    className="min-h-10 w-full min-w-0 rounded-xl border border-white/80 bg-white/70 px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
                   />
                 </label>
               </section>
 
-              <section>
+              <section className="min-w-0">
                 <div className="mb-1.5 text-xs font-black text-slate-700">예약 가능한 시간</div>
                 {loadingSlots ? (
                   <div className="rounded-xl bg-white/55 px-3 py-3 text-xs font-bold text-slate-500">
@@ -320,48 +328,50 @@ function ReservationCard({
                     선택한 날짜에 예약 가능한 시간이 없어요.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {availableTimes.map((time) => {
-                      const selected = form.startTime === time;
-                      return (
-                        <button
-                          key={time}
-                          type="button"
-                          onClick={() => update("startTime", time)}
-                          className={`min-h-10 rounded-xl border text-xs font-black transition ${
-                            selected
-                              ? "brand-selected"
-                              : "border-white/80 bg-white/70 text-slate-700 hover:bg-[#e8fbff]"
-                          }`}
-                        >
-                          {time}
-                        </button>
-                      );
-                    })}
+                  <div className="max-h-[180px] overflow-y-auto rounded-2xl border border-white/70 bg-white/35 p-2 sm:max-h-[220px]">
+                    <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5">
+                      {availableTimes.map((time) => {
+                        const selected = form.startTime === time;
+                        return (
+                          <button
+                            key={time}
+                            type="button"
+                            onClick={() => update("startTime", time)}
+                            className={`min-h-9 rounded-xl border text-xs font-black transition ${
+                              selected
+                                ? "brand-selected"
+                                : "border-white/80 bg-white/70 text-slate-700 hover:bg-[#e8fbff]"
+                            }`}
+                          >
+                            {time}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </section>
 
-              <section className="grid gap-2">
+              <section className="grid min-w-0 gap-2">
                 <div className="text-xs font-black text-slate-700">고객 정보</div>
-              <label className="grid gap-1 text-xs font-bold text-slate-500">
-                고객명
-                <input
-                  value={form.customerName}
-                  onChange={(event) => update("customerName", event.target.value)}
-                  maxLength={30}
-                  className="min-h-10 rounded-xl border border-white/80 bg-white/70 px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
-                />
-              </label>
-              <label className="grid gap-1 text-xs font-bold text-slate-500">
-                연락처
-                <input
-                  value={form.customerPhone}
-                  onChange={(event) => update("customerPhone", event.target.value)}
-                  maxLength={50}
-                  className="min-h-10 rounded-xl border border-white/80 bg-white/70 px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
-                />
-              </label>
+                <label className="grid gap-1 text-xs font-bold text-slate-500">
+                  고객명
+                  <input
+                    value={form.customerName}
+                    onChange={(event) => update("customerName", event.target.value)}
+                    maxLength={30}
+                    className="min-h-10 w-full min-w-0 rounded-xl border border-white/80 bg-white/70 px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
+                  />
+                </label>
+                <label className="grid gap-1 text-xs font-bold text-slate-500">
+                  연락처
+                  <input
+                    value={form.customerPhone}
+                    onChange={(event) => update("customerPhone", event.target.value)}
+                    maxLength={50}
+                    className="min-h-10 w-full min-w-0 rounded-xl border border-white/80 bg-white/70 px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
+                  />
+                </label>
               </section>
             </div>
 
@@ -371,7 +381,7 @@ function ReservationCard({
               </div>
             ) : null}
 
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
               <button
                 type="button"
                 onClick={cancelEdit}
