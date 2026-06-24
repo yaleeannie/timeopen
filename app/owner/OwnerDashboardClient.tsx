@@ -29,7 +29,6 @@ export type IncompleteSetting = {
 };
 
 export type PlanDisplayInfo = {
-  planType?: string;
   label: string;
   helperText: string;
   billingNotice: string;
@@ -135,11 +134,6 @@ export default function OwnerDashboardClient({
   const selectedReservations = reservationsByDate.get(selectedDate) ?? [];
   const selectedDateInfo =
     scheduleDates.find((date) => date.iso === selectedDate) ?? scheduleDates[0];
-  const isBetaPlan = planDisplay.planType === "beta";
-  const compactPlanHelper = isBetaPlan
-    ? "베타 기간 무료 · 정식 유료 전환 전 안내"
-    : planDisplay.helperText;
-  const compactPlanBadge = isBetaPlan ? "자동 결제 없음" : planDisplay.billingNotice;
 
   async function copyBookingLink() {
     if (!canLink || !bookingUrl) return;
@@ -183,22 +177,23 @@ export default function OwnerDashboardClient({
             <LogoutButton />
           </header>
 
-          <section className="glass-card mt-5 rounded-[18px] px-3.5 py-3">
-            <div className="flex min-h-12 min-w-0 items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[11px] font-black text-slate-400">현재 플랜</div>
-                <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="text-sm font-black text-slate-950">
-                    {planDisplay.label}
-                  </span>
-                  <span className="text-xs font-bold text-slate-500">
-                    {compactPlanHelper}
-                  </span>
-                </div>
+          <section className="glass-card mt-5 rounded-[20px] px-3.5 py-3">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="brand-soft flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-xs font-black">
+                PLAN
               </div>
-              <span className="brand-chip max-w-[120px] shrink-0 truncate rounded-full px-2.5 py-1 text-[10px] font-black sm:max-w-[180px]">
-                {compactPlanBadge}
-              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] font-black text-slate-400">현재 플랜</div>
+                <div className="mt-0.5 text-sm font-black text-slate-900">
+                  {planDisplay.label}
+                </div>
+                <p className="mt-1 text-xs font-medium leading-5 text-slate-500">
+                  {planDisplay.helperText}
+                </p>
+                <p className="mt-1 text-[11px] font-bold leading-5 text-slate-400">
+                  {planDisplay.billingNotice}
+                </p>
+              </div>
             </div>
           </section>
 
