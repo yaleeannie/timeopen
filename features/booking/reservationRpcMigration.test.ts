@@ -4,7 +4,7 @@ import test from "node:test";
 
 const migrationSql = readFileSync(
   new URL(
-    "../../supabase/migrations/20260624130000_restore_reservation_rpc_dependency.sql",
+    "../../supabase/migrations/20260624140000_include_duration_in_reservation_rpc.sql",
     import.meta.url
   ),
   "utf8"
@@ -44,6 +44,17 @@ test("hotfix migration restores the 9-argument reservation RPC before the consen
   assert.ok(
     nineArgDefinition < twelveArgDefinition,
     "9-argument RPC must be created before the wrapper calls it"
+  );
+});
+
+test("restored reservation RPC inserts required reservation duration", () => {
+  assert.match(
+    migrationSql,
+    /insert into public\.reservations \(\s*organization_id,\s*service_id,\s*date,\s*start_time,\s*end_time,\s*start_at,\s*end_at,\s*duration_min,\s*status,\s*customer_name,\s*customer_phone\s*\)/s
+  );
+  assert.match(
+    migrationSql,
+    /\(\(p_date \+ p_end\) at time zone 'Asia\/Seoul'\),\s*p_duration_min,\s*'confirmed'/s
   );
 });
 
