@@ -1,3 +1,5 @@
+import { LEGAL_TERMS_VERSION } from "@/features/legal/consent";
+
 const sections = [
   {
     title: "1. 목적",
@@ -97,7 +99,7 @@ export default function TermsPage() {
           이용약관
         </h1>
         <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
-          시행일: 2026년 6월 24일
+          시행일: {LEGAL_TERMS_VERSION}
         </p>
 
         <div className="mt-8 space-y-7">

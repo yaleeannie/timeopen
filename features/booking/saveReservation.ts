@@ -1,5 +1,6 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { validateCustomerName } from "@/features/validation/fieldLimits";
+import { buildCustomerPrivacyConsentPayload } from "@/features/legal/consent";
 
 export type Params = {
   handle: string;
@@ -11,12 +12,20 @@ export type Params = {
   bufferMin: number;
   customerName: string;
   customerPhone: string;
+  customerPrivacyAgreed: boolean;
 };
 
 export async function saveReservation(params: Params): Promise<string> {
   const customerName = validateCustomerName(params.customerName);
   if (!customerName.ok) {
     throw new Error(customerName.error);
+  }
+
+  const customerPrivacyConsent = buildCustomerPrivacyConsentPayload({
+    agreed: params.customerPrivacyAgreed,
+  });
+  if (!customerPrivacyConsent.ok) {
+    throw new Error(customerPrivacyConsent.error);
   }
 
   const supabase = createSupabaseBrowserClient();
@@ -31,6 +40,11 @@ export async function saveReservation(params: Params): Promise<string> {
     p_buffer_min: params.bufferMin,
     p_customer_name: customerName.value,
     p_customer_phone: params.customerPhone,
+    p_customer_privacy_agreed: true,
+    p_customer_privacy_agreed_at:
+      customerPrivacyConsent.customer_privacy_agreed_at,
+    p_customer_privacy_policy_version:
+      customerPrivacyConsent.customer_privacy_policy_version,
   });
 
   if (error) {

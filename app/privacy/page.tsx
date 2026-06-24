@@ -1,3 +1,5 @@
+import { PRIVACY_POLICY_VERSION } from "@/features/legal/consent";
+
 const sections = [
   {
     title: "1. 수집하는 개인정보",
@@ -99,7 +101,8 @@ export default function PrivacyPage() {
           개인정보 처리방침
         </h1>
         <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
-          개인정보 수집·이용 동의 내용을 포함합니다. 시행일: 2026년 6월 24일
+          개인정보 수집·이용 동의 내용을 포함합니다. 시행일:{" "}
+          {PRIVACY_POLICY_VERSION}
         </p>
 
         <div className="mt-8 space-y-7">

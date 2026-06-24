@@ -3,6 +3,7 @@
 import { useState } from "react";
 import AuthShell from "@/components/AuthShell";
 import { validateEmail } from "@/features/auth/email";
+import { buildOwnerLegalConsentMetadata } from "@/features/legal/consent";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
@@ -51,11 +52,18 @@ export default function SignupPage() {
     const callbackUrl = new URL("/auth/callback", window.location.origin);
     callbackUrl.searchParams.set("next", "/onboarding");
     callbackUrl.searchParams.set("flow", "signup");
+    const consentMetadata = buildOwnerLegalConsentMetadata({
+      nowISO: new Date().toISOString(),
+      marketingAgreed,
+    });
 
     const { data, error } = await supabase.auth.signUp({
       email: emailValidation.value,
       password: pw,
-      options: { emailRedirectTo: callbackUrl.toString() },
+      options: {
+        emailRedirectTo: callbackUrl.toString(),
+        data: consentMetadata,
+      },
     });
 
     if (error) {

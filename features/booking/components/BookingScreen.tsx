@@ -35,6 +35,7 @@ import {
   FIELD_LIMITS,
   validateCustomerName,
 } from "@/features/validation/fieldLimits";
+import { canSubmitCustomerReservation } from "@/features/legal/consent";
 
 type Props = { handle: string; bookingSlotMode: BookingSlotMode };
 type BookingStep = "service" | "datetime" | "customer";
@@ -355,6 +356,7 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
         bufferMin: cleanupMin,
         customerName,
         customerPhone: normalizedPhone.e164,
+        customerPrivacyAgreed,
       });
 
       if (typeof result === "string") rid = result;
@@ -398,10 +400,14 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
   const canContinueFromService = serviceId != null;
   const canContinueFromDatetime =
     dateISO != null && time != null && isTimesReadyForCurrent;
-  const canReserveFromCustomer =
-    customerPrivacyAgreed &&
-    validateCustomerName(customerName).ok &&
-    customerPhone.trim().length > 0;
+  const canReserveFromCustomer = canSubmitCustomerReservation({
+    hasSelection: ctaSelection.serviceId !== null &&
+      ctaSelection.dateISO !== null &&
+      ctaSelection.time !== null,
+    hasValidName: validateCustomerName(customerName).ok,
+    hasPhone: customerPhone.trim().length > 0,
+    customerPrivacyAgreed,
+  });
   const regionNames = new Intl.DisplayNames([locale], { type: "region" });
 
   return (
