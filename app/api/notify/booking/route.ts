@@ -5,6 +5,10 @@ import {
   SmsSendError,
   type SmsSendResult,
 } from "@/lib/notify/sendSms";
+import {
+  formatReservationDateCompactKorean,
+  formatReservationTimeDisplay,
+} from "@/features/booking/reservationDisplay";
 
 function clean(v: unknown) {
   return typeof v === "string" ? v.trim() : "";
@@ -182,8 +186,12 @@ export async function POST(req: Request) {
   const noticeText = clean(reservation.notice_text);
   const serviceName = clean(reservation.service_name) || "예약";
   const ownerPhone = process.env.OWNER_PHONE || "";
-  const date = clean(reservation.reservation_date);
-  const time = clean(reservation.start_time);
+  const date =
+    formatReservationDateCompactKorean(reservation.reservation_date) ||
+    clean(reservation.reservation_date);
+  const time =
+    formatReservationTimeDisplay(reservation.start_time) ||
+    clean(reservation.start_time);
   const customerName = clean(reservation.customer_name);
   const customerPhone = clean(reservation.customer_phone);
 

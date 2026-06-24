@@ -406,18 +406,30 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
       </section>
 
       <div className="glass-card rounded-[24px] p-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {(["service", "datetime", "customer"] as const).map((item, index) => {
             const active = item === step;
             const complete =
               (item === "service" && step !== "service") ||
               (item === "datetime" && step === "customer");
+            const desktopLabel =
+              item === "service"
+                ? t("service")
+                : item === "datetime"
+                  ? t("dateTime")
+                  : t("customerInfo");
+            const mobileLabel =
+              item === "service"
+                ? t("service")
+                : item === "datetime"
+                  ? t("dateTimeShort")
+                  : t("customerInfoShort");
 
             return (
-              <div key={item} className="flex min-w-0 flex-1 items-center gap-2">
+              <div key={item} className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
                 <div
                   className={[
-                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black",
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black sm:h-8 sm:w-8 sm:text-xs",
                     active || complete
                       ? "brand-gradient [color:var(--brand-contrast)]"
                       : "brand-soft",
@@ -427,18 +439,15 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
                 </div>
                 <div
                   className={[
-                    "truncate text-xs font-bold",
+                    "min-w-0 truncate text-[11px] font-bold sm:text-xs",
                     active ? "brand-text" : "text-gray-400",
                   ].join(" ")}
                 >
-                  {item === "service"
-                    ? t("service")
-                    : item === "datetime"
-                      ? t("dateTime")
-                      : t("customerInfo")}
+                  <span className="sm:hidden">{mobileLabel}</span>
+                  <span className="hidden sm:inline">{desktopLabel}</span>
                 </div>
                 {index < 2 ? (
-                  <div className="h-px min-w-2 flex-1 bg-[#dceef2]" />
+                  <div className="h-px min-w-1 flex-1 bg-[#dceef2] sm:min-w-2" />
                 ) : null}
               </div>
             );

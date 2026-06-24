@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendSms } from "@/lib/notify/sendSms";
+import {
+  formatReservationDateCompactKorean,
+  formatReservationTimeDisplay,
+} from "@/features/booking/reservationDisplay";
 
 function clean(v: unknown) {
   return typeof v === "string" ? v.trim() : "";
@@ -88,8 +92,12 @@ export async function POST(req: Request) {
     : (reservation as any).organizations;
 
   const orgName = clean(org?.handle) || "예약";
-  const date = clean((reservation as any).date);
-  const time = clean((reservation as any).start_time);
+  const date =
+    formatReservationDateCompactKorean((reservation as any).date) ||
+    clean((reservation as any).date);
+  const time =
+    formatReservationTimeDisplay((reservation as any).start_time) ||
+    clean((reservation as any).start_time);
   const customerPhone = clean((reservation as any).customer_phone);
 
   const cancelMsg = `[TimeOpen]

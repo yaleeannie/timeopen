@@ -54,13 +54,6 @@ function PublicBookingPageContent({
               ) : null}
             </div>
           </div>
-          <header className="mb-6 text-center">
-            <div className={`${theme.logo} mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] text-2xl font-black [color:var(--brand-contrast)]`}>T</div>
-            <div className="brand-text mt-4 text-sm font-bold">TimeOpen 샵 예약</div>
-            <h1 className="mt-1 text-3xl font-black tracking-[-0.04em]">{t("book")}</h1>
-            <p className="mt-2 text-sm leading-5 text-gray-500">{t("bookingSubtitle")}</p>
-          </header>
-
           {!disabled && bookingEnabled ? (
             <BookingScreen handle={handle} bookingSlotMode={bookingSlotMode} />
           ) : (

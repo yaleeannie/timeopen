@@ -2,6 +2,10 @@ export const dynamic = "force-dynamic";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import PublicConfirmedPage from "@/features/booking/components/PublicConfirmedPage";
+import {
+  formatReservationDateKorean,
+  formatReservationTimeRangeDisplay,
+} from "@/features/booking/reservationDisplay";
 
 type Props = {
   params: { handle: string };
@@ -21,12 +25,12 @@ export default async function ConfirmedPage({ params, searchParams }: Props) {
     : { data: null, error: null };
 
   const confirmation = Array.isArray(data) ? data[0] ?? null : data;
-  const startTime = confirmation?.start_time ? String(confirmation.start_time) : "";
-  const endTime = confirmation?.end_time ? String(confirmation.end_time) : "";
   const dateText = confirmation?.reservation_date
-    ? String(confirmation.reservation_date)
+    ? formatReservationDateKorean(confirmation.reservation_date)
     : "-";
-  const timeText = startTime ? `${startTime}${endTime ? ` ~ ${endTime}` : ""}` : "-";
+  const timeText =
+    formatReservationTimeRangeDisplay(confirmation?.start_time, confirmation?.end_time) ||
+    "-";
 
   return (
     <PublicConfirmedPage
