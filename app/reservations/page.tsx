@@ -3,7 +3,10 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
-import ReservationsClient, { type ReservationCardItem } from "./ReservationsClient";
+import ReservationsClient, {
+  type ReservationCardItem,
+  type ReservationServiceOption,
+} from "./ReservationsClient";
 
 type ReservationRow = {
   id: string;
@@ -314,8 +317,9 @@ export default async function ReservationsPage({ searchParams }: Props) {
 
   const { data: services, error: svcErr } = await supabase
     .from("services")
-    .select("id, name")
-    .eq("organization_id", organizationId);
+    .select("id, name, duration_min, cleanup_min, price, active")
+    .eq("organization_id", organizationId)
+    .eq("active", true);
 
   if (svcErr) {
     return (
@@ -355,6 +359,13 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const serviceNameMap = new Map(
     (services ?? []).map((s: any) => [String(s.id), String(s.name)])
   );
+  const serviceOptions: ReservationServiceOption[] = (services ?? []).map((service: any) => ({
+    id: String(service.id),
+    name: String(service.name ?? "서비스"),
+    durationMin: Number(service.duration_min ?? 0),
+    cleanupMin: Number(service.cleanup_min ?? 0),
+    price: typeof service.price === "number" ? service.price : null,
+  }));
 
   function formatServiceName(serviceId: unknown) {
     if (!serviceId) return "-";
@@ -412,6 +423,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const selectedReservationCards: ReservationCardItem[] = selectedReservations.map(
     ({ row, date, start, end, serviceName, smsStatus }) => ({
       id: row.id,
+      serviceId: row.service_id ? String(row.service_id) : "",
       status: row.status,
       customerName: displayValue(row.customer_name),
       customerPhone: displayValue(row.customer_phone),
@@ -538,6 +550,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
         <ReservationsClient
           selectedDateLabel={formatDateLabel(selectedDate)}
           reservations={selectedReservationCards}
+          services={serviceOptions}
         />
         <nav className="brand-nav mt-7 grid grid-cols-4 gap-1 rounded-2xl p-2">
           <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">대시보드</a>

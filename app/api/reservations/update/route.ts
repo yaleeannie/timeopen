@@ -28,11 +28,11 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const validation = validateReservationEditInput({
     reservationId: body?.reservationId,
+    serviceId: body?.serviceId,
     customerName: body?.customerName,
     customerPhone: body?.customerPhone,
     date: body?.date,
     startTime: body?.startTime,
-    endTime: body?.endTime,
   });
 
   if (!validation.ok) {
@@ -111,7 +111,6 @@ export async function POST(req: Request) {
     shopName,
     serviceName,
     dateTime: `${date} ${time}`.trim(),
-    contact: clean(org?.handle) ? `@${clean(org?.handle)}` : "매장으로 문의해주세요",
   });
 
   if (!customerPhone) {

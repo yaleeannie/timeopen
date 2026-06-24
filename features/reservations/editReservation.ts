@@ -5,35 +5,40 @@ const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 export type ReservationEditInput = {
   reservationId: unknown;
+  serviceId: unknown;
   customerName: unknown;
   customerPhone: unknown;
   date: unknown;
   startTime: unknown;
-  endTime?: unknown;
 };
 
 export type ReservationEditPayload = {
   p_reservation_id: string;
+  p_service_id: string;
   p_customer_name: string;
   p_customer_phone: string;
   p_date: string;
   p_start: string;
-  p_end: string | null;
 };
 
 export type ReservationEditValue = {
   reservationId: string;
+  serviceId: string;
   customerName: string;
   customerPhone: string;
   date: string;
   startTime: string;
-  endTime: string | null;
 };
 
 export function validateReservationEditInput(input: ReservationEditInput) {
   const reservationId = asText(input.reservationId);
   if (!reservationId) {
     return { ok: false as const, error: "예약 ID가 필요합니다." };
+  }
+
+  const serviceId = asText(input.serviceId);
+  if (!serviceId) {
+    return { ok: false as const, error: "서비스를 선택해주세요." };
   }
 
   const customerName = validateCustomerName(asText(input.customerName));
@@ -60,24 +65,15 @@ export function validateReservationEditInput(input: ReservationEditInput) {
     return { ok: false as const, error: "시작 시간을 올바르게 입력해주세요." };
   }
 
-  const endTimeText = asText(input.endTime);
-  const endTime = endTimeText ? normalizeTime(endTimeText) : null;
-  if (endTimeText && !endTime) {
-    return { ok: false as const, error: "종료 시간을 올바르게 입력해주세요." };
-  }
-  if (endTime && endTime <= startTime) {
-    return { ok: false as const, error: "종료 시간은 시작 시간보다 늦어야 해요." };
-  }
-
   return {
     ok: true as const,
     value: {
       reservationId,
+      serviceId,
       customerName: customerName.value,
       customerPhone,
       date,
       startTime,
-      endTime,
     },
   };
 }
@@ -87,11 +83,11 @@ export function buildReservationEditRpcPayload(
 ): ReservationEditPayload {
   return {
     p_reservation_id: value.reservationId,
+    p_service_id: value.serviceId,
     p_customer_name: value.customerName,
     p_customer_phone: value.customerPhone,
     p_date: value.date,
     p_start: value.startTime,
-    p_end: value.endTime,
   };
 }
 
@@ -99,14 +95,12 @@ export function buildReservationUpdatedSms(params: {
   shopName: string;
   serviceName: string;
   dateTime: string;
-  contact: string;
 }) {
   return [
     "[TimeOpen] 예약 정보가 변경되었어요.",
     `샵: ${params.shopName || "예약"}`,
     `서비스: ${params.serviceName || "예약"}`,
     `일시: ${params.dateTime}`,
-    `문의: ${params.contact || "매장으로 문의해주세요"}`,
   ].join("\n");
 }
 

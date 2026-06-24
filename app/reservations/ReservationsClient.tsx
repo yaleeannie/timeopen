@@ -1,10 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+
+export type ReservationServiceOption = {
+  id: string;
+  name: string;
+  durationMin: number;
+  cleanupMin: number;
+  price: number | null;
+};
 
 export type ReservationCardItem = {
   id: string;
+  serviceId: string;
   status: string | null;
   customerName: string;
   customerPhone: string;
@@ -18,6 +27,7 @@ export type ReservationCardItem = {
 type Props = {
   selectedDateLabel: string;
   reservations: ReservationCardItem[];
+  services: ReservationServiceOption[];
 };
 
 function formatStatus(status: string | null) {
@@ -53,18 +63,32 @@ function timeRange(start: string, end: string) {
   return `${start || "-"}${end ? ` ~ ${end}` : ""}`;
 }
 
-function ReservationCard({ reservation }: { reservation: ReservationCardItem }) {
+function formatPrice(price: number | null) {
+  return typeof price === "number" ? `${price.toLocaleString()}원` : "";
+}
+
+function ReservationCard({
+  reservation,
+  services,
+}: {
+  reservation: ReservationCardItem;
+  services: ReservationServiceOption[];
+}) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [slotError, setSlotError] = useState("");
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const requestIdRef = useRef(0);
   const [form, setForm] = useState({
+    serviceId: reservation.serviceId,
     customerName: reservation.customerName === "-" ? "" : reservation.customerName,
     customerPhone: reservation.customerPhone === "-" ? "" : reservation.customerPhone,
     date: reservation.date,
     startTime: reservation.start,
-    endTime: reservation.end,
   });
 
   const editable =
@@ -79,13 +103,53 @@ function ReservationCard({ reservation }: { reservation: ReservationCardItem }) 
     setError("");
     setMessage("");
     setForm({
+      serviceId: reservation.serviceId,
       customerName: reservation.customerName === "-" ? "" : reservation.customerName,
       customerPhone: reservation.customerPhone === "-" ? "" : reservation.customerPhone,
       date: reservation.date,
       startTime: reservation.start,
-      endTime: reservation.end,
     });
   }
+
+  useEffect(() => {
+    if (!editing || !form.serviceId || !form.date) return;
+
+    const requestId = ++requestIdRef.current;
+    setLoadingSlots(true);
+    setSlotError("");
+
+    fetch("/api/reservations/slots", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        reservationId: reservation.id,
+        serviceId: form.serviceId,
+        date: form.date,
+      }),
+    })
+      .then(async (response) => {
+        const json = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(json?.error || "예약 가능 시간을 불러오지 못했어요.");
+        return Array.isArray(json?.times) ? json.times.map(String) : [];
+      })
+      .then((times) => {
+        if (requestIdRef.current !== requestId) return;
+        setAvailableTimes(times);
+        if (!times.includes(form.startTime)) {
+          setForm((prev) => ({ ...prev, startTime: "" }));
+        }
+      })
+      .catch((fetchError) => {
+        if (requestIdRef.current !== requestId) return;
+        setAvailableTimes([]);
+        setSlotError(fetchError instanceof Error ? fetchError.message : "예약 가능 시간을 불러오지 못했어요.");
+      })
+      .finally(() => {
+        if (requestIdRef.current === requestId) {
+          setLoadingSlots(false);
+        }
+      });
+  }, [editing, form.serviceId, form.date, reservation.id]);
 
   async function saveEdit() {
     setSaving(true);
@@ -96,9 +160,9 @@ function ReservationCard({ reservation }: { reservation: ReservationCardItem }) 
       const response = await fetch("/api/reservations/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reservationId: reservation.id,
-          ...form,
+          body: JSON.stringify({
+            reservationId: reservation.id,
+            ...form,
         }),
       });
       const result = await response.json().catch(() => null);
@@ -192,7 +256,94 @@ function ReservationCard({ reservation }: { reservation: ReservationCardItem }) 
           </>
         ) : (
           <div className="space-y-2.5">
-            <div className="grid gap-2">
+            <div className="grid gap-3">
+              <section>
+                <div className="mb-1.5 text-xs font-black text-slate-700">서비스 선택</div>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {services.map((service) => {
+                    const selected = form.serviceId === service.id;
+                    return (
+                      <button
+                        key={service.id}
+                        type="button"
+                        onClick={() =>
+                          setForm((prev) => ({
+                            ...prev,
+                            serviceId: service.id,
+                            startTime:
+                              service.id === prev.serviceId ? prev.startTime : "",
+                          }))
+                        }
+                        className={`min-w-[132px] rounded-2xl border px-3 py-2 text-left transition ${
+                          selected
+                            ? "brand-selected"
+                            : "border-white/80 bg-white/65 text-slate-700 hover:bg-white"
+                        }`}
+                      >
+                        <div className="truncate text-xs font-black">{service.name}</div>
+                        <div className={`mt-0.5 text-[11px] font-bold ${selected ? "text-white/85" : "text-slate-500"}`}>
+                          {service.durationMin}분
+                          {formatPrice(service.price) ? ` · ${formatPrice(service.price)}` : ""}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section>
+                <label className="grid gap-1 text-xs font-black text-slate-700">
+                  날짜 선택
+                  <input
+                    type="date"
+                    value={form.date}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, date: event.target.value, startTime: "" }))
+                    }
+                    className="min-h-10 rounded-xl border border-white/80 bg-white/70 px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
+                  />
+                </label>
+              </section>
+
+              <section>
+                <div className="mb-1.5 text-xs font-black text-slate-700">예약 가능한 시간</div>
+                {loadingSlots ? (
+                  <div className="rounded-xl bg-white/55 px-3 py-3 text-xs font-bold text-slate-500">
+                    시간을 불러오는 중이에요.
+                  </div>
+                ) : slotError ? (
+                  <div className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700">
+                    {slotError}
+                  </div>
+                ) : availableTimes.length === 0 ? (
+                  <div className="rounded-xl bg-white/55 px-3 py-3 text-xs font-bold text-slate-500">
+                    선택한 날짜에 예약 가능한 시간이 없어요.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {availableTimes.map((time) => {
+                      const selected = form.startTime === time;
+                      return (
+                        <button
+                          key={time}
+                          type="button"
+                          onClick={() => update("startTime", time)}
+                          className={`min-h-10 rounded-xl border text-xs font-black transition ${
+                            selected
+                              ? "brand-selected"
+                              : "border-white/80 bg-white/70 text-slate-700 hover:bg-[#e8fbff]"
+                          }`}
+                        >
+                          {time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+
+              <section className="grid gap-2">
+                <div className="text-xs font-black text-slate-700">고객 정보</div>
               <label className="grid gap-1 text-xs font-bold text-slate-500">
                 고객명
                 <input
@@ -211,35 +362,7 @@ function ReservationCard({ reservation }: { reservation: ReservationCardItem }) 
                   className="min-h-10 rounded-xl border border-white/80 bg-white/70 px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
                 />
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                <label className="grid gap-1 text-xs font-bold text-slate-500">
-                  날짜
-                  <input
-                    type="date"
-                    value={form.date}
-                    onChange={(event) => update("date", event.target.value)}
-                    className="min-h-10 rounded-xl border border-white/80 bg-white/70 px-2 text-xs font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
-                  />
-                </label>
-                <label className="grid gap-1 text-xs font-bold text-slate-500">
-                  시작
-                  <input
-                    type="time"
-                    value={form.startTime}
-                    onChange={(event) => update("startTime", event.target.value)}
-                    className="min-h-10 rounded-xl border border-white/80 bg-white/70 px-2 text-xs font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
-                  />
-                </label>
-                <label className="grid gap-1 text-xs font-bold text-slate-500">
-                  종료
-                  <input
-                    type="time"
-                    value={form.endTime}
-                    onChange={(event) => update("endTime", event.target.value)}
-                    className="min-h-10 rounded-xl border border-white/80 bg-white/70 px-2 text-xs font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
-                  />
-                </label>
-              </div>
+              </section>
             </div>
 
             {error ? (
@@ -260,7 +383,7 @@ function ReservationCard({ reservation }: { reservation: ReservationCardItem }) 
               <button
                 type="button"
                 onClick={saveEdit}
-                disabled={saving}
+                disabled={saving || loadingSlots || !form.serviceId || !form.startTime}
                 className="brand-button min-h-10 rounded-xl px-3 text-xs font-black disabled:opacity-50"
               >
                 {saving ? "저장 중" : "수정 완료"}
@@ -279,7 +402,7 @@ function ReservationCard({ reservation }: { reservation: ReservationCardItem }) 
   );
 }
 
-export default function ReservationsClient({ selectedDateLabel, reservations }: Props) {
+export default function ReservationsClient({ selectedDateLabel, reservations, services }: Props) {
   const count = reservations.length;
   const sortedReservations = useMemo(
     () =>
@@ -312,7 +435,7 @@ export default function ReservationsClient({ selectedDateLabel, reservations }: 
         <section aria-label="선택한 날짜 예약">
           <div className="relative space-y-2 before:absolute before:bottom-5 before:left-[31px] before:top-5 before:w-px before:bg-gradient-to-b before:from-[#00d6f7]/15 before:via-[#00c1ff]/60 before:to-[#00c1ff]/15">
             {sortedReservations.map((reservation) => (
-              <ReservationCard key={reservation.id} reservation={reservation} />
+              <ReservationCard key={reservation.id} reservation={reservation} services={services} />
             ))}
           </div>
         </section>
