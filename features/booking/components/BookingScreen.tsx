@@ -126,6 +126,7 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
   const [customerName, setCustomerName] = useState("");
   const [phoneCountry, setPhoneCountry] = useState<SupportedPhoneCountry>("KR");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerPrivacyAgreed, setCustomerPrivacyAgreed] = useState(false);
 
   const lastStableSelectionRef = useRef<{ dateISO: string | null; serviceId: string | null; time: string | null }>({
     dateISO: null,
@@ -310,6 +311,11 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
     if (!organizationId || !service || !dateISO || !serviceId || !time) return;
     if (!isTimesReadyForCurrent) return;
 
+    if (!customerPrivacyAgreed) {
+      setMsg("개인정보 수집·이용에 동의해 주세요.");
+      return;
+    }
+
     // ✅ Day 1 추가: 이름/전화 검증
     const nameValidation = validateCustomerName(customerName);
     if (!nameValidation.ok) {
@@ -392,6 +398,10 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
   const canContinueFromService = serviceId != null;
   const canContinueFromDatetime =
     dateISO != null && time != null && isTimesReadyForCurrent;
+  const canReserveFromCustomer =
+    customerPrivacyAgreed &&
+    validateCustomerName(customerName).ok &&
+    customerPhone.trim().length > 0;
   const regionNames = new Intl.DisplayNames([locale], { type: "region" });
 
   return (
@@ -472,6 +482,7 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
                     userPickedTimeRef.current = false;
                     computedKeyRef.current = null;
                     setTime(null);
+                    setCustomerPrivacyAgreed(false);
                     setAvailableTimes([]);
                     setNoTimesForCurrent(false);
                     setHolidayClosedForCurrent(false);
@@ -521,6 +532,7 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
               userPickedTimeRef.current = false;
               computedKeyRef.current = null;
               setTime(null);
+              setCustomerPrivacyAgreed(false);
               setAvailableTimes([]);
               setNoTimesForCurrent(false);
               setHolidayClosedForCurrent(false);
@@ -577,6 +589,7 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
                   if (!isTimesReadyForCurrent) return;
 
                   userPickedTimeRef.current = true;
+                  setCustomerPrivacyAgreed(false);
                   setTime(t);
                 }}
               />
@@ -635,6 +648,55 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
           ) : null}
         </div>
 
+        <div className="mt-4 rounded-2xl border border-[#dceef2] bg-white/65 p-3">
+          <label className="flex min-w-0 items-start gap-3 text-sm font-bold text-slate-700">
+            <input
+              type="checkbox"
+              checked={customerPrivacyAgreed}
+              onChange={(event) => {
+                setCustomerPrivacyAgreed(event.target.checked);
+                if (event.target.checked) setMsg("");
+              }}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-[#00C9FF]"
+            />
+            <span className="min-w-0 leading-5">
+              [필수] 개인정보 수집·이용에 동의합니다.
+            </span>
+          </label>
+          <p className="mt-2 pl-7 text-[11px] font-medium leading-5 text-slate-500">
+            예약 접수 및 관리를 위해 이름, 연락처, 예약 일시, 선택한 서비스,
+            요청사항이 TimeOpen과 해당 매장 운영자에게 전달됩니다.
+          </p>
+          <details className="mt-2 pl-7 text-[11px] font-medium leading-5 text-slate-500">
+            <summary className="cursor-pointer brand-text font-black">
+              자세히 보기
+            </summary>
+            <div className="mt-2 space-y-1.5 rounded-xl bg-white/70 px-3 py-2">
+              <p>
+                <span className="font-black text-slate-600">수집 항목:</span>{" "}
+                예약자 이름, 연락처, 예약 일시, 선택한 서비스, 요청사항
+              </p>
+              <p>
+                <span className="font-black text-slate-600">수집 목적:</span>{" "}
+                예약 접수, 예약 확인, 예약 변경·취소 안내, 매장과 고객 간 예약
+                관련 연락
+              </p>
+              <p>
+                <span className="font-black text-slate-600">보유 기간:</span>{" "}
+                예약 관리 및 분쟁 대응을 위해 필요한 기간 동안 보관 후
+                파기합니다.
+              </p>
+              <p>
+                <span className="font-black text-slate-600">동의 거부권:</span>{" "}
+                동의하지 않을 경우 예약 접수가 제한될 수 있습니다.
+              </p>
+              <a href="/privacy" className="inline-flex brand-text font-black underline underline-offset-2">
+                개인정보 처리방침 보기
+              </a>
+            </div>
+          </details>
+        </div>
+
         {msg ? (
           <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold leading-5 text-red-700 [overflow-wrap:anywhere]">
             {msg}
@@ -668,7 +730,14 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
           {step !== "service" ? (
             <button
               type="button"
-              onClick={() => setStep(step === "customer" ? "datetime" : "service")}
+              onClick={() => {
+                if (step === "customer") {
+                  setCustomerPrivacyAgreed(false);
+                  setStep("datetime");
+                  return;
+                }
+                setStep("service");
+              }}
               className="brand-outline min-h-12 shrink-0 rounded-2xl px-4 text-sm font-black transition"
             >
               {t("previous")}
@@ -695,7 +764,11 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
             </button>
           ) : (
             <div className="min-w-0 flex-1">
-              <BookingCta selection={ctaSelection} onReserve={onReserve} />
+              <BookingCta
+                selection={ctaSelection}
+                onReserve={onReserve}
+                canReserve={canReserveFromCustomer}
+              />
             </div>
           )}
         </div>

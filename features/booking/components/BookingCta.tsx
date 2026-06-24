@@ -9,14 +9,16 @@ type Props = {
     time: string | null;
   };
   onReserve: () => void;
+  canReserve?: boolean;
 };
 
-export default function BookingCta({ selection, onReserve }: Props) {
+export default function BookingCta({ selection, onReserve, canReserve = true }: Props) {
   const { t } = usePublicBookingI18n();
   const ready =
     selection.serviceId !== null &&
     selection.dateISO !== null &&
-    selection.time !== null;
+    selection.time !== null &&
+    canReserve;
 
   return (
     <div className="glass-card flex items-center justify-between gap-3 rounded-[22px] p-3">
