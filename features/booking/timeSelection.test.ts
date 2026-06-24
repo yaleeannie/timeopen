@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildBookingTimeSelectionKey,
   getEarliestAvailableTime,
+  shouldShowEarliestTimeHint,
 } from "./timeSelection";
 
 test("builds the same stable key shape for time slot readiness", () => {
@@ -58,4 +59,40 @@ test("time selection key is null until required values exist", () => {
 test("returns only the first available time as the earliest helper target", () => {
   assert.equal(getEarliestAvailableTime(["09:00", "09:10", "09:20"]), "09:00");
   assert.equal(getEarliestAvailableTime([]), null);
+});
+
+test("shows earliest hint before selecting a non-earliest time", () => {
+  assert.equal(
+    shouldShowEarliestTimeHint({
+      times: ["09:00", "09:10", "09:20"],
+      selectedTime: null,
+    }),
+    true
+  );
+
+  assert.equal(
+    shouldShowEarliestTimeHint({
+      times: ["09:00", "09:10", "09:20"],
+      selectedTime: "09:00",
+    }),
+    true
+  );
+});
+
+test("hides earliest hint after selecting a non-earliest time", () => {
+  assert.equal(
+    shouldShowEarliestTimeHint({
+      times: ["09:00", "09:10", "09:20"],
+      selectedTime: "09:10",
+    }),
+    false
+  );
+
+  assert.equal(
+    shouldShowEarliestTimeHint({
+      times: [],
+      selectedTime: null,
+    }),
+    false
+  );
 });

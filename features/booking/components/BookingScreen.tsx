@@ -19,6 +19,7 @@ import {
 import {
   buildBookingTimeSelectionKey,
   getEarliestAvailableTime,
+  shouldShowEarliestTimeHint,
 } from "@/features/booking/timeSelection";
 import type { WeeklySchedule } from "@/features/availability/weeklySchedule";
 
@@ -148,6 +149,12 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
   }, [bookingSlotMode, organizationId, dateISO, serviceId, service?.duration_min, service?.cleanup_min]);
 
   const isTimesReadyForCurrent = currentKey != null && computedKeyRef.current === currentKey;
+  const showEarliestTimeHint =
+    isTimesReadyForCurrent &&
+    shouldShowEarliestTimeHint({
+      times: availableTimes,
+      selectedTime: time,
+    });
 
   const ctaSelection = useMemo(() => {
     if (isTimesReadyForCurrent) {
@@ -519,6 +526,11 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-bold text-gray-900">{t("selectTime")}</div>
           </div>
+          {showEarliestTimeHint ? (
+            <p className="mt-1.5 text-xs font-semibold brand-text">
+              {t("earliestTime")}
+            </p>
+          ) : null}
 
           <div className="booking-time-tone mt-3 [&_button]:min-h-10 [&_button]:rounded-xl [&_button]:px-4 [&_button]:font-bold">
             {!serviceId || !dateISO ? (
@@ -552,7 +564,6 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
               <TimePicker
                 times={availableTimes}
                 value={time}
-                recommendedTime={getEarliestAvailableTime(availableTimes)}
                 onChange={(t) => {
                   if (!isTimesReadyForCurrent) return;
 

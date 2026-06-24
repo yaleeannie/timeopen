@@ -9,7 +9,6 @@ type Props = {
   disabled?: boolean;
   requiredMin?: number; // duration+buffer
   onChange: (time: string) => void;
-  recommendedTime?: string | null;
 };
 
 function fmtRequired(
@@ -30,7 +29,6 @@ export default function TimePicker({
   disabled,
   requiredMin,
   onChange,
-  recommendedTime,
 }: Props) {
   const { t } = usePublicBookingI18n();
   // 1) 서비스/날짜를 안 골랐으면 안내
@@ -79,7 +77,6 @@ export default function TimePicker({
     <div className="grid w-full max-w-md grid-cols-3 gap-3 sm:grid-cols-4">
       {times.map((time) => {
         const active = value === time;
-        const isRecommended = recommendedTime != null && time === recommendedTime;
 
         return (
           <button
@@ -95,20 +92,7 @@ export default function TimePicker({
               color: active ? "var(--brand-contrast)" : colors.text.primary,
             }}
           >
-            <span>{time}</span>
-
-            {isRecommended && (
-              <span
-                className="mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold sm:ml-2 sm:mt-0"
-                style={{
-                  border: `1px solid ${colors.border.default}`,
-                  background: colors.background.base,
-                  color: colors.text.secondary,
-                }}
-              >
-                {t("earliestTime")}
-              </span>
-            )}
+            {time}
           </button>
         );
       })}

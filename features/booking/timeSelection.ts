@@ -26,3 +26,13 @@ export function buildBookingTimeSelectionKey(input: {
 export function getEarliestAvailableTime(times: string[]) {
   return times[0] ?? null;
 }
+
+export function shouldShowEarliestTimeHint(input: {
+  times: string[];
+  selectedTime: string | null | undefined;
+}) {
+  const earliestTime = getEarliestAvailableTime(input.times);
+  if (!earliestTime) return false;
+
+  return input.selectedTime == null || input.selectedTime === earliestTime;
+}
