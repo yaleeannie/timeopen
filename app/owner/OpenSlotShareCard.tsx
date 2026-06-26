@@ -131,7 +131,7 @@ export default function OpenSlotShareCard({
 
   return (
     <section
-      className="glass-card min-w-0 overflow-hidden rounded-[22px] p-4"
+      className="glass-card min-w-0 rounded-[22px] p-4"
       aria-labelledby="open-slot-share"
     >
       <div className="min-w-0">
@@ -145,18 +145,18 @@ export default function OpenSlotShareCard({
 
       {canLink ? (
         <>
-          <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
-            <label className="min-w-0">
+          <div className="mt-4 grid w-full min-w-0 max-w-full gap-3 sm:grid-cols-2">
+            <label className="block w-full min-w-0 max-w-full overflow-visible">
               <span className="mb-1.5 block text-xs font-black text-slate-600">날짜</span>
               <input
                 type="date"
                 value={dateISO}
                 min={todayISO}
                 onChange={(event) => setDateISO(event.target.value || todayISO)}
-                className="brand-input box-border min-h-12 w-full min-w-0 max-w-full rounded-2xl px-3 py-2.5 text-sm font-bold"
+                className="brand-input box-border block min-h-12 w-full min-w-0 max-w-full appearance-none rounded-2xl px-3 py-2.5 text-sm font-bold"
               />
             </label>
-            <div className="min-w-0">
+            <div className="w-full min-w-0 max-w-full">
               <span className="mb-1.5 block text-xs font-black text-slate-600">시간</span>
               <TimeSelect
                 value={time}
