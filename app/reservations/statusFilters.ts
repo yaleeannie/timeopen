@@ -10,14 +10,30 @@ export const RESERVATION_STATUS_FILTERS: Array<{
   { value: "cancelled", label: "취소" },
 ];
 
+export function normalizeReservationStatusFilter(
+  value: unknown
+): ReservationStatusFilter {
+  return value === "requested" ||
+    value === "confirmed" ||
+    value === "cancelled"
+    ? value
+    : "all";
+}
+
 export function matchesReservationStatusFilter(
   status: string | null,
   filter: ReservationStatusFilter
 ) {
-  if (filter === "all") return true;
+  if (filter === "all") return status !== "cancelled" && status !== "canceled";
   if (filter === "requested") return status === "requested";
   if (filter === "confirmed") return status === "confirmed";
   return status === "cancelled" || status === "canceled";
+}
+
+export function isReservationStatusFilterCalendarScoped(
+  filter: ReservationStatusFilter
+) {
+  return filter === "all" || filter === "confirmed";
 }
 
 export function getReservationStatusFilterEmptyText(

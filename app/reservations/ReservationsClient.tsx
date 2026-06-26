@@ -2,12 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  getReservationStatusFilterEmptyText,
-  matchesReservationStatusFilter,
-  RESERVATION_STATUS_FILTERS,
-  type ReservationStatusFilter,
-} from "./statusFilters";
 
 export type ReservationServiceOption = {
   id: string;
@@ -35,6 +29,7 @@ type Props = {
   selectedDateLabel: string;
   reservations: ReservationCardItem[];
   services: ReservationServiceOption[];
+  emptyText: string;
 };
 
 function formatStatus(status: string | null) {
@@ -458,24 +453,15 @@ function ReservationCard({
   );
 }
 
-export default function ReservationsClient({ selectedDateLabel, reservations, services }: Props) {
-  const [statusFilter, setStatusFilter] = useState<ReservationStatusFilter>("all");
-  const filteredReservations = useMemo(
-    () =>
-      reservations.filter((reservation) =>
-        matchesReservationStatusFilter(reservation.status, statusFilter)
-      ),
-    [reservations, statusFilter]
-  );
-  const count = filteredReservations.length;
+export default function ReservationsClient({ selectedDateLabel, reservations, services, emptyText }: Props) {
+  const count = reservations.length;
   const sortedReservations = useMemo(
     () =>
-      [...filteredReservations].sort((a, b) =>
+      [...reservations].sort((a, b) =>
         (b.createdAt || "").localeCompare(a.createdAt || "")
       ),
-    [filteredReservations]
+    [reservations]
   );
-  const emptyText = getReservationStatusFilterEmptyText(statusFilter);
 
   return (
     <>
@@ -484,28 +470,6 @@ export default function ReservationsClient({ selectedDateLabel, reservations, se
         <span className="brand-chip shrink-0 rounded-full px-2.5 py-1 text-xs font-bold">
           {count}건
         </span>
-      </div>
-
-      <div className="-mx-1 mb-4 overflow-x-auto px-1 pb-1">
-        <div className="flex w-max min-w-full gap-2">
-          {RESERVATION_STATUS_FILTERS.map((filter) => {
-            const selected = statusFilter === filter.value;
-            return (
-              <button
-                key={filter.value}
-                type="button"
-                onClick={() => setStatusFilter(filter.value)}
-                className={`min-h-10 shrink-0 rounded-full border px-4 text-sm font-black transition ${
-                  selected
-                    ? "brand-selected"
-                    : "border-white/80 bg-white/60 text-slate-500 hover:border-[#00C9FF]/50 hover:bg-white"
-                }`}
-              >
-                {filter.label}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {count === 0 ? (

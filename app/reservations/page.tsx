@@ -7,6 +7,14 @@ import ReservationsClient, {
   type ReservationCardItem,
   type ReservationServiceOption,
 } from "./ReservationsClient";
+import {
+  getReservationStatusFilterEmptyText,
+  isReservationStatusFilterCalendarScoped,
+  matchesReservationStatusFilter,
+  normalizeReservationStatusFilter,
+  RESERVATION_STATUS_FILTERS,
+  type ReservationStatusFilter,
+} from "./statusFilters";
 
 type ReservationRow = {
   id: string;
@@ -35,6 +43,7 @@ type SmsDisplayStatus = "success" | "partial" | "failed" | "none";
 type Props = {
   searchParams?: {
     date?: string;
+    status?: string;
   };
 };
 
@@ -271,6 +280,19 @@ function getMonthCalendar(dateISO: string) {
   };
 }
 
+function getStatusHref(status: ReservationStatusFilter, dateISO: string) {
+  const params = new URLSearchParams();
+  params.set("date", dateISO);
+  if (status !== "all") {
+    params.set("status", status);
+  }
+  return `/reservations?${params.toString()}`;
+}
+
+function getDateHref(dateISO: string, status: ReservationStatusFilter) {
+  return getStatusHref(status, dateISO);
+}
+
 export default async function ReservationsPage({ searchParams }: Props) {
   const { user, organizationId, handle, error } = await getOwnerContext();
 
@@ -411,8 +433,13 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const todayISO = getSeoulTodayISO();
   const requestedDate = searchParams?.date ?? "";
   const selectedDate = parseISODate(requestedDate) ? requestedDate : todayISO;
+  const selectedStatusFilter = normalizeReservationStatusFilter(searchParams?.status);
+  const calendarScoped = isReservationStatusFilterCalendarScoped(selectedStatusFilter);
   const calendar = getMonthCalendar(selectedDate);
-  const reservationCountByDate = reservationRows.reduce((counts, reservation) => {
+  const filteredReservationRows = reservationRows.filter(({ row }) =>
+    matchesReservationStatusFilter(row.status, selectedStatusFilter)
+  );
+  const reservationCountByDate = filteredReservationRows.reduce((counts, reservation) => {
     if (reservation.date !== "-") {
       counts.set(reservation.date, (counts.get(reservation.date) ?? 0) + 1);
     }
@@ -421,7 +448,14 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const selectedReservations = groupedReservations.find(
     ([date]) => date === selectedDate
   )?.[1] ?? [];
-  const selectedReservationCards: ReservationCardItem[] = selectedReservations.map(
+  const listReservations = calendarScoped
+    ? selectedReservations.filter(({ row }) =>
+        matchesReservationStatusFilter(row.status, selectedStatusFilter)
+      )
+    : [...filteredReservationRows].sort((a, b) =>
+        ((b.row.created_at ?? "") || "").localeCompare((a.row.created_at ?? "") || "")
+      );
+  const selectedReservationCards: ReservationCardItem[] = listReservations.map(
     ({ row, date, start, end, serviceName, smsStatus }) => ({
       id: row.id,
       serviceId: row.service_id ? String(row.service_id) : "",
@@ -436,6 +470,16 @@ export default async function ReservationsPage({ searchParams }: Props) {
       smsStatus,
     })
   );
+  const listLabel = calendarScoped
+    ? formatDateLabel(selectedDate)
+    : selectedStatusFilter === "requested"
+      ? "확인 대기 예약"
+      : "취소된 예약";
+  const emptyText = getReservationStatusFilterEmptyText(selectedStatusFilter);
+  const selectedStatusLabel =
+    RESERVATION_STATUS_FILTERS.find(
+      (filter) => filter.value === selectedStatusFilter
+    )?.label ?? "전체";
 
   return (
     <main className="soft-page-bg overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
@@ -448,9 +492,34 @@ export default async function ReservationsPage({ searchParams }: Props) {
           <h1 className="text-3xl font-black tracking-[-0.04em]">예약관리</h1>
           <p className="mt-1 text-sm leading-5 text-gray-500">날짜별 일정과 고객 정보를 확인하세요.</p>
           <p className="mt-2 text-sm text-gray-400">
-            {handle ? `@${handle}` : "예약 일정"} · 전체 {reservationRows.length}건
+            {handle ? `@${handle}` : "예약 일정"} · {selectedStatusLabel} {filteredReservationRows.length}건
           </p>
         </header>
+
+        <nav
+          className="-mx-1 mb-5 overflow-x-auto px-1 pb-1"
+          aria-label="예약 상태 필터"
+        >
+          <div className="flex w-max min-w-full gap-2">
+            {RESERVATION_STATUS_FILTERS.map((filter) => {
+              const selected = selectedStatusFilter === filter.value;
+              return (
+                <a
+                  key={filter.value}
+                  href={getStatusHref(filter.value, selectedDate)}
+                  aria-current={selected ? "page" : undefined}
+                  className={`flex min-h-10 shrink-0 items-center rounded-full border px-4 text-sm font-black transition ${
+                    selected
+                      ? "brand-selected"
+                      : "border-white/80 bg-white/60 text-slate-500 hover:border-[#00C9FF]/50 hover:bg-white"
+                  }`}
+                >
+                  {filter.label}
+                </a>
+              );
+            })}
+          </div>
+        </nav>
 
         <section
           className="glass-card mb-7 rounded-[24px] p-3 sm:p-4"
@@ -458,7 +527,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
         >
           <div className="mb-3 flex items-center justify-between gap-3">
             <a
-              href={`/reservations?date=${calendar?.previousMonth ?? selectedDate}`}
+              href={getDateHref(calendar?.previousMonth ?? selectedDate, selectedStatusFilter)}
               aria-label="이전 달"
               className="brand-outline flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl font-black"
             >
@@ -471,7 +540,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
               </div>
               {selectedDate !== todayISO ? (
                 <a
-                  href={`/reservations?date=${todayISO}`}
+                  href={getDateHref(todayISO, selectedStatusFilter)}
                   className="brand-text mt-1 inline-block text-sm font-bold"
                 >
                   오늘로 이동
@@ -482,7 +551,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
             </div>
 
             <a
-              href={`/reservations?date=${calendar?.nextMonth ?? selectedDate}`}
+              href={getDateHref(calendar?.nextMonth ?? selectedDate, selectedStatusFilter)}
               aria-label="다음 달"
               className="brand-outline flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl font-black"
             >
@@ -515,7 +584,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
               return (
                 <a
                   key={dateISO}
-                  href={`/reservations?date=${dateISO}`}
+                  href={getDateHref(dateISO, selectedStatusFilter)}
                   aria-current={selected ? "date" : undefined}
                   className={`flex min-h-[62px] min-w-0 flex-col items-center rounded-xl border px-0.5 py-1.5 text-center ${
                     selected
@@ -550,9 +619,10 @@ export default async function ReservationsPage({ searchParams }: Props) {
         </section>
 
         <ReservationsClient
-          selectedDateLabel={formatDateLabel(selectedDate)}
+          selectedDateLabel={listLabel}
           reservations={selectedReservationCards}
           services={serviceOptions}
+          emptyText={emptyText}
         />
         <nav className="brand-nav mt-7 grid grid-cols-4 gap-1 rounded-2xl p-2">
           <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">대시보드</a>
