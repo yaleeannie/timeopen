@@ -182,7 +182,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "reservation not found" }, { status: 404 });
   }
 
-  const orgName = handle || "예약";
+  const orgName = clean(reservation.organization_name) || handle || "예약";
   const locationText = clean(reservation.location_text);
   const noticeText = clean(reservation.notice_text);
   const bookingContact = clean(reservation.booking_contact);

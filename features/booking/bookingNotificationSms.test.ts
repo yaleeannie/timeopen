@@ -7,11 +7,26 @@ test("booking confirmation SMS includes booking inquiry contact when set", () =>
     shopName: "타임네일",
     serviceName: "젤네일",
     dateTime: "6월 24일 11:20",
+    locationText: "서울시 마포구 2층",
+    noticeText: "10분 전 도착 부탁드립니다.",
     bookingContact: "010-1234-5678",
   });
 
-  assert.match(message, /타임네일 예약이 확정되었습니다/);
-  assert.match(message, /문의\n010-1234-5678/);
+  assert.equal(
+    message,
+    [
+      "[TimeOpen] 예약이 확정되었어요.",
+      "",
+      "샵: 타임네일",
+      "서비스: 젤네일",
+      "일시: 6월 24일 11:20",
+      "위치: 서울시 마포구 2층",
+      "안내: 10분 전 도착 부탁드립니다.",
+      "문의: 010-1234-5678",
+    ].join("\n")
+  );
+  assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
+  assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
 });
 
 test("booking confirmation SMS omits inquiry contact when empty", () => {
@@ -23,4 +38,5 @@ test("booking confirmation SMS omits inquiry contact when empty", () => {
   });
 
   assert.doesNotMatch(message, /문의/);
+  assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
 });

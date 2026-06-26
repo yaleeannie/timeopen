@@ -66,11 +66,19 @@ test("reservation update SMS copy is Korean and transactional", () => {
     dateTime: "6월 24일 11:20",
   });
 
-  assert.match(message, /예약 정보가 변경되었어요/);
-  assert.match(message, /샵: 타임네일/);
-  assert.match(message, /서비스: 젤네일/);
-  assert.match(message, /일시: 6월 24일 11:20/);
+  assert.equal(
+    message,
+    [
+      "[TimeOpen] 예약 정보가 변경되었어요.",
+      "",
+      "샵: 타임네일",
+      "서비스: 젤네일",
+      "일시: 6월 24일 11:20",
+    ].join("\n")
+  );
   assert.doesNotMatch(message, /문의:/);
+  assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
+  assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
 });
 
 test("reservation update SMS includes booking inquiry contact when provided", () => {
@@ -81,5 +89,16 @@ test("reservation update SMS includes booking inquiry contact when provided", ()
     bookingContact: "인스타 DM @time_nail",
   });
 
-  assert.match(message, /문의: 인스타 DM @time_nail/);
+  assert.equal(
+    message,
+    [
+      "[TimeOpen] 예약 정보가 변경되었어요.",
+      "",
+      "샵: 타임네일",
+      "서비스: 젤네일",
+      "일시: 6월 24일 11:20",
+      "문의: 인스타 DM @time_nail",
+    ].join("\n")
+  );
+  assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
 });

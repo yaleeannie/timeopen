@@ -99,6 +99,7 @@ export function buildReservationUpdatedSms(params: {
 }) {
   const lines = [
     "[TimeOpen] 예약 정보가 변경되었어요.",
+    "",
     `샵: ${params.shopName || "예약"}`,
     `서비스: ${params.serviceName || "예약"}`,
     `일시: ${params.dateTime}`,
