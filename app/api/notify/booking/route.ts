@@ -9,6 +9,7 @@ import {
   formatReservationDateCompactKorean,
   formatReservationTimeDisplay,
 } from "@/features/booking/reservationDisplay";
+import { buildBookingConfirmationCustomerSms } from "@/features/booking/bookingNotificationSms";
 
 function clean(v: unknown) {
   return typeof v === "string" ? v.trim() : "";
@@ -184,6 +185,7 @@ export async function POST(req: Request) {
   const orgName = handle || "예약";
   const locationText = clean(reservation.location_text);
   const noticeText = clean(reservation.notice_text);
+  const bookingContact = clean(reservation.booking_contact);
   const serviceName = clean(reservation.service_name) || "예약";
   const ownerPhone = process.env.OWNER_PHONE || "";
   const date =
@@ -211,28 +213,15 @@ export async function POST(req: Request) {
     customerPhone || "-",
   ];
 
-  const guestLines = [
-    "[TimeOpen]",
-    "",
-    `${orgName} 예약이 확정되었습니다.`,
-    "",
-    "서비스",
-    serviceName,
-    "",
-    "일시",
-    `${date} ${time}`,
-  ];
-
-  if (locationText) {
-    guestLines.push("", "위치", locationText);
-  }
-
-  if (noticeText) {
-    guestLines.push("", "안내", noticeText);
-  }
-
   const ownerMsg = ownerLines.join("\n");
-  const guestMsg = guestLines.join("\n");
+  const guestMsg = buildBookingConfirmationCustomerSms({
+    shopName: orgName,
+    serviceName,
+    dateTime: `${date} ${time}`,
+    locationText,
+    noticeText,
+    bookingContact,
+  });
 
   console.log("[notify/booking] ownerPhone =", ownerPhone);
   console.log("[notify/booking] customerPhone =", customerPhone);

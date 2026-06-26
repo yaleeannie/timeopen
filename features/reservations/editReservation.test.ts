@@ -70,4 +70,16 @@ test("reservation update SMS copy is Korean and transactional", () => {
   assert.match(message, /샵: 타임네일/);
   assert.match(message, /서비스: 젤네일/);
   assert.match(message, /일시: 6월 24일 11:20/);
+  assert.doesNotMatch(message, /문의:/);
+});
+
+test("reservation update SMS includes booking inquiry contact when provided", () => {
+  const message = buildReservationUpdatedSms({
+    shopName: "타임네일",
+    serviceName: "젤네일",
+    dateTime: "6월 24일 11:20",
+    bookingContact: "인스타 DM @time_nail",
+  });
+
+  assert.match(message, /문의: 인스타 DM @time_nail/);
 });

@@ -18,6 +18,7 @@ type Props = {
   customerPhone: string;
   locationText: string;
   noticeText: string;
+  bookingContact: string;
   organizationFound: boolean;
   reservationFound: boolean;
   organizationError?: string;
@@ -88,6 +89,15 @@ function PublicConfirmedPageContent(props: Props) {
               </div>
             </div>
           </section>
+
+          {props.bookingContact.trim() ? (
+            <section className="glass-card mt-4 rounded-[24px] p-4">
+              <div className="brand-text text-sm font-bold">예약 문의</div>
+              <div className="mt-1 whitespace-pre-wrap text-sm font-black leading-6 text-slate-800 [overflow-wrap:anywhere]">
+                {props.bookingContact}
+              </div>
+            </section>
+          ) : null}
 
           <section className="glass-card mt-4 rounded-[24px] p-4">
             <div className="mb-4 text-base font-black">{t("visitorGuide")}</div>

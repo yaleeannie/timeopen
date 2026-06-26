@@ -48,6 +48,7 @@ export default async function ConfirmedPage({ params, searchParams }: Props) {
       customerPhone={confirmation?.customer_phone ? String(confirmation.customer_phone) : "-"}
       locationText={confirmation?.location_text ? String(confirmation.location_text) : ""}
       noticeText={confirmation?.notice_text ? String(confirmation.notice_text) : ""}
+      bookingContact={confirmation?.booking_contact ? String(confirmation.booking_contact) : ""}
       organizationFound
       reservationFound={Boolean(confirmation)}
       reservationError={error?.message}

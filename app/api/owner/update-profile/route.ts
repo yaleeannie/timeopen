@@ -25,6 +25,9 @@ export async function POST(req: Request) {
   const notice_text =
     typeof body?.notice_text === "string" ? body.notice_text.trim() : "";
 
+  const booking_contact =
+    typeof body?.booking_contact === "string" ? body.booking_contact.trim() : "";
+
   const locationValidation = validateOptionalText(
     location_text,
     FIELD_LIMITS.noticeMax,
@@ -41,6 +44,18 @@ export async function POST(req: Request) {
   );
   if (!noticeValidation.ok) {
     return NextResponse.json({ error: noticeValidation.error }, { status: 400 });
+  }
+
+  const bookingContactValidation = validateOptionalText(
+    booking_contact,
+    FIELD_LIMITS.bookingContactMax,
+    "예약 문의 연락처"
+  );
+  if (!bookingContactValidation.ok) {
+    return NextResponse.json(
+      { error: bookingContactValidation.error },
+      { status: 400 }
+    );
   }
 
   if (!organizationId) {
@@ -65,6 +80,7 @@ export async function POST(req: Request) {
     .update({
       location_text: location_text || null,
       notice_text: notice_text || null,
+      booking_contact: booking_contact || null,
     })
     .eq("id", organizationId);
 

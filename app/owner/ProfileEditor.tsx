@@ -18,6 +18,7 @@ type Props = {
   organizationId: string;
   initialLocation: string;
   initialNotice: string;
+  initialBookingContact: string;
   initialName?: string;
   initialHandle?: string;
   initialTheme: LinkTheme;
@@ -36,6 +37,7 @@ export default function ProfileEditor({
   organizationId,
   initialLocation,
   initialNotice,
+  initialBookingContact,
   initialName = "",
   initialHandle = "",
   initialTheme,
@@ -68,6 +70,7 @@ export default function ProfileEditor({
   const [handle, setHandle] = useState(initialHandle ?? "");
   const [locationText, setLocationText] = useState(initialLocation ?? "");
   const [noticeText, setNoticeText] = useState(initialNotice ?? "");
+  const [bookingContact, setBookingContact] = useState(initialBookingContact ?? "");
   const [linkTheme, setLinkTheme] = useState<LinkTheme>(initialTheme);
   const [bookingEnabled, setBookingEnabled] = useState(initialBookingEnabled);
   const withdrawalRequested = initialWithdrawalRequested || initialDisabled;
@@ -87,6 +90,10 @@ export default function ProfileEditor({
   useEffect(() => {
     setNoticeText(initialNotice ?? "");
   }, [initialNotice]);
+
+  useEffect(() => {
+    setBookingContact(initialBookingContact ?? "");
+  }, [initialBookingContact]);
 
   useEffect(() => {
     setLinkTheme(initialTheme);
@@ -253,6 +260,7 @@ export default function ProfileEditor({
           organizationId,
           location_text: locationText,
           notice_text: noticeText,
+          booking_contact: bookingContact,
         }),
       });
 
@@ -515,6 +523,21 @@ export default function ProfileEditor({
 
       <div className="glass-card rounded-[24px] p-4">
       <div className="mb-4 text-base font-black">추가 정보</div>
+      <div className="mb-1.5 text-sm font-bold text-gray-700">예약 문의 연락처 (선택)</div>
+      <input
+        value={bookingContact}
+        onChange={(e) => setBookingContact(e.target.value)}
+        placeholder="예) 010-1234-5678 또는 인스타 DM @shopname"
+        maxLength={FIELD_LIMITS.bookingContactMax}
+        className="brand-input mb-2 min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
+      />
+      <div className="mb-4 text-sm leading-5 text-gray-500">
+        예약 완료 화면과 안내 문자에 고객에게 보여줄 연락처예요.
+      </div>
+      <div className="-mt-3 mb-4 text-right text-xs font-bold text-gray-400">
+        {bookingContact.length}/{FIELD_LIMITS.bookingContactMax}
+      </div>
+
       <div className="mb-1.5 text-sm font-bold text-gray-700">위치 안내 (선택)</div>
       <textarea
         value={locationText}

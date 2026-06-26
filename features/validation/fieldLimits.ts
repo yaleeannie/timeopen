@@ -13,6 +13,7 @@ export const FIELD_LIMITS = {
   customerRequestMax: 300,
   handleMin: 3,
   handleMax: 30,
+  bookingContactMax: 100,
   withdrawalReasonMax: 500,
 } as const;
 

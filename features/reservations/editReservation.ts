@@ -95,13 +95,20 @@ export function buildReservationUpdatedSms(params: {
   shopName: string;
   serviceName: string;
   dateTime: string;
+  bookingContact?: string;
 }) {
-  return [
+  const lines = [
     "[TimeOpen] 예약 정보가 변경되었어요.",
     `샵: ${params.shopName || "예약"}`,
     `서비스: ${params.serviceName || "예약"}`,
     `일시: ${params.dateTime}`,
-  ].join("\n");
+  ];
+
+  if (params.bookingContact?.trim()) {
+    lines.push(`문의: ${params.bookingContact.trim()}`);
+  }
+
+  return lines.join("\n");
 }
 
 export function mutationDoesNotContainRestrictedReservationFields(

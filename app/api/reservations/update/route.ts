@@ -70,7 +70,8 @@ export async function POST(req: Request) {
       customer_phone,
       organizations (
         name,
-        handle
+        handle,
+        booking_contact
       )
     `
     )
@@ -99,6 +100,7 @@ export async function POST(req: Request) {
     ? (reservation as any).organizations[0]
     : (reservation as any).organizations;
   const shopName = clean(org?.name) || clean(org?.handle) || "예약";
+  const bookingContact = clean(org?.booking_contact);
   const serviceName = clean((service as any)?.name) || "예약";
   const date =
     formatReservationDateCompactKorean((reservation as any).date) ||
@@ -111,6 +113,7 @@ export async function POST(req: Request) {
     shopName,
     serviceName,
     dateTime: `${date} ${time}`.trim(),
+    bookingContact,
   });
 
   if (!customerPhone) {
