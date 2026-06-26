@@ -130,8 +130,11 @@ export default function OpenSlotShareCard({
   }
 
   return (
-    <section className="glass-card rounded-[22px] p-4" aria-labelledby="open-slot-share">
-      <div>
+    <section
+      className="glass-card min-w-0 overflow-hidden rounded-[22px] p-4"
+      aria-labelledby="open-slot-share"
+    >
+      <div className="min-w-0">
         <h2 id="open-slot-share" className="text-base font-black text-slate-900">
           빈 시간 공유
         </h2>
@@ -142,28 +145,29 @@ export default function OpenSlotShareCard({
 
       {canLink ? (
         <>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <label>
+          <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
+            <label className="min-w-0">
               <span className="mb-1.5 block text-xs font-black text-slate-600">날짜</span>
               <input
                 type="date"
                 value={dateISO}
                 min={todayISO}
                 onChange={(event) => setDateISO(event.target.value || todayISO)}
-                className="brand-input min-h-12 w-full rounded-2xl px-3 py-2.5 text-sm font-bold"
+                className="brand-input box-border min-h-12 w-full min-w-0 max-w-full rounded-2xl px-3 py-2.5 text-sm font-bold"
               />
             </label>
-            <div>
+            <div className="min-w-0">
               <span className="mb-1.5 block text-xs font-black text-slate-600">시간</span>
               <TimeSelect
                 value={time}
                 onChange={setTime}
                 aria-label="공유할 예약 가능 시간"
+                className="w-full max-w-full"
               />
             </div>
           </div>
 
-          <label className="mt-3 block">
+          <label className="mt-3 block min-w-0">
             <span className="mb-1.5 block text-xs font-black text-slate-600">
               한마디 추가 <span className="font-medium text-slate-400">(선택)</span>
             </span>
@@ -172,11 +176,11 @@ export default function OpenSlotShareCard({
               onChange={(event) => setNote(event.target.value)}
               maxLength={80}
               placeholder="예: 젤네일 가능해요"
-              className="brand-input min-h-12 w-full rounded-2xl px-4 py-3 text-sm"
+              className="brand-input box-border min-h-12 w-full min-w-0 max-w-full rounded-2xl px-4 py-3 text-sm"
             />
           </label>
 
-          <div className="brand-soft mt-4 rounded-[18px] p-4">
+          <div className="brand-soft mt-4 min-w-0 rounded-[18px] p-4">
             <div className="text-[11px] font-black">공유 메시지 미리보기</div>
             <div className="mt-2 whitespace-pre-wrap break-words text-sm font-bold leading-6 text-slate-700">
               {message}
@@ -190,12 +194,12 @@ export default function OpenSlotShareCard({
           <button
             type="button"
             onClick={copyMessage}
-            className="brand-button mt-3 min-h-12 w-full rounded-2xl px-4 text-sm font-black"
+            className="brand-button mt-3 min-h-12 w-full min-w-0 max-w-full rounded-2xl px-4 text-sm font-black"
           >
             {copyStatus || "공유 메시지 복사"}
           </button>
 
-          <div className="mt-5 border-t border-white/70 pt-5">
+          <div className="mt-5 min-w-0 border-t border-white/70 pt-5">
             <div className="text-base font-black text-slate-900">스토리 이미지</div>
             <p className="mt-1 text-xs font-medium leading-5 text-slate-500">
               빈 시간을 인스타 스토리용 이미지로 저장해보세요.
@@ -212,7 +216,7 @@ export default function OpenSlotShareCard({
             <button
               type="button"
               onClick={downloadStoryImage}
-              className="brand-outline mt-4 min-h-12 w-full rounded-2xl px-4 text-sm font-black"
+              className="brand-outline mt-4 min-h-12 w-full min-w-0 max-w-full rounded-2xl px-4 text-sm font-black"
             >
               {downloadStatus || "스토리 이미지 저장"}
             </button>

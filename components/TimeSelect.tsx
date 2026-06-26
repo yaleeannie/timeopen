@@ -245,7 +245,7 @@ export default function TimeSelect({
     : null;
 
   return (
-    <div className={`min-w-0 ${className}`}>
+    <div className={`min-w-0 max-w-full ${className}`}>
       <button
         ref={triggerRef}
         type="button"
@@ -258,7 +258,7 @@ export default function TimeSelect({
         disabled={disabled}
         onClick={toggle}
         onKeyDown={handleKeyDown}
-        className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 text-left text-sm font-bold outline-none transition ${
+        className={`box-border flex min-h-12 w-full min-w-0 max-w-full items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 text-left text-sm font-bold outline-none transition ${
           open
             ? "brand-border ring-4 ring-[#00c1ff]/10"
             : "border-[#00c1ff]/35 hover:border-[#00c1ff]"
