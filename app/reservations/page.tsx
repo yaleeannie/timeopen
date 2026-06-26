@@ -51,6 +51,8 @@ type Props = {
   };
 };
 
+type BookingConfirmationMode = "automatic" | "manual";
+
 function formatStatus(status: string | null) {
   if (!status) return "-";
   switch (status) {
@@ -284,6 +286,10 @@ function getMonthCalendar(dateISO: string) {
   };
 }
 
+function normalizeBookingConfirmationMode(value: unknown): BookingConfirmationMode {
+  return value === "manual" ? "manual" : "automatic";
+}
+
 function getReservationHref({
   view,
   dateISO,
@@ -363,6 +369,20 @@ export default async function ReservationsPage({ searchParams }: Props) {
   }
 
   const supabase = await createSupabaseServerClient();
+
+  const { data: organizationRow, error: orgErr } = await supabase
+    .from("organizations")
+    .select("booking_confirmation_mode")
+    .eq("id", organizationId)
+    .maybeSingle();
+
+  if (orgErr) {
+    return (
+      <div style={{ padding: 16 }}>
+        <div>organization 조회 실패: {orgErr.message}</div>
+      </div>
+    );
+  }
 
   const { data: rows, error: resErr } = await supabase
     .from("reservations")
@@ -475,7 +495,13 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const todayISO = getSeoulTodayISO();
   const requestedDate = searchParams?.date ?? "";
   const selectedDate = parseISODate(requestedDate) ? requestedDate : todayISO;
-  const selectedView = normalizeReservationView(searchParams?.view);
+  const bookingConfirmationMode = normalizeBookingConfirmationMode(
+    organizationRow?.booking_confirmation_mode
+  );
+  const isManualConfirmationMode = bookingConfirmationMode === "manual";
+  const selectedView = isManualConfirmationMode
+    ? normalizeReservationView(searchParams?.view)
+    : "calendar";
   const selectedStatusFilter = normalizeReservationStatusFilter(searchParams?.status);
   const calendar = getMonthCalendar(selectedDate);
   const listReservationRows = reservationRows.filter(({ row }) =>
@@ -540,32 +566,34 @@ export default async function ReservationsPage({ searchParams }: Props) {
           </p>
         </header>
 
-        <nav
-          className="mb-4 grid grid-cols-2 gap-2 rounded-2xl bg-white/45 p-1.5"
-          aria-label="예약관리 보기"
-        >
-          {RESERVATION_VIEW_TABS.map((tab) => {
-            const selected = selectedView === tab.value;
-            return (
-              <a
-                key={tab.value}
-                href={getReservationHref({
-                  view: tab.value,
-                  dateISO: selectedDate,
-                  status: selectedStatusFilter,
-                })}
-                aria-current={selected ? "page" : undefined}
-                className={`flex min-h-11 items-center justify-center rounded-xl text-sm font-black transition ${
-                  selected
-                    ? "brand-selected"
-                    : "text-slate-500 hover:bg-white/70 hover:text-slate-800"
-                }`}
-              >
-                {tab.label}
-              </a>
-            );
-          })}
-        </nav>
+        {isManualConfirmationMode ? (
+          <nav
+            className="mb-4 grid grid-cols-2 gap-2 rounded-2xl bg-white/45 p-1.5"
+            aria-label="예약관리 보기"
+          >
+            {RESERVATION_VIEW_TABS.map((tab) => {
+              const selected = selectedView === tab.value;
+              return (
+                <a
+                  key={tab.value}
+                  href={getReservationHref({
+                    view: tab.value,
+                    dateISO: selectedDate,
+                    status: selectedStatusFilter,
+                  })}
+                  aria-current={selected ? "page" : undefined}
+                  className={`flex min-h-11 items-center justify-center rounded-xl text-sm font-black transition ${
+                    selected
+                      ? "brand-selected"
+                      : "text-slate-500 hover:bg-white/70 hover:text-slate-800"
+                  }`}
+                >
+                  {tab.label}
+                </a>
+              );
+            })}
+          </nav>
+        ) : null}
 
         {selectedView === "list" ? (
           <>

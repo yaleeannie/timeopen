@@ -5,8 +5,8 @@ export const RESERVATION_VIEW_TABS: Array<{
   value: ReservationView;
   label: string;
 }> = [
-  { value: "list", label: "예약 현황" },
   { value: "calendar", label: "일정 관리" },
+  { value: "list", label: "예약 현황" },
 ];
 
 export const RESERVATION_STATUS_FILTERS: Array<{
@@ -30,7 +30,7 @@ export function normalizeReservationStatusFilter(
 }
 
 export function normalizeReservationView(value: unknown): ReservationView {
-  return value === "calendar" ? "calendar" : "list";
+  return value === "list" ? "list" : "calendar";
 }
 
 export function matchesReservationStatusFilter(

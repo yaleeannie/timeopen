@@ -46,14 +46,14 @@ test("reservation status filter normalizes query values", () => {
 test("reservation management view tabs render with Korean labels", () => {
   assert.deepEqual(
     RESERVATION_VIEW_TABS.map((tab) => tab.label),
-    ["예약 현황", "일정 관리"]
+    ["일정 관리", "예약 현황"]
   );
 });
 
-test("reservation management view defaults to list", () => {
+test("reservation management view defaults to calendar", () => {
   assert.equal(normalizeReservationView("calendar"), "calendar");
   assert.equal(normalizeReservationView("list"), "list");
-  assert.equal(normalizeReservationView("unknown"), "list");
+  assert.equal(normalizeReservationView("unknown"), "calendar");
 });
 
 test("calendar schedule statuses include only requested and confirmed", () => {
@@ -80,12 +80,38 @@ test("reservation status filter empty states are explicit", () => {
   assert.equal(getReservationStatusFilterEmptyText("all"), "아직 예약이 없어요.");
 });
 
-test("top-level reservation view tabs render above the calendar", () => {
+test("top-level reservation view tabs render above the calendar for manual mode", () => {
   const tabsIndex = reservationsPage.indexOf('aria-label="예약관리 보기"');
   const calendarIndex = reservationsPage.indexOf('aria-label="예약 날짜 선택"');
   assert.ok(tabsIndex > -1);
   assert.ok(calendarIndex > -1);
   assert.ok(tabsIndex < calendarIndex);
+});
+
+test("automatic confirmation mode hides top-level reservation view tabs", () => {
+  assert.match(
+    reservationsPage,
+    /const isManualConfirmationMode = bookingConfirmationMode === "manual"/
+  );
+  assert.match(
+    reservationsPage,
+    /\{isManualConfirmationMode \? \(\s+<nav\s+className="mb-4 grid grid-cols-2/s
+  );
+  assert.match(
+    reservationsPage,
+    /const selectedView = isManualConfirmationMode\s+\? normalizeReservationView\(searchParams\?\.view\)\s+: "calendar"/s
+  );
+});
+
+test("reservation page falls back to automatic confirmation mode", () => {
+  assert.match(
+    reservationsPage,
+    /function normalizeBookingConfirmationMode\(value: unknown\)/
+  );
+  assert.match(
+    reservationsPage,
+    /return value === "manual" \? "manual" : "automatic"/
+  );
 });
 
 test("list view renders status tabs and calendar view renders calendar", () => {
