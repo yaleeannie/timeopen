@@ -31,12 +31,14 @@ type Props = {
 };
 
 function formatStatus(status: string | null) {
+  if (status === "requested") return "예약 요청";
   if (status === "confirmed") return "확정";
   if (status === "cancelled" || status === "canceled") return "취소됨";
   return status || "-";
 }
 
 function statusClass(status: string | null) {
+  if (status === "requested") return "border-amber-200/70 bg-amber-50/75 text-amber-700";
   if (status === "confirmed") return "brand-chip";
   if (status === "cancelled" || status === "canceled") {
     return "border-slate-200/70 bg-slate-100/70 text-slate-500";
@@ -77,6 +79,7 @@ function ReservationCard({
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -181,6 +184,32 @@ function ReservationCard({
     }
   }
 
+  async function confirmReservation() {
+    setConfirming(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/reservations/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservationId: reservation.id }),
+      });
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(result?.error || "예약을 확정하지 못했어요.");
+      }
+
+      setMessage(result?.message || "예약이 확정됐어요.");
+      router.refresh();
+    } catch (confirmError) {
+      setError(confirmError instanceof Error ? confirmError.message : "예약을 확정하지 못했어요.");
+    } finally {
+      setConfirming(false);
+    }
+  }
+
   return (
     <div className="relative grid min-w-0 grid-cols-[64px_1fr] gap-2">
       <div className="relative z-10 pt-3 text-center">
@@ -231,6 +260,16 @@ function ReservationCard({
               </span>
 
               <div className="flex shrink-0 items-center gap-1.5">
+                {reservation.status === "requested" ? (
+                  <button
+                    type="button"
+                    onClick={confirmReservation}
+                    disabled={confirming}
+                    className="brand-button min-h-9 rounded-xl px-2.5 text-xs font-black disabled:opacity-60"
+                  >
+                    {confirming ? "확정 중" : "입금 확인 후 확정"}
+                  </button>
+                ) : null}
                 {editable ? (
                   <button
                     type="button"
@@ -240,7 +279,7 @@ function ReservationCard({
                     수정
                   </button>
                 ) : null}
-                {reservation.status === "confirmed" ? (
+                {reservation.status === "confirmed" || reservation.status === "requested" ? (
                   <form action="/api/reservations/cancel" method="post">
                     <input type="hidden" name="reservationId" value={reservation.id} />
                     <button

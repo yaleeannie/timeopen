@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import ProfileEditor from "@/app/owner/ProfileEditor";
 import { normalizeLinkTheme } from "@/features/booking/themes";
+import { normalizeBookingConfirmationMode } from "@/features/booking/confirmationMode";
 
 export default async function ProfilePage() {
   const { user, organizationId, handle, error } = await getOwnerContext();
@@ -21,7 +22,7 @@ export default async function ProfilePage() {
 
   const { data: orgRow } = await supabase
     .from("organizations")
-    .select("name, handle, handle_changed_at, location_text, notice_text, booking_contact, link_theme, booking_enabled, withdrawal_requested_at, disabled_at")
+    .select("name, handle, handle_changed_at, location_text, notice_text, booking_contact, booking_notice, link_theme, booking_enabled, booking_confirmation_mode, withdrawal_requested_at, disabled_at")
     .eq("id", organizationId)
     .maybeSingle();
 
@@ -42,8 +43,12 @@ export default async function ProfilePage() {
             initialLocation={orgRow?.location_text ?? ""}
             initialNotice={orgRow?.notice_text ?? ""}
             initialBookingContact={orgRow?.booking_contact ?? ""}
+            initialBookingNotice={orgRow?.booking_notice ?? ""}
             initialTheme={normalizeLinkTheme(orgRow?.link_theme)}
             initialBookingEnabled={orgRow?.booking_enabled !== false}
+            initialBookingConfirmationMode={normalizeBookingConfirmationMode(
+              orgRow?.booking_confirmation_mode
+            )}
             initialWithdrawalRequested={Boolean(orgRow?.withdrawal_requested_at)}
             initialDisabled={Boolean(orgRow?.disabled_at)}
           />

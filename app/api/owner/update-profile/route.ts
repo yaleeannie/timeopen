@@ -28,6 +28,9 @@ export async function POST(req: Request) {
   const booking_contact =
     typeof body?.booking_contact === "string" ? body.booking_contact.trim() : "";
 
+  const booking_notice =
+    typeof body?.booking_notice === "string" ? body.booking_notice.trim() : "";
+
   const locationValidation = validateOptionalText(
     location_text,
     FIELD_LIMITS.noticeMax,
@@ -40,7 +43,7 @@ export async function POST(req: Request) {
   const noticeValidation = validateOptionalText(
     notice_text,
     FIELD_LIMITS.noticeMax,
-    "예약 안내문"
+    "방문 안내문"
   );
   if (!noticeValidation.ok) {
     return NextResponse.json({ error: noticeValidation.error }, { status: 400 });
@@ -54,6 +57,18 @@ export async function POST(req: Request) {
   if (!bookingContactValidation.ok) {
     return NextResponse.json(
       { error: bookingContactValidation.error },
+      { status: 400 }
+    );
+  }
+
+  const bookingNoticeValidation = validateOptionalText(
+    booking_notice,
+    FIELD_LIMITS.noticeMax,
+    "예약 안내문"
+  );
+  if (!bookingNoticeValidation.ok) {
+    return NextResponse.json(
+      { error: bookingNoticeValidation.error },
       { status: 400 }
     );
   }
@@ -81,6 +96,7 @@ export async function POST(req: Request) {
       location_text: location_text || null,
       notice_text: notice_text || null,
       booking_contact: booking_contact || null,
+      booking_notice: booking_notice || null,
     })
     .eq("id", organizationId);
 

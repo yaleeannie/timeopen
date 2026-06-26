@@ -38,6 +38,9 @@ export default async function ConfirmedPage({ params, searchParams }: Props) {
       dateText={dateText}
       timeText={timeText}
       serviceName={confirmation?.service_name ? String(confirmation.service_name) : "-"}
+      reservationStatus={
+        confirmation?.reservation_status ? String(confirmation.reservation_status) : "confirmed"
+      }
       serviceNameTranslations={
         confirmation?.service_name_translations &&
         typeof confirmation.service_name_translations === "object"
@@ -49,6 +52,7 @@ export default async function ConfirmedPage({ params, searchParams }: Props) {
       locationText={confirmation?.location_text ? String(confirmation.location_text) : ""}
       noticeText={confirmation?.notice_text ? String(confirmation.notice_text) : ""}
       bookingContact={confirmation?.booking_contact ? String(confirmation.booking_contact) : ""}
+      bookingNotice={confirmation?.booking_notice ? String(confirmation.booking_notice) : ""}
       organizationFound
       reservationFound={Boolean(confirmation)}
       reservationError={error?.message}

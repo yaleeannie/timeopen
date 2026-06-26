@@ -50,12 +50,16 @@ type Props = {
 };
 
 function statusLabel(status: string) {
+  if (status === "requested") return "예약 요청";
   if (status === "confirmed") return "확정";
   if (status === "cancelled" || status === "canceled") return "취소";
   return status;
 }
 
 function statusStyle(status: string) {
+  if (status === "requested") {
+    return "border-amber-200/70 bg-amber-50/75 text-amber-700";
+  }
   if (status === "confirmed") {
     return "brand-chip";
   }

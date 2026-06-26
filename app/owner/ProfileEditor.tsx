@@ -8,6 +8,7 @@ import {
   PUBLIC_BOOKING_THEMES,
   type LinkTheme,
 } from "@/features/booking/themes";
+import type { BookingConfirmationMode } from "@/features/booking/confirmationMode";
 import {
   FIELD_LIMITS,
   normalizeHandleValue,
@@ -19,11 +20,13 @@ type Props = {
   initialLocation: string;
   initialNotice: string;
   initialBookingContact: string;
+  initialBookingNotice: string;
   initialName?: string;
   initialHandle?: string;
   initialHandleChangedAt?: string;
   initialTheme: LinkTheme;
   initialBookingEnabled: boolean;
+  initialBookingConfirmationMode: BookingConfirmationMode;
   initialWithdrawalRequested: boolean;
   initialDisabled: boolean;
 };
@@ -56,11 +59,13 @@ export default function ProfileEditor({
   initialLocation,
   initialNotice,
   initialBookingContact,
+  initialBookingNotice,
   initialName = "",
   initialHandle = "",
   initialHandleChangedAt = "",
   initialTheme,
   initialBookingEnabled,
+  initialBookingConfirmationMode,
   initialWithdrawalRequested,
   initialDisabled,
 }: Props) {
@@ -71,11 +76,13 @@ export default function ProfileEditor({
   const [loadingExtra, setLoadingExtra] = useState(false);
   const [loadingTheme, setLoadingTheme] = useState(false);
   const [loadingBookingStatus, setLoadingBookingStatus] = useState(false);
+  const [loadingConfirmationMode, setLoadingConfirmationMode] = useState(false);
   const [loadingWithdrawal, setLoadingWithdrawal] = useState(false);
 
   const [msg, setMsg] = useState("");
   const [themeMsg, setThemeMsg] = useState("");
   const [bookingStatusMsg, setBookingStatusMsg] = useState("");
+  const [confirmationModeMsg, setConfirmationModeMsg] = useState("");
   const [withdrawalMsg, setWithdrawalMsg] = useState("");
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
   const [withdrawalReason, setWithdrawalReason] = useState("");
@@ -90,8 +97,11 @@ export default function ProfileEditor({
   const [locationText, setLocationText] = useState(initialLocation ?? "");
   const [noticeText, setNoticeText] = useState(initialNotice ?? "");
   const [bookingContact, setBookingContact] = useState(initialBookingContact ?? "");
+  const [bookingNotice, setBookingNotice] = useState(initialBookingNotice ?? "");
   const [linkTheme, setLinkTheme] = useState<LinkTheme>(initialTheme);
   const [bookingEnabled, setBookingEnabled] = useState(initialBookingEnabled);
+  const [bookingConfirmationMode, setBookingConfirmationMode] =
+    useState<BookingConfirmationMode>(initialBookingConfirmationMode);
   const withdrawalRequested = initialWithdrawalRequested || initialDisabled;
   const handleCooldownUntil = getHandleCooldownUntil(initialHandleChangedAt);
   const handleCooldownActive =
@@ -119,12 +129,20 @@ export default function ProfileEditor({
   }, [initialBookingContact]);
 
   useEffect(() => {
+    setBookingNotice(initialBookingNotice ?? "");
+  }, [initialBookingNotice]);
+
+  useEffect(() => {
     setLinkTheme(initialTheme);
   }, [initialTheme]);
 
   useEffect(() => {
     setBookingEnabled(initialBookingEnabled);
   }, [initialBookingEnabled]);
+
+  useEffect(() => {
+    setBookingConfirmationMode(initialBookingConfirmationMode);
+  }, [initialBookingConfirmationMode]);
 
   useEffect(() => {
     const validation = validateHandleValue(handle);
@@ -284,6 +302,7 @@ export default function ProfileEditor({
           location_text: locationText,
           notice_text: noticeText,
           booking_contact: bookingContact,
+          booking_notice: bookingNotice,
         }),
       });
 
@@ -365,6 +384,35 @@ export default function ProfileEditor({
       setBookingStatusMsg("예약 접수 상태 저장 중 오류가 발생했습니다.");
     } finally {
       setLoadingBookingStatus(false);
+    }
+  }
+
+  async function onSaveConfirmationMode(nextMode: BookingConfirmationMode) {
+    setLoadingConfirmationMode(true);
+    setConfirmationModeMsg("");
+
+    try {
+      const res = await fetch("/api/settings/booking-confirmation-mode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_confirmation_mode: nextMode }),
+      });
+      const json: { error?: string } = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setConfirmationModeMsg(
+          json.error ?? "예약 확정 방식 저장 중 오류가 발생했습니다."
+        );
+        return;
+      }
+
+      setBookingConfirmationMode(nextMode);
+      setConfirmationModeMsg("예약 확정 방식이 저장되었습니다.");
+      router.refresh();
+    } catch {
+      setConfirmationModeMsg("예약 확정 방식 저장 중 오류가 발생했습니다.");
+    } finally {
+      setLoadingConfirmationMode(false);
     }
   }
 
@@ -557,6 +605,70 @@ export default function ProfileEditor({
       </div>
 
       <div className="glass-card rounded-[24px] p-4">
+        <div className="text-base font-black">예약 확정 방식</div>
+        <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
+          예약금을 직접 확인해야 하는 샵만 사용해요. TimeOpen은 결제나 예약금 수납을 처리하지 않아요.
+        </p>
+
+        <div className="mt-4 grid gap-2">
+          {[
+            {
+              value: "automatic" as const,
+              title: "자동 확정",
+              description: "고객이 예약하면 바로 확정돼요.",
+            },
+            {
+              value: "manual" as const,
+              title: "예약금 확인 후 확정",
+              description:
+                "고객 예약은 먼저 요청으로 접수돼요. 예약금 입금 확인이나 일정 확인 후 사장님이 확정할 수 있어요.",
+            },
+          ].map((option) => {
+            const selected = bookingConfirmationMode === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => void onSaveConfirmationMode(option.value)}
+                disabled={loadingConfirmationMode}
+                className={`rounded-2xl border px-4 py-3 text-left transition disabled:opacity-60 ${
+                  selected
+                    ? "border-[#00C1FF] bg-[#E9FAFF] shadow-[0_10px_26px_rgba(0,193,255,0.14)]"
+                    : "border-white/80 bg-white/55 hover:border-[#00C1FF]/45"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-black text-slate-900">{option.title}</div>
+                  <span
+                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
+                      selected ? "brand-selected" : "border border-slate-200 bg-white text-transparent"
+                    }`}
+                  >
+                    ✓
+                  </span>
+                </div>
+                <p className="mt-1 text-xs font-medium leading-5 text-gray-500">
+                  {option.description}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+
+        {confirmationModeMsg ? (
+          <div
+            className={`mt-3 rounded-xl px-4 py-3 text-sm font-bold ${
+              confirmationModeMsg.includes("오류")
+                ? "bg-red-50 text-red-700"
+                : "brand-chip"
+            }`}
+          >
+            {confirmationModeMsg}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="glass-card rounded-[24px] p-4">
       <div className="mb-4 text-base font-black">추가 정보</div>
       <div className="mb-1.5 text-sm font-bold text-gray-700">예약 문의 연락처 (선택)</div>
       <input
@@ -586,7 +698,7 @@ export default function ProfileEditor({
         {locationText.length}/{FIELD_LIMITS.noticeMax}
       </div>
 
-      <div className="mb-1.5 text-sm font-bold text-gray-700">예약 안내문 (선택)</div>
+      <div className="mb-1.5 text-sm font-bold text-gray-700">방문 안내문 (선택)</div>
       <textarea
         value={noticeText}
         onChange={(e) => setNoticeText(e.target.value)}
@@ -597,6 +709,22 @@ export default function ProfileEditor({
       />
       <div className="-mt-3 mb-4 text-right text-xs font-bold text-gray-400">
         {noticeText.length}/{FIELD_LIMITS.noticeMax}
+      </div>
+
+      <div className="mb-1.5 text-sm font-bold text-gray-700">예약 안내문 (선택)</div>
+      <textarea
+        value={bookingNotice}
+        onChange={(e) => setBookingNotice(e.target.value)}
+        rows={4}
+        placeholder="예) 예약금 20,000원 입금 후 예약이 확정됩니다. 24시간 이내 미입금 시 예약이 취소될 수 있어요."
+        maxLength={FIELD_LIMITS.noticeMax}
+        className="brand-input mb-2 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
+      />
+      <div className="mb-2 text-sm leading-5 text-gray-500">
+        예약금, 입금 방법, 변경/취소 안내 등을 고객에게 보여줄 수 있어요.
+      </div>
+      <div className="-mt-1 mb-4 text-right text-xs font-bold text-gray-400">
+        {bookingNotice.length}/{FIELD_LIMITS.noticeMax}
       </div>
 
       <button

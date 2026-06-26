@@ -119,6 +119,7 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
 
   const [orgLocation, setOrgLocation] = useState<string>("");
   const [orgNotice, setOrgNotice] = useState<string>("");
+  const [orgBookingNotice, setOrgBookingNotice] = useState<string>("");
   const [orgName, setOrgName] = useState<string>("");
 
   const [msg, setMsg] = useState<string>("");
@@ -172,6 +173,7 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
     setOrgName((org?.name ?? org?.display_name ?? "").trim());
     setOrgLocation((org?.location_text ?? "").trim());
     setOrgNotice((org?.notice_text ?? "").trim());
+    setOrgBookingNotice((org?.booking_notice ?? "").trim());
 
     const rows = await fetchServicesByHandle(handle);
     setServices(rows);
@@ -662,6 +664,15 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
             </p>
           ) : null}
         </div>
+
+        {orgBookingNotice ? (
+          <div className="mt-4 rounded-2xl border border-[#dceef2] bg-white/70 p-3">
+            <div className="brand-text text-sm font-black">예약 안내</div>
+            <p className="mt-1 whitespace-pre-wrap text-sm font-medium leading-6 text-slate-600 [overflow-wrap:anywhere]">
+              {orgBookingNotice}
+            </p>
+          </div>
+        ) : null}
 
         <div className="mt-4 rounded-2xl border border-[#dceef2] bg-white/65 p-3">
           <label className="flex min-w-0 items-start gap-3 text-sm font-bold text-slate-700">

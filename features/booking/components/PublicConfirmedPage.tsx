@@ -13,12 +13,14 @@ type Props = {
   dateText: string;
   timeText: string;
   serviceName: string;
+  reservationStatus: string;
   serviceNameTranslations: Record<string, string>;
   customerName: string;
   customerPhone: string;
   locationText: string;
   noticeText: string;
   bookingContact: string;
+  bookingNotice: string;
   organizationFound: boolean;
   reservationFound: boolean;
   organizationError?: string;
@@ -27,6 +29,7 @@ type Props = {
 
 function PublicConfirmedPageContent(props: Props) {
   const { locale, t } = usePublicBookingI18n();
+  const isRequested = props.reservationStatus === "requested";
 
   return (
     <main className="soft-page-bg overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
@@ -40,8 +43,14 @@ function PublicConfirmedPageContent(props: Props) {
               ✓
             </div>
             <div className="brand-text mt-4 text-sm font-bold">{t("bookingComplete")}</div>
-            <h1 className="mt-1 text-3xl font-black tracking-[-0.04em]">{t("bookingConfirmed")}</h1>
-            <p className="mt-2 text-sm leading-5 text-gray-500">{t("checkBookingInfo")}</p>
+            <h1 className="mt-1 text-3xl font-black tracking-[-0.04em]">
+              {isRequested ? "예약 요청이 접수되었어요." : "예약이 확정되었어요."}
+            </h1>
+            <p className="mt-2 text-sm leading-5 text-gray-500">
+              {isRequested
+                ? "샵에서 확인 후 예약 확정 안내를 보내드릴게요."
+                : t("checkBookingInfo")}
+            </p>
           </header>
 
           <section className="brand-gradient rounded-[24px] p-5 text-white shadow-[0_14px_30px_rgba(0,193,255,0.22)]">
@@ -95,6 +104,15 @@ function PublicConfirmedPageContent(props: Props) {
               <div className="brand-text text-sm font-bold">예약 문의</div>
               <div className="mt-1 whitespace-pre-wrap text-sm font-black leading-6 text-slate-800 [overflow-wrap:anywhere]">
                 {props.bookingContact}
+              </div>
+            </section>
+          ) : null}
+
+          {props.bookingNotice.trim() ? (
+            <section className="glass-card mt-4 rounded-[24px] p-4">
+              <div className="brand-text text-sm font-bold">예약 안내</div>
+              <div className="mt-1 whitespace-pre-wrap text-sm font-medium leading-6 text-gray-600 [overflow-wrap:anywhere]">
+                {props.bookingNotice}
               </div>
             </section>
           ) : null}

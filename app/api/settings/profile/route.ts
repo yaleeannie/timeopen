@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       const noticeValidation = validateOptionalText(
         body.notice_text,
         FIELD_LIMITS.noticeMax,
-        "예약 안내문"
+        "방문 안내문"
       );
       if (!noticeValidation.ok) {
         return NextResponse.json({ error: noticeValidation.error }, { status: 400 });
