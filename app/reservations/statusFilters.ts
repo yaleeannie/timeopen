@@ -1,4 +1,13 @@
 export type ReservationStatusFilter = "all" | "requested" | "confirmed" | "cancelled";
+export type ReservationView = "list" | "calendar";
+
+export const RESERVATION_VIEW_TABS: Array<{
+  value: ReservationView;
+  label: string;
+}> = [
+  { value: "list", label: "예약 현황" },
+  { value: "calendar", label: "일정 관리" },
+];
 
 export const RESERVATION_STATUS_FILTERS: Array<{
   value: ReservationStatusFilter;
@@ -20,6 +29,10 @@ export function normalizeReservationStatusFilter(
     : "all";
 }
 
+export function normalizeReservationView(value: unknown): ReservationView {
+  return value === "calendar" ? "calendar" : "list";
+}
+
 export function matchesReservationStatusFilter(
   status: string | null,
   filter: ReservationStatusFilter
@@ -30,10 +43,8 @@ export function matchesReservationStatusFilter(
   return status === "cancelled" || status === "canceled";
 }
 
-export function isReservationStatusFilterCalendarScoped(
-  filter: ReservationStatusFilter
-) {
-  return filter === "all" || filter === "confirmed";
+export function isScheduleReservationStatus(status: string | null) {
+  return status === "requested" || status === "confirmed";
 }
 
 export function getReservationStatusFilterEmptyText(

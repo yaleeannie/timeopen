@@ -9,11 +9,14 @@ import ReservationsClient, {
 } from "./ReservationsClient";
 import {
   getReservationStatusFilterEmptyText,
-  isReservationStatusFilterCalendarScoped,
+  isScheduleReservationStatus,
   matchesReservationStatusFilter,
   normalizeReservationStatusFilter,
+  normalizeReservationView,
   RESERVATION_STATUS_FILTERS,
+  RESERVATION_VIEW_TABS,
   type ReservationStatusFilter,
+  type ReservationView,
 } from "./statusFilters";
 
 type ReservationRow = {
@@ -44,6 +47,7 @@ type Props = {
   searchParams?: {
     date?: string;
     status?: string;
+    view?: string;
   };
 };
 
@@ -280,17 +284,55 @@ function getMonthCalendar(dateISO: string) {
   };
 }
 
-function getStatusHref(status: ReservationStatusFilter, dateISO: string) {
+function getReservationHref({
+  view,
+  dateISO,
+  status,
+}: {
+  view: ReservationView;
+  dateISO: string;
+  status?: ReservationStatusFilter;
+}) {
   const params = new URLSearchParams();
+  params.set("view", view);
   params.set("date", dateISO);
-  if (status !== "all") {
+  if (view === "list" && status && status !== "all") {
     params.set("status", status);
   }
   return `/reservations?${params.toString()}`;
 }
 
-function getDateHref(dateISO: string, status: ReservationStatusFilter) {
-  return getStatusHref(status, dateISO);
+function getStatusHref(status: ReservationStatusFilter, dateISO: string) {
+  return getReservationHref({ view: "list", dateISO, status });
+}
+
+function getDateHref(dateISO: string) {
+  return getReservationHref({ view: "calendar", dateISO });
+}
+
+function toReservationCards(
+  reservations: Array<{
+    row: ReservationRow;
+    date: string;
+    start: string;
+    end: string;
+    serviceName: string;
+    smsStatus: SmsDisplayStatus;
+  }>
+): ReservationCardItem[] {
+  return reservations.map(({ row, date, start, end, serviceName, smsStatus }) => ({
+    id: row.id,
+    serviceId: row.service_id ? String(row.service_id) : "",
+    createdAt: row.created_at ?? "",
+    status: row.status,
+    customerName: displayValue(row.customer_name),
+    customerPhone: displayValue(row.customer_phone),
+    serviceName: serviceName === "-" ? "서비스 미지정" : serviceName,
+    date,
+    start: start === "-" ? "" : start,
+    end: end === "-" ? "" : end,
+    smsStatus,
+  }));
 }
 
 export default async function ReservationsPage({ searchParams }: Props) {
@@ -433,13 +475,16 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const todayISO = getSeoulTodayISO();
   const requestedDate = searchParams?.date ?? "";
   const selectedDate = parseISODate(requestedDate) ? requestedDate : todayISO;
+  const selectedView = normalizeReservationView(searchParams?.view);
   const selectedStatusFilter = normalizeReservationStatusFilter(searchParams?.status);
-  const calendarScoped = isReservationStatusFilterCalendarScoped(selectedStatusFilter);
   const calendar = getMonthCalendar(selectedDate);
-  const filteredReservationRows = reservationRows.filter(({ row }) =>
+  const listReservationRows = reservationRows.filter(({ row }) =>
     matchesReservationStatusFilter(row.status, selectedStatusFilter)
   );
-  const reservationCountByDate = filteredReservationRows.reduce((counts, reservation) => {
+  const calendarReservationRows = reservationRows.filter(({ row }) =>
+    isScheduleReservationStatus(row.status)
+  );
+  const reservationCountByDate = calendarReservationRows.reduce((counts, reservation) => {
     if (reservation.date !== "-") {
       counts.set(reservation.date, (counts.get(reservation.date) ?? 0) + 1);
     }
@@ -448,38 +493,34 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const selectedReservations = groupedReservations.find(
     ([date]) => date === selectedDate
   )?.[1] ?? [];
-  const listReservations = calendarScoped
-    ? selectedReservations.filter(({ row }) =>
-        matchesReservationStatusFilter(row.status, selectedStatusFilter)
-      )
-    : [...filteredReservationRows].sort((a, b) =>
-        ((b.row.created_at ?? "") || "").localeCompare((a.row.created_at ?? "") || "")
-      );
-  const selectedReservationCards: ReservationCardItem[] = listReservations.map(
-    ({ row, date, start, end, serviceName, smsStatus }) => ({
-      id: row.id,
-      serviceId: row.service_id ? String(row.service_id) : "",
-      createdAt: row.created_at ?? "",
-      status: row.status,
-      customerName: displayValue(row.customer_name),
-      customerPhone: displayValue(row.customer_phone),
-      serviceName: serviceName === "-" ? "서비스 미지정" : serviceName,
-      date,
-      start: start === "-" ? "" : start,
-      end: end === "-" ? "" : end,
-      smsStatus,
-    })
+  const calendarListReservations = selectedReservations.filter(({ row }) =>
+    isScheduleReservationStatus(row.status)
   );
-  const listLabel = calendarScoped
-    ? formatDateLabel(selectedDate)
-    : selectedStatusFilter === "requested"
-      ? "확인 대기 예약"
-      : "취소된 예약";
-  const emptyText = getReservationStatusFilterEmptyText(selectedStatusFilter);
+  const listReservationCards = toReservationCards(
+    [...listReservationRows].sort((a, b) =>
+      ((b.row.created_at ?? "") || "").localeCompare((a.row.created_at ?? "") || "")
+    )
+  );
+  const calendarReservationCards = toReservationCards(
+    [...calendarListReservations].sort((a, b) =>
+      (a.start === "-" ? "99:99" : a.start).localeCompare(
+        b.start === "-" ? "99:99" : b.start
+      )
+    )
+  );
+  const listLabel = selectedStatusFilter === "all"
+    ? "전체 예약"
+    : RESERVATION_STATUS_FILTERS.find(
+        (filter) => filter.value === selectedStatusFilter
+      )?.label ?? "전체 예약";
+  const listEmptyText = getReservationStatusFilterEmptyText(selectedStatusFilter);
   const selectedStatusLabel =
     RESERVATION_STATUS_FILTERS.find(
       (filter) => filter.value === selectedStatusFilter
     )?.label ?? "전체";
+  const selectedViewLabel =
+    RESERVATION_VIEW_TABS.find((tab) => tab.value === selectedView)?.label ??
+    "예약 현황";
 
   return (
     <main className="soft-page-bg overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
@@ -492,138 +533,199 @@ export default async function ReservationsPage({ searchParams }: Props) {
           <h1 className="text-3xl font-black tracking-[-0.04em]">예약관리</h1>
           <p className="mt-1 text-sm leading-5 text-gray-500">날짜별 일정과 고객 정보를 확인하세요.</p>
           <p className="mt-2 text-sm text-gray-400">
-            {handle ? `@${handle}` : "예약 일정"} · {selectedStatusLabel} {filteredReservationRows.length}건
+            {handle ? `@${handle}` : "예약 일정"} · {selectedViewLabel}
+            {selectedView === "list"
+              ? ` · ${selectedStatusLabel} ${listReservationRows.length}건`
+              : ` · ${calendarReservationRows.length}건`}
           </p>
         </header>
 
         <nav
-          className="-mx-1 mb-5 overflow-x-auto px-1 pb-1"
-          aria-label="예약 상태 필터"
+          className="mb-4 grid grid-cols-2 gap-2 rounded-2xl bg-white/45 p-1.5"
+          aria-label="예약관리 보기"
         >
-          <div className="flex w-max min-w-full gap-2">
-            {RESERVATION_STATUS_FILTERS.map((filter) => {
-              const selected = selectedStatusFilter === filter.value;
-              return (
-                <a
-                  key={filter.value}
-                  href={getStatusHref(filter.value, selectedDate)}
-                  aria-current={selected ? "page" : undefined}
-                  className={`flex min-h-10 shrink-0 items-center rounded-full border px-4 text-sm font-black transition ${
-                    selected
-                      ? "brand-selected"
-                      : "border-white/80 bg-white/60 text-slate-500 hover:border-[#00C9FF]/50 hover:bg-white"
-                  }`}
-                >
-                  {filter.label}
-                </a>
-              );
-            })}
-          </div>
+          {RESERVATION_VIEW_TABS.map((tab) => {
+            const selected = selectedView === tab.value;
+            return (
+              <a
+                key={tab.value}
+                href={getReservationHref({
+                  view: tab.value,
+                  dateISO: selectedDate,
+                  status: selectedStatusFilter,
+                })}
+                aria-current={selected ? "page" : undefined}
+                className={`flex min-h-11 items-center justify-center rounded-xl text-sm font-black transition ${
+                  selected
+                    ? "brand-selected"
+                    : "text-slate-500 hover:bg-white/70 hover:text-slate-800"
+                }`}
+              >
+                {tab.label}
+              </a>
+            );
+          })}
         </nav>
 
-        <section
-          className="glass-card mb-7 rounded-[24px] p-3 sm:p-4"
-          aria-label="예약 날짜 선택"
-        >
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <a
-              href={getDateHref(calendar?.previousMonth ?? selectedDate, selectedStatusFilter)}
-              aria-label="이전 달"
-              className="brand-outline flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl font-black"
-            >
-              ‹
-            </a>
-
-            <div className="min-w-0 text-center">
-              <div className="truncate text-base font-black">
-                {calendar?.label ?? ""}
-              </div>
-              {selectedDate !== todayISO ? (
-                <a
-                  href={getDateHref(todayISO, selectedStatusFilter)}
-                  className="brand-text mt-1 inline-block text-sm font-bold"
-                >
-                  오늘로 이동
-                </a>
-              ) : (
-                <div className="mt-1 text-sm text-gray-400">오늘</div>
-              )}
+        {selectedView === "list" ? (
+          <>
+            <div className="mb-4 px-1">
+              <h2 className="text-xl font-black tracking-[-0.03em]">예약 현황</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                새로 들어온 예약 요청과 고객 정보를 확인하세요.
+              </p>
             </div>
 
-            <a
-              href={getDateHref(calendar?.nextMonth ?? selectedDate, selectedStatusFilter)}
-              aria-label="다음 달"
-              className="brand-outline flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl font-black"
+            <nav
+              className="-mx-1 mb-5 overflow-x-auto px-1 pb-1"
+              aria-label="예약 상태 필터"
             >
-              ›
-            </a>
-          </div>
-
-          <div className="mb-1 grid grid-cols-7 gap-1" aria-hidden="true">
-            {["월", "화", "수", "목", "금", "토", "일"].map((weekday) => (
-              <div
-                key={weekday}
-                className="py-1 text-center text-[11px] font-black text-gray-400"
-              >
-                {weekday}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1">
-            {(calendar?.dates ?? []).map((dateISO, index) => {
-              if (!dateISO) {
-                return <div key={`empty-${index}`} className="min-h-[62px]" />;
-              }
-
-              const date = parseISODate(dateISO);
-              const count = reservationCountByDate.get(dateISO) ?? 0;
-              const selected = dateISO === selectedDate;
-              const today = dateISO === todayISO;
-
-              return (
-                <a
-                  key={dateISO}
-                  href={getDateHref(dateISO, selectedStatusFilter)}
-                  aria-current={selected ? "date" : undefined}
-                  className={`flex min-h-[62px] min-w-0 flex-col items-center rounded-xl border px-0.5 py-1.5 text-center ${
-                    selected
-                      ? "brand-selected"
-                      : today
-                        ? "brand-border bg-white/75 text-gray-700"
-                        : "border-transparent bg-white text-gray-700"
-                  }`}
-                >
-                  <div
-                    className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-black ${
-                      today && !selected ? "brand-soft" : ""
-                    }`}
-                  >
-                    {date?.getUTCDate()}
-                  </div>
-                  {count > 0 ? (
-                    <div
-                      className={`mt-1 rounded-full px-1.5 py-0.5 text-[9px] font-black ${
+              <div className="flex w-max min-w-full gap-2">
+                {RESERVATION_STATUS_FILTERS.map((filter) => {
+                  const selected = selectedStatusFilter === filter.value;
+                  return (
+                    <a
+                      key={filter.value}
+                      href={getStatusHref(filter.value, selectedDate)}
+                      aria-current={selected ? "page" : undefined}
+                      className={`flex min-h-10 shrink-0 items-center rounded-full border px-4 text-sm font-black transition ${
                         selected
-                          ? "bg-white/20 text-white"
-                          : "brand-soft"
+                          ? "brand-selected"
+                          : "border-white/80 bg-white/60 text-slate-500 hover:border-[#00C9FF]/50 hover:bg-white"
                       }`}
                     >
-                      {count}건
-                    </div>
-                  ) : null}
-                </a>
-              );
-            })}
-          </div>
-        </section>
+                      {filter.label}
+                    </a>
+                  );
+                })}
+              </div>
+            </nav>
 
-        <ReservationsClient
-          selectedDateLabel={listLabel}
-          reservations={selectedReservationCards}
-          services={serviceOptions}
-          emptyText={emptyText}
-        />
+            <ReservationsClient
+              selectedDateLabel={listLabel}
+              reservations={listReservationCards}
+              services={serviceOptions}
+              emptyText={listEmptyText}
+              emptyHelper="상단 필터를 바꿔 다른 예약 상태를 확인해보세요."
+              sortMode="created_desc"
+            />
+          </>
+        ) : (
+          <>
+            <div className="mb-4 px-1">
+              <h2 className="text-xl font-black tracking-[-0.03em]">일정 관리</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                날짜별 확정·대기 예약을 캘린더로 확인하세요.
+              </p>
+            </div>
+
+            <section
+              className="glass-card mb-7 rounded-[24px] p-3 sm:p-4"
+              aria-label="예약 날짜 선택"
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <a
+                  href={getDateHref(calendar?.previousMonth ?? selectedDate)}
+                  aria-label="이전 달"
+                  className="brand-outline flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl font-black"
+                >
+                  ‹
+                </a>
+
+                <div className="min-w-0 text-center">
+                  <div className="truncate text-base font-black">
+                    {calendar?.label ?? ""}
+                  </div>
+                  {selectedDate !== todayISO ? (
+                    <a
+                      href={getDateHref(todayISO)}
+                      className="brand-text mt-1 inline-block text-sm font-bold"
+                    >
+                      오늘로 이동
+                    </a>
+                  ) : (
+                    <div className="mt-1 text-sm text-gray-400">오늘</div>
+                  )}
+                </div>
+
+                <a
+                  href={getDateHref(calendar?.nextMonth ?? selectedDate)}
+                  aria-label="다음 달"
+                  className="brand-outline flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl font-black"
+                >
+                  ›
+                </a>
+              </div>
+
+              <div className="mb-1 grid grid-cols-7 gap-1" aria-hidden="true">
+                {["월", "화", "수", "목", "금", "토", "일"].map((weekday) => (
+                  <div
+                    key={weekday}
+                    className="py-1 text-center text-[11px] font-black text-gray-400"
+                  >
+                    {weekday}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {(calendar?.dates ?? []).map((dateISO, index) => {
+                  if (!dateISO) {
+                    return <div key={`empty-${index}`} className="min-h-[62px]" />;
+                  }
+
+                  const date = parseISODate(dateISO);
+                  const count = reservationCountByDate.get(dateISO) ?? 0;
+                  const selected = dateISO === selectedDate;
+                  const today = dateISO === todayISO;
+
+                  return (
+                    <a
+                      key={dateISO}
+                      href={getDateHref(dateISO)}
+                      aria-current={selected ? "date" : undefined}
+                      className={`flex min-h-[62px] min-w-0 flex-col items-center rounded-xl border px-0.5 py-1.5 text-center ${
+                        selected
+                          ? "brand-selected"
+                          : today
+                            ? "brand-border bg-white/75 text-gray-700"
+                            : "border-transparent bg-white text-gray-700"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-black ${
+                          today && !selected ? "brand-soft" : ""
+                        }`}
+                      >
+                        {date?.getUTCDate()}
+                      </div>
+                      {count > 0 ? (
+                        <div
+                          className={`mt-1 rounded-full px-1.5 py-0.5 text-[9px] font-black ${
+                            selected
+                              ? "bg-white/20 text-white"
+                              : "brand-soft"
+                          }`}
+                        >
+                          {count}건
+                        </div>
+                      ) : null}
+                    </a>
+                  );
+                })}
+              </div>
+            </section>
+
+            <ReservationsClient
+              selectedDateLabel={formatDateLabel(selectedDate)}
+              reservations={calendarReservationCards}
+              services={serviceOptions}
+              emptyText="선택한 날짜에 예약이 없어요."
+              emptyHelper="캘린더에서 다른 날짜를 선택해 예약 일정을 확인해보세요."
+              sortMode="start_asc"
+            />
+          </>
+        )}
         <nav className="brand-nav mt-7 grid grid-cols-4 gap-1 rounded-2xl p-2">
           <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">대시보드</a>
           <a href="/reservations" className="brand-chip flex min-h-11 items-center justify-center rounded-xl text-sm font-black">예약관리</a>

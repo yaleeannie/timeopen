@@ -30,6 +30,8 @@ type Props = {
   reservations: ReservationCardItem[];
   services: ReservationServiceOption[];
   emptyText: string;
+  emptyHelper: string;
+  sortMode: "created_desc" | "start_asc";
 };
 
 function formatStatus(status: string | null) {
@@ -453,14 +455,30 @@ function ReservationCard({
   );
 }
 
-export default function ReservationsClient({ selectedDateLabel, reservations, services, emptyText }: Props) {
+export default function ReservationsClient({
+  selectedDateLabel,
+  reservations,
+  services,
+  emptyText,
+  emptyHelper,
+  sortMode,
+}: Props) {
   const count = reservations.length;
   const sortedReservations = useMemo(
-    () =>
-      [...reservations].sort((a, b) =>
+    () => {
+      if (sortMode === "start_asc") {
+        return [...reservations].sort((a, b) => {
+          const dateDiff = (a.date || "").localeCompare(b.date || "");
+          if (dateDiff !== 0) return dateDiff;
+          return (a.start || "99:99").localeCompare(b.start || "99:99");
+        });
+      }
+
+      return [...reservations].sort((a, b) =>
         (b.createdAt || "").localeCompare(a.createdAt || "")
-      ),
-    [reservations]
+      );
+    },
+    [reservations, sortMode]
   );
 
   return (
@@ -479,7 +497,7 @@ export default function ReservationsClient({ selectedDateLabel, reservations, se
           </div>
           <div className="mt-3 text-base font-black">{emptyText}</div>
           <div className="mt-1 text-sm leading-6 text-gray-500">
-            캘린더에서 다른 날짜를 선택해 예약 일정을 확인해보세요.
+            {emptyHelper}
           </div>
         </div>
       ) : (
