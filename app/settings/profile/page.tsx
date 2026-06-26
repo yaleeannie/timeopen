@@ -21,7 +21,7 @@ export default async function ProfilePage() {
 
   const { data: orgRow } = await supabase
     .from("organizations")
-    .select("name, handle, location_text, notice_text, booking_contact, link_theme, booking_enabled, withdrawal_requested_at, disabled_at")
+    .select("name, handle, handle_changed_at, location_text, notice_text, booking_contact, link_theme, booking_enabled, withdrawal_requested_at, disabled_at")
     .eq("id", organizationId)
     .maybeSingle();
 
@@ -38,6 +38,7 @@ export default async function ProfilePage() {
             organizationId={organizationId}
             initialName={orgRow?.name ?? ""}
             initialHandle={orgRow?.handle ?? ""}
+            initialHandleChangedAt={orgRow?.handle_changed_at ?? ""}
             initialLocation={orgRow?.location_text ?? ""}
             initialNotice={orgRow?.notice_text ?? ""}
             initialBookingContact={orgRow?.booking_contact ?? ""}

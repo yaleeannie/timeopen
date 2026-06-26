@@ -21,6 +21,7 @@ type Props = {
   initialBookingContact: string;
   initialName?: string;
   initialHandle?: string;
+  initialHandleChangedAt?: string;
   initialTheme: LinkTheme;
   initialBookingEnabled: boolean;
   initialWithdrawalRequested: boolean;
@@ -33,6 +34,23 @@ type HandleAvailability =
   | { state: "available"; message: string; available: true }
   | { state: "invalid" | "taken" | "error"; message: string; available: false };
 
+function getHandleCooldownUntil(value: string) {
+  if (!value) return null;
+  const changedAt = new Date(value);
+  if (Number.isNaN(changedAt.getTime())) return null;
+  const cooldownUntil = new Date(changedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+  return cooldownUntil > new Date() ? cooldownUntil : null;
+}
+
+function formatKoreanDate(date: Date) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
 export default function ProfileEditor({
   organizationId,
   initialLocation,
@@ -40,6 +58,7 @@ export default function ProfileEditor({
   initialBookingContact,
   initialName = "",
   initialHandle = "",
+  initialHandleChangedAt = "",
   initialTheme,
   initialBookingEnabled,
   initialWithdrawalRequested,
@@ -74,6 +93,10 @@ export default function ProfileEditor({
   const [linkTheme, setLinkTheme] = useState<LinkTheme>(initialTheme);
   const [bookingEnabled, setBookingEnabled] = useState(initialBookingEnabled);
   const withdrawalRequested = initialWithdrawalRequested || initialDisabled;
+  const handleCooldownUntil = getHandleCooldownUntil(initialHandleChangedAt);
+  const handleCooldownActive =
+    Boolean(handleCooldownUntil) &&
+    handle.trim() !== normalizeHandleValue(initialHandle ?? "");
 
   useEffect(() => {
     setShopName(initialName ?? "");
@@ -164,7 +187,7 @@ export default function ProfileEditor({
 
         setHandleAvailability({
           state: "taken",
-          message: "이미 사용 중인 예약 링크예요.",
+          message: json.reason ?? "이미 사용 중이거나 더 이상 사용할 수 없는 링크예요.",
           available: false,
         });
       } catch (error) {
@@ -412,6 +435,18 @@ export default function ProfileEditor({
         <div className="mt-2 text-sm leading-5 text-gray-500">
           인스타 프로필에 복사할 주소예요. 영어 소문자, 숫자, 하이픈(-), 언더스코어(_)를 3~30자로 사용할 수 있어요.
         </div>
+
+        <div className="mt-2 rounded-2xl bg-white/60 px-3 py-3 text-xs font-medium leading-5 text-gray-500">
+          <p>예약 링크는 14일에 한 번만 변경할 수 있어요.</p>
+          <p>링크를 변경하면 이전 링크로는 예약을 받을 수 없고, 고객에게 최신 링크를 다시 안내해야 해요.</p>
+          <p>이전에 사용했던 링크는 다른 샵이 사용할 수 없으며, 원래 샵은 다시 사용할 수 있어요.</p>
+        </div>
+
+        {handleCooldownActive && handleCooldownUntil ? (
+          <div className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-black leading-5 text-amber-700">
+            예약 링크는 14일에 한 번만 변경할 수 있어요. {formatKoreanDate(handleCooldownUntil)} 이후 다시 변경할 수 있어요.
+          </div>
+        ) : null}
 
         <div className="mt-1 text-sm leading-5 text-gray-400">
           ※ 변경 시 기존 링크는 더 이상 사용되지 않을 수 있어요

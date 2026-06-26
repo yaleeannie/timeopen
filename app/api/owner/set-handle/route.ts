@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: handleValidation.error }, { status: 400 });
   }
 
-  const { data, error } = await supabase.rpc("set_my_handle", {
+  const { data, error } = await supabase.rpc("change_organization_handle", {
     p_handle: handleValidation.value,
   });
 

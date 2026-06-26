@@ -15,6 +15,7 @@ import type { BookingSlotMode } from "@/features/booking/slotMode";
 
 type Props = {
   handle: string;
+  organizationFound: boolean;
   linkTheme: LinkTheme;
   bookingSlotMode: BookingSlotMode;
   bookingEnabled: boolean;
@@ -26,6 +27,7 @@ type Props = {
 
 function PublicBookingPageContent({
   handle,
+  organizationFound,
   linkTheme,
   bookingSlotMode,
   bookingEnabled,
@@ -57,7 +59,21 @@ function PublicBookingPageContent({
               ) : null}
             </div>
           </div>
-          {!disabled && bookingEnabled ? (
+          {!organizationFound ? (
+            <section className="glass-card rounded-[24px] px-5 py-10 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl brand-soft text-2xl font-black">
+                ?
+              </div>
+              <h1 className="mt-5 text-2xl font-black tracking-[-0.04em] text-slate-950">
+                예약 링크를 찾을 수 없어요.
+              </h1>
+              <p className="mt-2 text-sm font-medium leading-6 text-gray-500">
+                주소가 변경되었거나 더 이상 사용하지 않는 예약 링크일 수 있어요.
+                <br />
+                샵에서 안내받은 최신 예약 링크를 다시 확인해주세요.
+              </p>
+            </section>
+          ) : !disabled && bookingEnabled ? (
             <BookingScreen handle={handle} bookingSlotMode={bookingSlotMode} />
           ) : (
             <section className="space-y-3.5">

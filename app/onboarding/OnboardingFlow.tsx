@@ -236,7 +236,7 @@ export default function OnboardingFlow({
 
         setHandleAvailability({
           state: "taken",
-          message: "이미 사용 중인 예약 링크예요.",
+          message: json.reason ?? "이미 사용 중이거나 더 이상 사용할 수 없는 링크예요.",
           available: false,
         });
       } catch (checkError) {

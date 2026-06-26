@@ -30,11 +30,13 @@ export async function GET(req: Request) {
   const handle = handleValidation.value;
   const supabase = await createSupabaseServerClient();
 
-  const { data: existing, error: lookupError } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("handle", handle)
-    .maybeSingle();
+  const { data, error: lookupError } = await supabase.rpc(
+    "check_organization_handle_availability",
+    {
+      p_organization_id: organizationId,
+      p_handle: handle,
+    }
+  );
 
   if (lookupError) {
     console.error("[settings/handle] availability lookup failed", {
@@ -49,11 +51,16 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
+  const availability = Array.isArray(data) ? data[0] : data;
+
   return NextResponse.json({
     ok: true,
-    valid: true,
-    available: !existing || existing.id === organizationId,
-    current: existing?.id === organizationId,
+    valid: availability?.valid === true,
+    available: availability?.available === true,
+    current: availability?.current === true,
+    ownHistory: availability?.own_history === true,
+    reason: availability?.reason ?? null,
+    cooldownUntil: availability?.cooldown_until ?? null,
   });
 }
 
@@ -79,38 +86,27 @@ export async function POST(req: Request) {
   const handle = handleValidation.value;
   const supabase = await createSupabaseServerClient();
 
-  // 중복 체크
-  const { data: existing, error: lookupError } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("handle", handle)
-    .maybeSingle();
+  const { data, error: updateErr } = await supabase.rpc(
+    "change_organization_handle",
+    { p_handle: handle }
+  );
 
-  if (lookupError) {
-    console.error("[settings/handle] save lookup failed", {
+  if (updateErr) {
+    console.error("[settings/handle] save failed", {
       userId: user.id,
       organizationId,
       handle,
-      message: lookupError.message,
-      code: lookupError.code,
-      details: lookupError.details,
-      hint: lookupError.hint,
+      message: updateErr.message,
+      code: updateErr.code,
+      details: updateErr.details,
+      hint: updateErr.hint,
     });
-    return NextResponse.json({ error: "예약 링크 확인 중 오류가 발생했어요." }, { status: 400 });
+    return NextResponse.json(
+      { error: updateErr.message || "예약 링크 저장 중 오류가 발생했어요." },
+      { status: 400 }
+    );
   }
 
-  if (existing && existing.id !== organizationId) {
-    return NextResponse.json({ error: "이미 사용 중인 예약 링크예요." }, { status: 400 });
-  }
-
-  const { error: updateErr } = await supabase
-    .from("organizations")
-    .update({ handle })
-    .eq("id", organizationId);
-
-  if (updateErr) {
-    return NextResponse.json({ error: updateErr.message }, { status: 400 });
-  }
-
-  return NextResponse.json({ ok: true });
+  const row = Array.isArray(data) ? data[0] : data;
+  return NextResponse.json({ ok: true, handle: row?.handle ?? handle });
 }

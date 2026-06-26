@@ -525,7 +525,16 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
               );
             })}
           </div>
-        ) : null}
+        ) : (
+          <div className="mt-3 rounded-2xl border border-[#dceef2] bg-white/75 px-4 py-6 text-center">
+            <div className="text-base font-black text-slate-900">
+              아직 예약 가능한 서비스가 없어요.
+            </div>
+            <p className="mt-2 text-sm font-medium leading-6 text-gray-500">
+              샵에 문의해 예약 가능 여부를 확인해주세요.
+            </p>
+          </div>
+        )}
       </section>
       ) : null}
 

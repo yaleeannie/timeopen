@@ -19,6 +19,7 @@ export default async function UserBookingPage({ params }: Props) {
   return (
     <PublicBookingPage
       handle={handle}
+      organizationFound={Boolean(organization)}
       linkTheme={normalizeLinkTheme(organization?.link_theme)}
       bookingSlotMode={normalizeBookingSlotMode(organization?.booking_slot_mode)}
       bookingEnabled={organization?.booking_enabled !== false}
