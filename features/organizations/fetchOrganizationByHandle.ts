@@ -21,16 +21,15 @@ export type Organization = {
 };
 
 export async function fetchOrganizationByHandle(handle: string): Promise<Organization | null> {
-  const { data, error } = await supabase
-    .from("organizations")
-    .select("id, handle, name, display_name, created_at, location_text, notice_text, booking_notice, link_theme, booking_slot_mode, booking_enabled, withdrawal_requested_at, disabled_at")
-    .eq("handle", handle)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_public_organization_by_handle", {
+    p_handle: handle,
+  });
 
   if (error) {
     console.error(error);
     return null;
   }
 
-  return (data as Organization | null) ?? null;
+  const row = Array.isArray(data) ? data[0] ?? null : data;
+  return (row as Organization | null) ?? null;
 }

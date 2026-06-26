@@ -10,11 +10,10 @@ type Props = {
 export default async function UserBookingPage({ params }: Props) {
   const { handle } = await params;
   const supabase = await createSupabaseServerClient();
-  const { data: organization } = await supabase
-    .from("organizations")
-    .select("name, display_name, location_text, notice_text, link_theme, booking_slot_mode, booking_enabled, withdrawal_requested_at, disabled_at")
-    .eq("handle", handle.trim().toLowerCase())
-    .maybeSingle();
+  const { data } = await supabase.rpc("get_public_organization_by_handle", {
+    p_handle: handle,
+  });
+  const organization = Array.isArray(data) ? data[0] ?? null : data;
 
   return (
     <PublicBookingPage
