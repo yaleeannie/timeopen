@@ -11,6 +11,7 @@ import ReservationsClient, {
 type ReservationRow = {
   id: string;
   organization_id: string;
+  created_at: string | null;
   date: string | null;
   start_time: string | null;
   end_time: string | null;
@@ -302,10 +303,10 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const { data: rows, error: resErr } = await supabase
     .from("reservations")
     .select(
-      "id, organization_id, date, start_time, end_time, start_at, end_at, status, service_id, customer_name, customer_phone"
+      "id, organization_id, created_at, date, start_time, end_time, start_at, end_at, status, service_id, customer_name, customer_phone"
     )
     .eq("organization_id", organizationId)
-    .order("start_at", { ascending: true });
+    .order("created_at", { ascending: false });
 
   if (resErr) {
     return (
@@ -424,6 +425,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
     ({ row, date, start, end, serviceName, smsStatus }) => ({
       id: row.id,
       serviceId: row.service_id ? String(row.service_id) : "",
+      createdAt: row.created_at ?? "",
       status: row.status,
       customerName: displayValue(row.customer_name),
       customerPhone: displayValue(row.customer_phone),

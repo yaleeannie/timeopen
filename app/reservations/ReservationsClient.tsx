@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  getReservationStatusFilterEmptyText,
+  matchesReservationStatusFilter,
+  RESERVATION_STATUS_FILTERS,
+  type ReservationStatusFilter,
+} from "./statusFilters";
 
 export type ReservationServiceOption = {
   id: string;
@@ -14,6 +20,7 @@ export type ReservationServiceOption = {
 export type ReservationCardItem = {
   id: string;
   serviceId: string;
+  createdAt: string;
   status: string | null;
   customerName: string;
   customerPhone: string;
@@ -31,8 +38,8 @@ type Props = {
 };
 
 function formatStatus(status: string | null) {
-  if (status === "requested") return "예약 요청";
-  if (status === "confirmed") return "확정";
+  if (status === "requested") return "확인 대기";
+  if (status === "confirmed") return "확인 완료";
   if (status === "cancelled" || status === "canceled") return "취소됨";
   return status || "-";
 }
@@ -267,7 +274,7 @@ function ReservationCard({
                     disabled={confirming}
                     className="brand-button min-h-9 rounded-xl px-2.5 text-xs font-black disabled:opacity-60"
                   >
-                    {confirming ? "확정 중" : "입금 확인 후 확정"}
+                    {confirming ? "확정 중" : "예약 확정"}
                   </button>
                 ) : null}
                 {editable ? (
@@ -452,14 +459,23 @@ function ReservationCard({
 }
 
 export default function ReservationsClient({ selectedDateLabel, reservations, services }: Props) {
-  const count = reservations.length;
+  const [statusFilter, setStatusFilter] = useState<ReservationStatusFilter>("all");
+  const filteredReservations = useMemo(
+    () =>
+      reservations.filter((reservation) =>
+        matchesReservationStatusFilter(reservation.status, statusFilter)
+      ),
+    [reservations, statusFilter]
+  );
+  const count = filteredReservations.length;
   const sortedReservations = useMemo(
     () =>
-      [...reservations].sort((a, b) =>
-        `${a.date} ${a.start}`.localeCompare(`${b.date} ${b.start}`)
+      [...filteredReservations].sort((a, b) =>
+        (b.createdAt || "").localeCompare(a.createdAt || "")
       ),
-    [reservations]
+    [filteredReservations]
   );
+  const emptyText = getReservationStatusFilterEmptyText(statusFilter);
 
   return (
     <>
@@ -470,12 +486,34 @@ export default function ReservationsClient({ selectedDateLabel, reservations, se
         </span>
       </div>
 
+      <div className="-mx-1 mb-4 overflow-x-auto px-1 pb-1">
+        <div className="flex w-max min-w-full gap-2">
+          {RESERVATION_STATUS_FILTERS.map((filter) => {
+            const selected = statusFilter === filter.value;
+            return (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setStatusFilter(filter.value)}
+                className={`min-h-10 shrink-0 rounded-full border px-4 text-sm font-black transition ${
+                  selected
+                    ? "brand-selected"
+                    : "border-white/80 bg-white/60 text-slate-500 hover:border-[#00C9FF]/50 hover:bg-white"
+                }`}
+              >
+                {filter.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {count === 0 ? (
         <div className="glass-card rounded-[24px] px-5 py-10 text-center">
           <div className="brand-soft mx-auto flex h-11 w-11 items-center justify-center rounded-2xl text-xl">
             ◷
           </div>
-          <div className="mt-3 text-base font-black">이 날짜에는 예약이 없어요.</div>
+          <div className="mt-3 text-base font-black">{emptyText}</div>
           <div className="mt-1 text-sm leading-6 text-gray-500">
             캘린더에서 다른 날짜를 선택해 예약 일정을 확인해보세요.
           </div>
