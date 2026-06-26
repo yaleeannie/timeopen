@@ -3,6 +3,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizeLinkTheme } from "@/features/booking/themes";
 import { normalizeBookingSlotMode } from "@/features/booking/slotMode";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 type Props = {
   params: Promise<{ handle: string }>;
 };
