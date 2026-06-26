@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   const bookingNoticeValidation = validateOptionalText(
     booking_notice,
     FIELD_LIMITS.noticeMax,
-    "예약 안내문"
+    "예약 전 안내문"
   );
   if (!bookingNoticeValidation.ok) {
     return NextResponse.json(

@@ -604,13 +604,18 @@ export default function ProfileEditor({
         ) : null}
       </div>
 
-      <div className="glass-card rounded-[24px] p-4">
-        <div className="text-base font-black">예약 확정 방식</div>
-        <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
-          예약금을 직접 확인해야 하는 샵만 사용해요. TimeOpen은 결제나 예약금 수납을 처리하지 않아요.
+      <div className="glass-card rounded-[22px] p-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-sm font-black">예약 확정 방식</div>
+          <span className="rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-black text-slate-400">
+            선택 설정
+          </span>
+        </div>
+        <p className="mt-1 text-xs font-medium leading-5 text-gray-500">
+          TimeOpen은 결제나 예약금 수납을 처리하지 않아요.
         </p>
 
-        <div className="mt-4 grid gap-2">
+        <div className="mt-3 grid gap-2">
           {[
             {
               value: "automatic" as const,
@@ -621,7 +626,7 @@ export default function ProfileEditor({
               value: "manual" as const,
               title: "예약금 확인 후 확정",
               description:
-                "고객 예약은 먼저 요청으로 접수돼요. 예약금 입금 확인이나 일정 확인 후 사장님이 확정할 수 있어요.",
+                "예약금 입금 확인이나 일정 확인이 필요한 경우 사용해요.",
             },
           ].map((option) => {
             const selected = bookingConfirmationMode === option.value;
@@ -631,7 +636,7 @@ export default function ProfileEditor({
                 type="button"
                 onClick={() => void onSaveConfirmationMode(option.value)}
                 disabled={loadingConfirmationMode}
-                className={`rounded-2xl border px-4 py-3 text-left transition disabled:opacity-60 ${
+                className={`rounded-2xl border px-3 py-2.5 text-left transition disabled:opacity-60 ${
                   selected
                     ? "border-[#00C1FF] bg-[#E9FAFF] shadow-[0_10px_26px_rgba(0,193,255,0.14)]"
                     : "border-white/80 bg-white/55 hover:border-[#00C1FF]/45"
@@ -647,7 +652,7 @@ export default function ProfileEditor({
                     ✓
                   </span>
                 </div>
-                <p className="mt-1 text-xs font-medium leading-5 text-gray-500">
+                <p className="mt-1 text-[11px] font-medium leading-5 text-gray-500">
                   {option.description}
                 </p>
               </button>
@@ -711,7 +716,7 @@ export default function ProfileEditor({
         {noticeText.length}/{FIELD_LIMITS.noticeMax}
       </div>
 
-      <div className="mb-1.5 text-sm font-bold text-gray-700">예약 안내문 (선택)</div>
+      <div className="mb-1.5 text-sm font-bold text-gray-700">예약 전 안내문 (선택)</div>
       <textarea
         value={bookingNotice}
         onChange={(e) => setBookingNotice(e.target.value)}
@@ -721,7 +726,7 @@ export default function ProfileEditor({
         className="brand-input mb-2 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
       />
       <div className="mb-2 text-sm leading-5 text-gray-500">
-        예약금, 입금 방법, 변경/취소 안내 등을 고객에게 보여줄 수 있어요.
+        방문 전 안내, 변경/취소 안내, 예약금 안내가 필요한 경우 고객에게 보여줄 수 있어요.
       </div>
       <div className="-mt-1 mb-4 text-right text-xs font-bold text-gray-400">
         {bookingNotice.length}/{FIELD_LIMITS.noticeMax}
