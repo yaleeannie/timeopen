@@ -86,6 +86,7 @@ export default function ProfileEditor({
   const [withdrawalMsg, setWithdrawalMsg] = useState("");
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
   const [withdrawalReason, setWithdrawalReason] = useState("");
+  const [handleGuidanceOpen, setHandleGuidanceOpen] = useState(false);
   const [handleAvailability, setHandleAvailability] = useState<HandleAvailability>({
     state: "idle",
     message: "",
@@ -481,24 +482,33 @@ export default function ProfileEditor({
         />
 
         <div className="mt-2 text-sm leading-5 text-gray-500">
-          인스타 프로필에 복사할 주소예요. 영어 소문자, 숫자, 하이픈(-), 언더스코어(_)를 3~30자로 사용할 수 있어요.
+          인스타 프로필에 복사할 예약 링크예요.
         </div>
 
-        <div className="mt-2 rounded-2xl bg-white/60 px-3 py-3 text-xs font-medium leading-5 text-gray-500">
-          <p>예약 링크는 14일에 한 번만 변경할 수 있어요.</p>
-          <p>링크를 변경하면 이전 링크로는 예약을 받을 수 없고, 고객에게 최신 링크를 다시 안내해야 해요.</p>
-          <p>이전에 사용했던 링크는 다른 샵이 사용할 수 없으며, 원래 샵은 다시 사용할 수 있어요.</p>
-        </div>
+        <button
+          type="button"
+          onClick={() => setHandleGuidanceOpen((open) => !open)}
+          aria-expanded={handleGuidanceOpen}
+          className="brand-text mt-2 inline-flex min-h-8 items-center text-xs font-black"
+        >
+          {handleGuidanceOpen
+            ? "예약 링크 변경 안내 닫기"
+            : "예약 링크 변경 안내 보기"}
+        </button>
+
+        {handleGuidanceOpen ? (
+          <div className="mt-2 rounded-2xl bg-white/60 px-3 py-3 text-xs font-medium leading-5 text-gray-500">
+            <p>예약 링크는 14일에 한 번만 변경할 수 있어요.</p>
+            <p>링크를 변경하면 이전 링크로는 예약을 받을 수 없고, 고객에게 최신 링크를 다시 안내해야 해요.</p>
+            <p>이전에 사용했던 링크는 다른 샵이 사용할 수 없으며, 원래 샵은 다시 사용할 수 있어요.</p>
+          </div>
+        ) : null}
 
         {handleCooldownActive && handleCooldownUntil ? (
           <div className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-black leading-5 text-amber-700">
             예약 링크는 14일에 한 번만 변경할 수 있어요. {formatKoreanDate(handleCooldownUntil)} 이후 다시 변경할 수 있어요.
           </div>
         ) : null}
-
-        <div className="mt-1 text-sm leading-5 text-gray-400">
-          ※ 변경 시 기존 링크는 더 이상 사용되지 않을 수 있어요
-        </div>
 
         <div className="brand-text mt-2 text-sm font-bold [overflow-wrap:anywhere]">
           {handle ? getBookingUrl(handle) : "-"}
