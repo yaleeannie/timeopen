@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { getPlanDisplay } from "@/features/billing/planStatus";
+import { filterDashboardScheduleReservations } from "./dashboardSchedule";
 import OwnerDashboardClient, {
   type DashboardReservation,
   type IncompleteSetting,
@@ -283,13 +284,12 @@ export default async function OwnerPage() {
     status: row.status ?? "confirmed",
     smsStatus: getSmsDisplayStatus(smsLogsByReservation.get(row.id) ?? []),
   }));
+  const scheduleReservations = filterDashboardScheduleReservations(reservations);
 
-  const thisWeekReservationCount = reservations.filter(
+  const thisWeekReservationCount = scheduleReservations.filter(
     (reservation) =>
       reservation.date >= weekRange.start &&
-      reservation.date <= weekRange.end &&
-      reservation.status !== "cancelled" &&
-      reservation.status !== "canceled"
+      reservation.date <= weekRange.end
   ).length;
 
   const todayDateText = new Intl.DateTimeFormat("ko-KR", {
@@ -306,7 +306,7 @@ export default async function OwnerPage() {
       todayISO={todayISO}
       todayDateText={todayDateText}
       scheduleDates={scheduleDates}
-      reservations={reservations}
+      reservations={scheduleReservations}
       thisWeekReservationCount={thisWeekReservationCount}
       incompleteSettings={incompleteSettings}
       bookingUrl={bookingUrl}
