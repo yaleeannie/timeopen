@@ -77,6 +77,9 @@ test("reservation update SMS copy is Korean and transactional", () => {
     ].join("\n")
   );
   assert.doesNotMatch(message, /문의:/);
+  assert.doesNotMatch(message, /위치:/);
+  assert.doesNotMatch(message, /안내:/);
+  assert.doesNotMatch(message, /예약금/);
   assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
   assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
 });
@@ -101,4 +104,7 @@ test("reservation update SMS includes booking inquiry contact when provided", ()
     ].join("\n")
   );
   assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
+  assert.doesNotMatch(message, /위치:/);
+  assert.doesNotMatch(message, /안내:/);
+  assert.doesNotMatch(message, /예약금/);
 });

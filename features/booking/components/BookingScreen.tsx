@@ -749,7 +749,7 @@ export default function BookingScreen({
 
         {orgBookingNotice ? (
           <div className="mt-4 rounded-2xl border border-[#dceef2] bg-white/70 p-3">
-            <div className="brand-text text-sm font-black">예약 안내</div>
+            <div className="brand-text text-sm font-black">예약 전 안내</div>
             <p className="mt-1 whitespace-pre-wrap text-sm font-medium leading-6 text-slate-600 [overflow-wrap:anywhere]">
               {orgBookingNotice}
             </p>

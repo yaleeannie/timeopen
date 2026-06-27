@@ -224,6 +224,7 @@ export async function POST(req: Request) {
           shopName: orgName,
           serviceName,
           dateTime: `${date} ${time}`,
+          locationText,
           bookingContact,
         })
       : buildBookingConfirmationCustomerSms({

@@ -110,28 +110,34 @@ function PublicConfirmedPageContent(props: Props) {
 
           {props.bookingNotice.trim() ? (
             <section className="glass-card mt-4 rounded-[24px] p-4">
-              <div className="brand-text text-sm font-bold">예약 안내</div>
+              <div className="brand-text text-sm font-bold">예약 전 안내</div>
               <div className="mt-1 whitespace-pre-wrap text-sm font-medium leading-6 text-gray-600 [overflow-wrap:anywhere]">
                 {props.bookingNotice}
               </div>
             </section>
           ) : null}
 
-          <section className="glass-card mt-4 rounded-[24px] p-4">
-            <div className="mb-4 text-base font-black">{t("visitorGuide")}</div>
-            <div className="mb-4">
-              <div className="brand-text text-sm font-bold">{t("location")}</div>
-              <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">
-                {props.locationText || "-"}
-              </div>
-            </div>
-            <div>
-              <div className="brand-text text-sm font-bold">{t("bookingNotice")}</div>
-              <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">
-                {props.noticeText || "-"}
-              </div>
-            </div>
-          </section>
+          {props.locationText.trim() || props.noticeText.trim() ? (
+            <section className="glass-card mt-4 rounded-[24px] p-4">
+              <div className="mb-4 text-base font-black">{t("visitorGuide")}</div>
+              {props.locationText.trim() ? (
+                <div className={props.noticeText.trim() ? "mb-4" : ""}>
+                  <div className="brand-text text-sm font-bold">위치 안내</div>
+                  <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">
+                    {props.locationText}
+                  </div>
+                </div>
+              ) : null}
+              {props.noticeText.trim() ? (
+                <div>
+                  <div className="brand-text text-sm font-bold">방문 안내</div>
+                  <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-600 [overflow-wrap:anywhere]">
+                    {props.noticeText}
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
 
           {!props.organizationFound ? (
             <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold text-red-700 [overflow-wrap:anywhere]">
