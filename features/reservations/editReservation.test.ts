@@ -69,9 +69,8 @@ test("reservation update SMS copy is Korean and transactional", () => {
   assert.equal(
     message,
     [
-      "[TimeOpen] 예약 정보가 변경되었어요.",
+      "타임네일 예약 정보가 변경되었어요.",
       "",
-      "샵: 타임네일",
       "서비스: 젤네일",
       "일시: 6월 24일 11:20",
     ].join("\n")
@@ -80,8 +79,10 @@ test("reservation update SMS copy is Korean and transactional", () => {
   assert.doesNotMatch(message, /위치:/);
   assert.doesNotMatch(message, /안내:/);
   assert.doesNotMatch(message, /예약금/);
-  assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
-  assert.equal(message.startsWith("[TimeOpen] 예약 정보가 변경되었어요."), true);
+  assert.doesNotMatch(message, /\[TimeOpen\]/);
+  assert.doesNotMatch(message, /TimeOpen/);
+  assert.doesNotMatch(message, /샵:/);
+  assert.equal(message.startsWith("타임네일 예약 정보가 변경되었어요."), true);
   assert.doesNotMatch(message, /\[Web발신\]/);
   assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
 });
@@ -97,18 +98,40 @@ test("reservation update SMS includes booking inquiry contact when provided", ()
   assert.equal(
     message,
     [
-      "[TimeOpen] 예약 정보가 변경되었어요.",
+      "타임네일 예약 정보가 변경되었어요.",
       "",
-      "샵: 타임네일",
       "서비스: 젤네일",
       "일시: 6월 24일 11:20",
       "문의: 인스타 DM @time_nail",
     ].join("\n")
   );
-  assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
-  assert.equal(message.startsWith("[TimeOpen] 예약 정보가 변경되었어요."), true);
+  assert.doesNotMatch(message, /\[TimeOpen\]/);
+  assert.doesNotMatch(message, /TimeOpen/);
+  assert.doesNotMatch(message, /샵:/);
+  assert.equal(message.startsWith("타임네일 예약 정보가 변경되었어요."), true);
   assert.doesNotMatch(message, /\[Web발신\]/);
   assert.doesNotMatch(message, /위치:/);
   assert.doesNotMatch(message, /안내:/);
   assert.doesNotMatch(message, /예약금/);
+});
+
+test("reservation update SMS uses a natural fallback when shop name is missing", () => {
+  const message = buildReservationUpdatedSms({
+    shopName: " ",
+    serviceName: "젤네일",
+    dateTime: "6월 24일 11:20",
+  });
+
+  assert.equal(
+    message,
+    [
+      "예약 정보가 변경되었어요.",
+      "",
+      "서비스: 젤네일",
+      "일시: 6월 24일 11:20",
+    ].join("\n")
+  );
+  assert.doesNotMatch(message, /undefined/);
+  assert.doesNotMatch(message, /null/);
+  assert.doesNotMatch(message, /샵:/);
 });

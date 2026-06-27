@@ -1,3 +1,12 @@
+function clean(value: string | undefined) {
+  return value?.trim() ?? "";
+}
+
+function buildShopHeadline(shopName: string | undefined, message: string) {
+  const name = clean(shopName);
+  return name ? `${name} ${message}` : message;
+}
+
 export function buildBookingConfirmationCustomerSms(params: {
   shopName: string;
   serviceName: string;
@@ -6,13 +15,12 @@ export function buildBookingConfirmationCustomerSms(params: {
   noticeText?: string;
   bookingContact?: string;
 }) {
-  const locationText = params.locationText?.trim();
-  const noticeText = params.noticeText?.trim();
-  const bookingContact = params.bookingContact?.trim();
+  const locationText = clean(params.locationText);
+  const noticeText = clean(params.noticeText);
+  const bookingContact = clean(params.bookingContact);
   const lines = [
-    "[TimeOpen] 예약이 확정되었어요.",
+    buildShopHeadline(params.shopName, "예약이 확정되었어요."),
     "",
-    `샵: ${params.shopName || "예약"}`,
     `서비스: ${params.serviceName || "예약"}`,
     `일시: ${params.dateTime}`,
   ];
@@ -39,12 +47,11 @@ export function buildBookingRequestCustomerSms(params: {
   locationText?: string;
   bookingContact?: string;
 }) {
-  const locationText = params.locationText?.trim();
-  const bookingContact = params.bookingContact?.trim();
+  const locationText = clean(params.locationText);
+  const bookingContact = clean(params.bookingContact);
   const lines = [
-    "[TimeOpen] 예약 요청이 접수되었어요.",
+    buildShopHeadline(params.shopName, "예약 요청이 접수되었어요."),
     "",
-    `샵: ${params.shopName || "예약"}`,
     `서비스: ${params.serviceName || "예약"}`,
     `일시: ${params.dateTime}`,
   ];

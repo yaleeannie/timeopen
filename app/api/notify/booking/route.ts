@@ -287,7 +287,9 @@ export async function POST(req: Request) {
   if (customerPhone) {
     try {
       console.log("[notify/booking] guest sms start");
-      const result = await sendSms(customerPhone, guestMsg);
+      const result = await sendSms(customerPhone, guestMsg, {
+        subject: orgName,
+      });
       console.log("[notify/booking] guest sms done");
       await saveSmsLog({
         supabase,

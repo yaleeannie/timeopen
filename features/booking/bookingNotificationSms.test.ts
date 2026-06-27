@@ -18,9 +18,8 @@ test("booking confirmation SMS includes booking inquiry contact when set", () =>
   assert.equal(
     message,
     [
-      "[TimeOpen] 예약이 확정되었어요.",
+      "타임네일 예약이 확정되었어요.",
       "",
-      "샵: 타임네일",
       "서비스: 젤네일",
       "일시: 6월 24일 11:20",
       "위치: 서울시 마포구 2층",
@@ -28,8 +27,10 @@ test("booking confirmation SMS includes booking inquiry contact when set", () =>
       "문의: 010-1234-5678",
     ].join("\n")
   );
-  assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
-  assert.equal(message.startsWith("[TimeOpen] 예약이 확정되었어요."), true);
+  assert.doesNotMatch(message, /\[TimeOpen\]/);
+  assert.doesNotMatch(message, /TimeOpen/);
+  assert.doesNotMatch(message, /샵:/);
+  assert.equal(message.startsWith("타임네일 예약이 확정되었어요."), true);
   assert.doesNotMatch(message, /\[Web발신\]/);
   assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
 });
@@ -43,7 +44,30 @@ test("booking confirmation SMS omits inquiry contact when empty", () => {
   });
 
   assert.doesNotMatch(message, /문의/);
-  assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
+  assert.doesNotMatch(message, /\[TimeOpen\]/);
+  assert.doesNotMatch(message, /TimeOpen/);
+  assert.doesNotMatch(message, /샵:/);
+});
+
+test("booking confirmation SMS uses a natural fallback when shop name is missing", () => {
+  const message = buildBookingConfirmationCustomerSms({
+    shopName: "  ",
+    serviceName: "젤네일",
+    dateTime: "6월 24일 11:20",
+  });
+
+  assert.equal(
+    message,
+    [
+      "예약이 확정되었어요.",
+      "",
+      "서비스: 젤네일",
+      "일시: 6월 24일 11:20",
+    ].join("\n")
+  );
+  assert.doesNotMatch(message, /undefined/);
+  assert.doesNotMatch(message, /null/);
+  assert.doesNotMatch(message, /샵:/);
 });
 
 test("booking request SMS uses request copy", () => {
@@ -58,9 +82,8 @@ test("booking request SMS uses request copy", () => {
   assert.equal(
     message,
     [
-      "[TimeOpen] 예약 요청이 접수되었어요.",
+      "타임네일 예약 요청이 접수되었어요.",
       "",
-      "샵: 타임네일",
       "서비스: 젤네일",
       "일시: 6월 24일 11:20",
       "위치: 서울시 마포구 2층",
@@ -69,8 +92,10 @@ test("booking request SMS uses request copy", () => {
       "샵에서 확인 후 예약 확정 안내를 보내드릴게요.",
     ].join("\n")
   );
-  assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
-  assert.equal(message.startsWith("[TimeOpen] 예약 요청이 접수되었어요."), true);
+  assert.doesNotMatch(message, /\[TimeOpen\]/);
+  assert.doesNotMatch(message, /TimeOpen/);
+  assert.doesNotMatch(message, /샵:/);
+  assert.equal(message.startsWith("타임네일 예약 요청이 접수되었어요."), true);
   assert.doesNotMatch(message, /\[Web발신\]/);
   assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
   assert.doesNotMatch(message, /예약금/);

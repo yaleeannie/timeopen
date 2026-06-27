@@ -23,15 +23,36 @@ export function normalizeSmsBody(text: string) {
   return text.replace(/\r\n/g, "\n").trim();
 }
 
-export function buildSolapiSendManyPayload(to: string, text: string) {
+export function normalizeSmsSubject(subject?: string | null) {
+  const text = subject?.trim() ?? "";
+  if (!text) return "예약 안내";
+
+  const headlineMatch = text.match(/^(.+?)\s+예약(?:이| 요청| 정보)/);
+  if (headlineMatch?.[1]?.trim()) {
+    return headlineMatch[1].trim();
+  }
+
+  if (/^예약(?:이| 요청| 정보)/.test(text)) {
+    return "예약 안내";
+  }
+
+  return text;
+}
+
+export function buildSolapiSendManyPayload(
+  to: string,
+  text: string,
+  options: { subject?: string | null } = {}
+) {
   const body = normalizeSmsBody(text);
+  const subject = normalizeSmsSubject(options.subject);
 
   return {
     messages: [
       {
         to,
         from: SENDER,
-        subject: "",
+        subject,
         text: body,
       },
     ],
@@ -52,16 +73,21 @@ function getAuthHeaders() {
   };
 }
 
-export async function sendSms(to: string, text: string) {
+export async function sendSms(
+  to: string,
+  text: string,
+  options: { subject?: string | null } = {}
+) {
   const body = normalizeSmsBody(text);
 
   console.log("[sendSms] to =", to, "from =", SENDER);
+  console.log("[sendSms] subject =", normalizeSmsSubject(options.subject));
   console.log("[sendSms] text =", body);
 
   const res = await fetch("https://api.solapi.com/messages/v4/send-many/detail", {
     method: "POST",
     headers: getAuthHeaders(),
-    body: JSON.stringify(buildSolapiSendManyPayload(to, body)),
+    body: JSON.stringify(buildSolapiSendManyPayload(to, body, options)),
   });
 
   const bodyText = await res.text();

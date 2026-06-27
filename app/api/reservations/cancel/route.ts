@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       status,
       customer_phone,
       organizations (
+        name,
         handle
       )
     `
@@ -91,7 +92,7 @@ export async function POST(req: Request) {
     ? (reservation as any).organizations[0]
     : (reservation as any).organizations;
 
-  const orgName = clean(org?.handle) || "예약";
+  const orgName = clean(org?.name) || clean(org?.handle);
   const date =
     formatReservationDateCompactKorean((reservation as any).date) ||
     clean((reservation as any).date);
@@ -100,17 +101,15 @@ export async function POST(req: Request) {
     clean((reservation as any).start_time);
   const customerPhone = clean((reservation as any).customer_phone);
 
-  const cancelMsg = `[TimeOpen]
-
-${orgName} 예약이 취소되었습니다.
-
-일시
-${date} ${time}
-`;
+  const cancelMsg = [
+    orgName ? `${orgName} 예약이 취소되었어요.` : "예약이 취소되었어요.",
+    "",
+    `일시: ${date} ${time}`,
+  ].join("\n");
 
   try {
     if (customerPhone) {
-      await sendSms(customerPhone, cancelMsg);
+      await sendSms(customerPhone, cancelMsg, { subject: orgName });
     }
   } catch (e) {
     console.error("[cancel] sms failed", e);

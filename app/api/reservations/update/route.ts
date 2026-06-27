@@ -125,7 +125,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await sendSms(customerPhone, smsText);
+    await sendSms(customerPhone, smsText, { subject: shopName });
     return NextResponse.json({
       ok: true,
       smsStatus: "success",
