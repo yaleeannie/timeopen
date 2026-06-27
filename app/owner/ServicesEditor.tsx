@@ -88,6 +88,10 @@ export default function ServicesEditor({ organizationId }: Props) {
   const [price, setPrice] = useState("");
   const [nameTranslations, setNameTranslations] = useState<ServiceNameTranslations>({});
   const [msg, setMsg] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [savingEditId, setSavingEditId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -117,6 +121,8 @@ export default function ServicesEditor({ organizationId }: Props) {
   }, [organizationId]);
 
   async function addService() {
+    if (adding) return;
+
     setMsg("");
 
     const duration = Number(durationMin);
@@ -136,30 +142,35 @@ export default function ServicesEditor({ organizationId }: Props) {
       return;
     }
 
-    const { error } = await supabase.from("services").insert({
-      organization_id: organizationId,
-      name: validation.value.name,
-      name_translations: normalizeServiceNameTranslations(nameTranslations),
-      description: validation.value.description || null,
-      duration_min: validation.value.durationMin,
-      cleanup_min: validation.value.cleanupMin,
-      price: priceValue,
-      active: true,
-    });
+    setAdding(true);
+    try {
+      const { error } = await supabase.from("services").insert({
+        organization_id: organizationId,
+        name: validation.value.name,
+        name_translations: normalizeServiceNameTranslations(nameTranslations),
+        description: validation.value.description || null,
+        duration_min: validation.value.durationMin,
+        cleanup_min: validation.value.cleanupMin,
+        price: priceValue,
+        active: true,
+      });
 
-    if (error) {
-      setMsg(error.message);
-      return;
+      if (error) {
+        setMsg(error.message);
+        return;
+      }
+
+      setName("");
+      setDescription("");
+      setDurationMin("");
+      setCleanupMin("0");
+      setPrice("");
+      setNameTranslations({});
+      setMsg("저장되었습니다.");
+      await load();
+    } finally {
+      setAdding(false);
     }
-
-    setName("");
-    setDescription("");
-    setDurationMin("");
-    setCleanupMin("0");
-    setPrice("");
-    setNameTranslations({});
-    setMsg("저장되었습니다.");
-    await load();
   }
 
   function startEdit(row: ServiceRow) {
@@ -184,6 +195,8 @@ export default function ServicesEditor({ organizationId }: Props) {
   }
 
   async function saveEdit(id: string) {
+    if (savingEditId) return;
+
     setMsg("");
 
     const duration = Number(editDurationMin);
@@ -203,66 +216,85 @@ export default function ServicesEditor({ organizationId }: Props) {
       return;
     }
 
-    const { error } = await supabase
-      .from("services")
-      .update({
-        name: validation.value.name,
-        name_translations: normalizeServiceNameTranslations(editNameTranslations),
-        description: validation.value.description || null,
-        duration_min: validation.value.durationMin,
-        cleanup_min: validation.value.cleanupMin,
-        price: priceValue,
-      })
-      .eq("id", id);
+    setSavingEditId(id);
+    try {
+      const { error } = await supabase
+        .from("services")
+        .update({
+          name: validation.value.name,
+          name_translations: normalizeServiceNameTranslations(editNameTranslations),
+          description: validation.value.description || null,
+          duration_min: validation.value.durationMin,
+          cleanup_min: validation.value.cleanupMin,
+          price: priceValue,
+        })
+        .eq("id", id);
 
-    if (error) {
-      setMsg(error.message);
-      return;
+      if (error) {
+        setMsg(error.message);
+        return;
+      }
+
+      setMsg("수정되었습니다.");
+      cancelEdit();
+      await load();
+    } finally {
+      setSavingEditId(null);
     }
-
-    setMsg("수정되었습니다.");
-    cancelEdit();
-    await load();
   }
 
   async function toggleActive(row: ServiceRow) {
+    if (togglingId) return;
+
     setMsg("");
+    setTogglingId(row.id);
 
-    const { error } = await supabase
-      .from("services")
-      .update({ active: !row.active })
-      .eq("id", row.id);
+    try {
+      const { error } = await supabase
+        .from("services")
+        .update({ active: !row.active })
+        .eq("id", row.id);
 
-    if (error) {
-      setMsg(error.message);
-      return;
+      if (error) {
+        setMsg(error.message);
+        return;
+      }
+
+      setMsg(row.active ? "비활성화되었습니다." : "활성화되었습니다.");
+      await load();
+    } finally {
+      setTogglingId(null);
     }
-
-    setMsg(row.active ? "비활성화되었습니다." : "활성화되었습니다.");
-    await load();
   }
 
   async function deleteService(id: string) {
+    if (deletingId) return;
+
     const ok = window.confirm("이 서비스를 삭제할까요?");
     if (!ok) return;
 
     setMsg("");
+    setDeletingId(id);
 
-    const { error } = await supabase
-      .from("services")
-      .delete()
-      .eq("id", id);
+    try {
+      const { error } = await supabase
+        .from("services")
+        .delete()
+        .eq("id", id);
 
-    if (error) {
-      setMsg(`삭제 실패: ${error.message}`);
-      return;
+      if (error) {
+        setMsg(`삭제 실패: ${error.message}`);
+        return;
+      }
+
+      setMsg("삭제되었습니다.");
+      if (editingId === id) {
+        cancelEdit();
+      }
+      await load();
+    } finally {
+      setDeletingId(null);
     }
-
-    setMsg("삭제되었습니다.");
-    if (editingId === id) {
-      cancelEdit();
-    }
-    await load();
   }
 
   return (
@@ -350,9 +382,10 @@ export default function ServicesEditor({ organizationId }: Props) {
         <button
           type="button"
           onClick={addService}
-          className="brand-outline min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-black shadow-sm"
+          disabled={adding}
+          className="brand-outline min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-black shadow-sm disabled:opacity-60"
         >
-          서비스 저장
+          {adding ? "저장 중..." : "서비스 저장"}
         </button>
         </div>
       </div>
@@ -454,9 +487,10 @@ export default function ServicesEditor({ organizationId }: Props) {
                     <button
                       type="button"
                       onClick={() => saveEdit(row.id)}
-                      className="brand-button min-h-11 rounded-xl px-4 py-2.5 text-sm font-black"
+                      disabled={savingEditId === row.id}
+                      className="brand-button min-h-11 rounded-xl px-4 py-2.5 text-sm font-black disabled:opacity-60"
                     >
-                      저장
+                      {savingEditId === row.id ? "저장 중..." : "저장"}
                     </button>
                     <button
                       type="button"
@@ -501,17 +535,23 @@ export default function ServicesEditor({ organizationId }: Props) {
                     <button
                       type="button"
                       onClick={() => toggleActive(row)}
-                      className="brand-outline min-h-11 rounded-xl px-2 py-2 text-sm font-bold"
+                      disabled={togglingId === row.id}
+                      className="brand-outline min-h-11 rounded-xl px-2 py-2 text-sm font-bold disabled:opacity-60"
                     >
-                      {row.active ? "비활성화" : "활성화"}
+                      {togglingId === row.id
+                        ? "처리 중..."
+                        : row.active
+                          ? "비활성화"
+                          : "활성화"}
                     </button>
 
                     <button
                       type="button"
                       onClick={() => deleteService(row.id)}
-                      className="min-h-11 rounded-xl border border-red-100 bg-red-50 px-2 py-2 text-sm font-bold text-red-600"
+                      disabled={deletingId === row.id}
+                      className="min-h-11 rounded-xl border border-red-100 bg-red-50 px-2 py-2 text-sm font-bold text-red-600 disabled:opacity-60"
                     >
-                      삭제
+                      {deletingId === row.id ? "삭제 중..." : "삭제"}
                     </button>
                   </div>
                 </div>

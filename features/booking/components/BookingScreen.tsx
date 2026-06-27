@@ -123,6 +123,7 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
   const [orgName, setOrgName] = useState<string>("");
 
   const [msg, setMsg] = useState<string>("");
+  const [isSubmittingReservation, setIsSubmittingReservation] = useState(false);
 
   // ✅ Day 1 추가
   const [customerName, setCustomerName] = useState("");
@@ -309,6 +310,8 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
   }, [currentKey, organizationId, weeklySchedule, dateISO, serviceId, services]);
 
   async function onReserve() {
+    if (isSubmittingReservation) return;
+
     setMsg("");
 
     if (!organizationId || !service || !dateISO || !serviceId || !time) return;
@@ -346,6 +349,7 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
     const cleanupMin = Number(service.cleanup_min ?? 0);
 
     let rid: string | null = null;
+    setIsSubmittingReservation(true);
 
     try {
       const result = await saveReservation({
@@ -365,11 +369,13 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
       else rid = (result as any)?.id ?? (result as any)?.[0]?.id ?? null;
     } catch (e: any) {
       setMsg(e?.message ?? t("bookingFailed"));
+      setIsSubmittingReservation(false);
       return;
     }
 
     if (!rid) {
       setMsg(t("reservationIdMissing"));
+      setIsSubmittingReservation(false);
       return;
     }
 
@@ -795,6 +801,7 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
                 selection={ctaSelection}
                 onReserve={onReserve}
                 canReserve={canReserveFromCustomer}
+                loading={isSubmittingReservation}
               />
             </div>
           )}

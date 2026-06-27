@@ -27,6 +27,8 @@ export default function SignupPage() {
   }
 
   async function onSignup() {
+  if (loading) return;
+
   if (!requiredConsentsAgreed) {
     setMsg("필수 약관과 개인정보 수집·이용에 동의해 주세요.");
     return;
@@ -242,7 +244,7 @@ export default function SignupPage() {
                 disabled={loading || !requiredConsentsAgreed}
                 className="brand-button min-h-12 w-full rounded-2xl px-4 py-3 text-base font-black disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "처리 중..." : "회원가입"}
+                {loading ? "가입 중..." : "회원가입"}
               </button>
 
               {msg ? (

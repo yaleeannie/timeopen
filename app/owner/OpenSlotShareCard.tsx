@@ -32,6 +32,8 @@ export default function OpenSlotShareCard({
   const [note, setNote] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
   const [downloadStatus, setDownloadStatus] = useState("");
+  const [copying, setCopying] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const message = useMemo(
@@ -68,13 +70,17 @@ export default function OpenSlotShareCard({
   const storyPreviewUrl = useMemo(() => storySvgDataUrl(storySvg), [storySvg]);
 
   async function copyMessage() {
+    if (copying) return;
     if (!canLink || !bookingUrl) return;
 
+    setCopying(true);
     try {
       await navigator.clipboard.writeText(message);
       setCopyStatus("복사됨");
     } catch {
       setCopyStatus("복사 실패");
+    } finally {
+      setCopying(false);
     }
 
     if (copyTimer.current) clearTimeout(copyTimer.current);
@@ -82,6 +88,9 @@ export default function OpenSlotShareCard({
   }
 
   async function downloadStoryImage() {
+    if (downloading) return;
+
+    setDownloading(true);
     setDownloadStatus("이미지 만드는 중...");
     let svgObjectUrl = "";
 
@@ -124,6 +133,7 @@ export default function OpenSlotShareCard({
       setDownloadStatus("저장 실패");
     } finally {
       if (svgObjectUrl) URL.revokeObjectURL(svgObjectUrl);
+      setDownloading(false);
     }
 
     window.setTimeout(() => setDownloadStatus(""), 1800);
@@ -194,9 +204,10 @@ export default function OpenSlotShareCard({
           <button
             type="button"
             onClick={copyMessage}
-            className="brand-button mt-3 min-h-12 w-full min-w-0 max-w-full rounded-2xl px-4 text-sm font-black"
+            disabled={copying}
+            className="brand-button mt-3 min-h-12 w-full min-w-0 max-w-full rounded-2xl px-4 text-sm font-black disabled:opacity-60"
           >
-            {copyStatus || "공유 메시지 복사"}
+            {copying ? "복사 중..." : copyStatus || "공유 메시지 복사"}
           </button>
 
           <div className="mt-5 min-w-0 border-t border-white/70 pt-5">
@@ -216,9 +227,10 @@ export default function OpenSlotShareCard({
             <button
               type="button"
               onClick={downloadStoryImage}
-              className="brand-outline mt-4 min-h-12 w-full min-w-0 max-w-full rounded-2xl px-4 text-sm font-black"
+              disabled={downloading}
+              className="brand-outline mt-4 min-h-12 w-full min-w-0 max-w-full rounded-2xl px-4 text-sm font-black disabled:opacity-60"
             >
-              {downloadStatus || "스토리 이미지 저장"}
+              {downloading ? "저장 중..." : downloadStatus || "스토리 이미지 저장"}
             </button>
             <p className="mt-3 text-[11px] font-medium leading-5 text-slate-400">
               다운로드한 이미지를 인스타 스토리에 올리고 예약 링크를 함께 공유해보세요.

@@ -75,6 +75,7 @@ export default function ProfileEditor({
   const [loadingHandle, setLoadingHandle] = useState(false);
   const [loadingExtra, setLoadingExtra] = useState(false);
   const [loadingTheme, setLoadingTheme] = useState(false);
+  const [copyingHandle, setCopyingHandle] = useState(false);
   const [loadingBookingStatus, setLoadingBookingStatus] = useState(false);
   const [loadingConfirmationMode, setLoadingConfirmationMode] = useState(false);
   const [loadingWithdrawal, setLoadingWithdrawal] = useState(false);
@@ -324,12 +325,17 @@ export default function ProfileEditor({
   }
 
   async function onCopyLink() {
+    if (copyingHandle) return;
+
     const link = getBookingUrl(handle);
+    setCopyingHandle(true);
     try {
       await navigator.clipboard.writeText(link);
       setMsg("인스타 예약 링크가 복사되었습니다.");
     } catch {
       setMsg("링크 복사에 실패했습니다.");
+    } finally {
+      setCopyingHandle(false);
     }
   }
 
@@ -541,10 +547,10 @@ export default function ProfileEditor({
           <button
             type="button"
             onClick={onCopyLink}
-            disabled={!handle}
+            disabled={!handle || copyingHandle}
             className="brand-outline min-h-11 rounded-xl px-3 py-2.5 text-sm font-black disabled:opacity-50"
           >
-            링크 복사
+            {copyingHandle ? "복사 중..." : "링크 복사"}
           </button>
         </div>
       </div>

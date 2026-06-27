@@ -19,6 +19,8 @@ export default function LoginPage() {
   }, []);
 
   async function onLogin() {
+    if (loading) return;
+
     const emailValidation = validateEmail(email);
     if (!emailValidation.ok) {
       setMsg(emailValidation.error);
@@ -99,7 +101,7 @@ export default function LoginPage() {
             disabled={loading}
             className="brand-button min-h-12 w-full rounded-2xl px-4 py-3 text-base font-black disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "처리 중..." : "로그인"}
+            {loading ? "로그인 중..." : "로그인"}
           </button>
 
           {msg ? (

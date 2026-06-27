@@ -10,15 +10,22 @@ type Props = {
   };
   onReserve: () => void;
   canReserve?: boolean;
+  loading?: boolean;
 };
 
-export default function BookingCta({ selection, onReserve, canReserve = true }: Props) {
+export default function BookingCta({
+  selection,
+  onReserve,
+  canReserve = true,
+  loading = false,
+}: Props) {
   const { t } = usePublicBookingI18n();
   const ready =
     selection.serviceId !== null &&
     selection.dateISO !== null &&
     selection.time !== null &&
-    canReserve;
+    canReserve &&
+    !loading;
 
   return (
     <div className="glass-card flex items-center justify-between gap-3 rounded-[22px] p-3">
@@ -39,7 +46,7 @@ export default function BookingCta({ selection, onReserve, canReserve = true }: 
             : "cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400",
         ].join(" ")}
       >
-        {t("book")}
+        {loading ? "예약 중..." : t("book")}
       </button>
     </div>
   );

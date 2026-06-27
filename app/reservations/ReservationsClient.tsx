@@ -84,6 +84,7 @@ function ReservationCard({
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -159,6 +160,8 @@ function ReservationCard({
   }, [editing, form.serviceId, form.date, reservation.id]);
 
   async function saveEdit() {
+    if (saving) return;
+
     setSaving(true);
     setError("");
     setMessage("");
@@ -189,6 +192,8 @@ function ReservationCard({
   }
 
   async function confirmReservation() {
+    if (confirming) return;
+
     setConfirming(true);
     setError("");
     setMessage("");
@@ -284,13 +289,18 @@ function ReservationCard({
                   </button>
                 ) : null}
                 {reservation.status === "confirmed" || reservation.status === "requested" ? (
-                  <form action="/api/reservations/cancel" method="post">
+                  <form
+                    action="/api/reservations/cancel"
+                    method="post"
+                    onSubmit={() => setCancelling(true)}
+                  >
                     <input type="hidden" name="reservationId" value={reservation.id} />
                     <button
                       type="submit"
-                      className="min-h-9 rounded-xl px-2.5 text-xs font-bold text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                      disabled={cancelling}
+                      className="min-h-9 rounded-xl px-2.5 text-xs font-bold text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
                     >
-                      예약 취소
+                      {cancelling ? "취소 중..." : "예약 취소"}
                     </button>
                   </form>
                 ) : null}

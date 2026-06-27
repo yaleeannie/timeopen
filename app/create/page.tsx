@@ -22,6 +22,8 @@ export default function CreateOrganizationPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
+
     setErrorMsg(null);
 
     if (!valid) {
@@ -83,7 +85,7 @@ export default function CreateOrganizationPage() {
             disabled={!valid || submitting}
             className="brand-button mt-5 min-h-12 w-full rounded-2xl px-4 py-3 text-base font-black disabled:opacity-40"
           >
-            {submitting ? "Creating..." : "Create"}
+            {submitting ? "생성 중..." : "예약 링크 만들기"}
           </button>
         </form>
     </AuthShell>
