@@ -37,7 +37,15 @@ import {
 } from "@/features/validation/fieldLimits";
 import { canSubmitCustomerReservation } from "@/features/legal/consent";
 
-type Props = { handle: string; bookingSlotMode: BookingSlotMode };
+type Props = {
+  handle: string;
+  bookingSlotMode: BookingSlotMode;
+  initialOrganizationId?: string | null;
+  initialOrgName?: string;
+  initialLocation?: string;
+  initialNotice?: string;
+  initialBookingNotice?: string;
+};
 type BookingStep = "service" | "datetime" | "customer";
 
 function hhmmToMin(v: string) {
@@ -95,12 +103,53 @@ function formatWon(price: number) {
   return `₩${wonNumberFormatter.format(price)}`;
 }
 
-export default function BookingScreen({ handle, bookingSlotMode }: Props) {
+function ServiceLoadingSkeleton() {
+  return (
+    <div className="mt-3 flex flex-col gap-3" aria-label="서비스를 불러오는 중이에요">
+      {[0, 1, 2].map((item) => (
+        <div
+          key={item}
+          className="rounded-[18px] border border-white/70 bg-white/60 px-4 py-4 shadow-sm"
+        >
+          <div className="h-4 w-1/2 rounded-full bg-[#dff7fc]" />
+          <div className="mt-3 h-3 w-1/3 rounded-full bg-[#eef8fb]" />
+          <div className="mt-3 h-3 w-5/6 rounded-full bg-[#eef8fb]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TimeLoadingSkeleton({ label }: { label: string }) {
+  return (
+    <div className="brand-soft rounded-2xl border brand-border px-4 py-4">
+      <div className="text-sm font-bold brand-text">{label}</div>
+      <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4" aria-hidden="true">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} className="h-10 rounded-xl bg-white/70" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function BookingScreen({
+  handle,
+  bookingSlotMode,
+  initialOrganizationId = null,
+  initialOrgName = "",
+  initialLocation = "",
+  initialNotice = "",
+  initialBookingNotice = "",
+}: Props) {
   const { locale, t } = usePublicBookingI18n();
   const [step, setStep] = useState<BookingStep>("service");
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(
+    initialOrganizationId || null
+  );
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule | null>(null);
+  const [isInitialBookingLoading, setIsInitialBookingLoading] = useState(true);
 
   const [dateISO, setDateISO] = useState<string | null>(null);
   const [serviceId, setServiceId] = useState<string | null>(null);
@@ -117,10 +166,12 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
   const [isTimesLoading, setIsTimesLoading] = useState(false);
   const [timesError, setTimesError] = useState<string>("");
 
-  const [orgLocation, setOrgLocation] = useState<string>("");
-  const [orgNotice, setOrgNotice] = useState<string>("");
-  const [orgBookingNotice, setOrgBookingNotice] = useState<string>("");
-  const [orgName, setOrgName] = useState<string>("");
+  const [orgLocation, setOrgLocation] = useState<string>(initialLocation.trim());
+  const [orgNotice, setOrgNotice] = useState<string>(initialNotice.trim());
+  const [orgBookingNotice, setOrgBookingNotice] = useState<string>(
+    initialBookingNotice.trim()
+  );
+  const [orgName, setOrgName] = useState<string>(initialOrgName.trim());
 
   const [msg, setMsg] = useState<string>("");
   const [isSubmittingReservation, setIsSubmittingReservation] = useState(false);
@@ -169,22 +220,47 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
   }, [isTimesReadyForCurrent, dateISO, serviceId, time]);
 
   useEffect(() => {
-  (async () => {
-    const org = await fetchOrganizationByHandle(handle);
-    setOrgName((org?.name ?? org?.display_name ?? "").trim());
-    setOrgLocation((org?.location_text ?? "").trim());
-    setOrgNotice((org?.notice_text ?? "").trim());
-    setOrgBookingNotice((org?.booking_notice ?? "").trim());
+    let alive = true;
 
-    const rows = await fetchServicesByHandle(handle);
-    setServices(rows);
-    setOrganizationId(org?.id ?? rows[0]?.organization_id ?? null);
+    (async () => {
+      setIsInitialBookingLoading(true);
 
-    if (rows.length > 0) {
-      setServiceId((prev) => prev ?? rows[0].id);
-    }
-  })();
-  }, [handle]);
+      try {
+        let currentOrganizationId = initialOrganizationId || null;
+
+        if (!currentOrganizationId) {
+          const org = await fetchOrganizationByHandle(handle);
+          if (!alive) return;
+
+          currentOrganizationId = org?.id ?? null;
+          setOrgName((org?.name ?? org?.display_name ?? "").trim());
+          setOrgLocation((org?.location_text ?? "").trim());
+          setOrgNotice((org?.notice_text ?? "").trim());
+          setOrgBookingNotice((org?.booking_notice ?? "").trim());
+        }
+
+        const rows = await fetchServicesByHandle(handle);
+        if (!alive) return;
+
+        setServices(rows);
+        setOrganizationId(currentOrganizationId ?? rows[0]?.organization_id ?? null);
+
+        if (rows.length > 0) {
+          setServiceId((prev) => prev ?? rows[0].id);
+        }
+      } catch (error) {
+        console.error("[BookingScreen] initial booking data load failed", error);
+      } finally {
+        if (alive) {
+          setIsInitialBookingLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [handle, initialOrganizationId]);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -405,9 +481,9 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
     window.location.href = `/u/${handle}/confirmed?rid=${encodeURIComponent(String(rid))}`;
   }
 
-  const canContinueFromService = serviceId != null;
+  const canContinueFromService = serviceId != null && !isInitialBookingLoading;
   const canContinueFromDatetime =
-    dateISO != null && time != null && isTimesReadyForCurrent;
+    dateISO != null && time != null && !isTimesLoading && isTimesReadyForCurrent;
   const canReserveFromCustomer = canSubmitCustomerReservation({
     hasSelection: ctaSelection.serviceId !== null &&
       ctaSelection.dateISO !== null &&
@@ -483,7 +559,9 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
       <section className="glass-card relative block h-auto min-h-0 w-full overflow-visible rounded-[24px] p-4 opacity-100 visible">
         <div className="text-sm font-semibold text-gray-900">{t("selectService")}</div>
 
-        {services.length > 0 ? (
+        {isInitialBookingLoading ? (
+          <ServiceLoadingSkeleton />
+        ) : services.length > 0 ? (
           <div className="mt-3 flex flex-col gap-3">
             {services.map((item) => {
               const active = item.id === serviceId;
@@ -585,9 +663,7 @@ export default function BookingScreen({ handle, bookingSlotMode }: Props) {
                 onChange={() => {}}
               />
             ) : isTimesLoading || !organizationId || !weeklySchedule ? (
-              <div className="brand-soft rounded-2xl border brand-border px-4 py-6 text-sm font-medium">
-                {t("loadingTimes")}
-              </div>
+              <TimeLoadingSkeleton label={t("loadingTimes")} />
             ) : timesError ? (
               <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-6 text-sm font-bold text-red-700">
                 {timesError}

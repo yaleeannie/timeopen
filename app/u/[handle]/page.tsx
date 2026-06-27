@@ -26,9 +26,11 @@ export default async function UserBookingPage({ params }: Props) {
       linkTheme={normalizeLinkTheme(organization?.link_theme)}
       bookingSlotMode={normalizeBookingSlotMode(organization?.booking_slot_mode)}
       bookingEnabled={organization?.booking_enabled !== false}
+      organizationId={(organization?.id ?? "") as string}
       shopName={(organization?.name ?? organization?.display_name ?? "") as string}
       locationText={(organization?.location_text ?? "") as string}
       noticeText={(organization?.notice_text ?? "") as string}
+      bookingNoticeText={(organization?.booking_notice ?? "") as string}
       disabled={Boolean(organization?.withdrawal_requested_at || organization?.disabled_at)}
     />
   );

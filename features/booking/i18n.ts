@@ -48,7 +48,7 @@ const ko = {
   selectTime: "시간 선택",
   earliestTime: "예약 가능한 가장 빠른 시간이에요",
   selectServiceAndDate: "서비스와 날짜를 먼저 선택해주세요",
-  loadingTimes: "가능한 시간을 불러오는 중...",
+  loadingTimes: "예약 가능한 시간을 불러오는 중이에요...",
   noTimes: "가능한 시간이 없어요",
   holidayClosed: "이 날은 예약을 받지 않아요.",
   continuousTimeRequired: "연속 시간이 필요해요.",

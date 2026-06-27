@@ -19,9 +19,11 @@ type Props = {
   linkTheme: LinkTheme;
   bookingSlotMode: BookingSlotMode;
   bookingEnabled: boolean;
+  organizationId?: string;
   shopName?: string;
   locationText?: string;
   noticeText?: string;
+  bookingNoticeText?: string;
   disabled?: boolean;
 };
 
@@ -31,9 +33,11 @@ function PublicBookingPageContent({
   linkTheme,
   bookingSlotMode,
   bookingEnabled,
+  organizationId = "",
   shopName = "",
   locationText = "",
   noticeText = "",
+  bookingNoticeText = "",
   disabled = false,
 }: Props) {
   const { locale, t } = usePublicBookingI18n();
@@ -74,7 +78,15 @@ function PublicBookingPageContent({
               </p>
             </section>
           ) : !disabled && bookingEnabled ? (
-            <BookingScreen handle={handle} bookingSlotMode={bookingSlotMode} />
+            <BookingScreen
+              handle={handle}
+              bookingSlotMode={bookingSlotMode}
+              initialOrganizationId={organizationId}
+              initialOrgName={shopName}
+              initialLocation={locationText}
+              initialNotice={noticeText}
+              initialBookingNotice={bookingNoticeText}
+            />
           ) : (
             <section className="space-y-3.5">
               <div className="glass-card rounded-[24px] px-4 py-5 text-center">
