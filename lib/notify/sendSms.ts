@@ -19,6 +19,25 @@ export class SmsSendError extends Error {
   }
 }
 
+export function normalizeSmsBody(text: string) {
+  return text.replace(/\r\n/g, "\n").trim();
+}
+
+export function buildSolapiSendManyPayload(to: string, text: string) {
+  const body = normalizeSmsBody(text);
+
+  return {
+    messages: [
+      {
+        to,
+        from: SENDER,
+        subject: "",
+        text: body,
+      },
+    ],
+  };
+}
+
 function getAuthHeaders() {
   const date = new Date().toISOString();
   const salt = crypto.randomUUID();
@@ -34,21 +53,15 @@ function getAuthHeaders() {
 }
 
 export async function sendSms(to: string, text: string) {
+  const body = normalizeSmsBody(text);
+
   console.log("[sendSms] to =", to, "from =", SENDER);
-  console.log("[sendSms] text =", text);
+  console.log("[sendSms] text =", body);
 
   const res = await fetch("https://api.solapi.com/messages/v4/send-many/detail", {
     method: "POST",
     headers: getAuthHeaders(),
-    body: JSON.stringify({
-      messages: [
-        {
-          to,
-          from: SENDER,
-          text,
-        },
-      ],
-    }),
+    body: JSON.stringify(buildSolapiSendManyPayload(to, body)),
   });
 
   const bodyText = await res.text();

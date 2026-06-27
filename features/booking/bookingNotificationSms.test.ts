@@ -29,6 +29,8 @@ test("booking confirmation SMS includes booking inquiry contact when set", () =>
     ].join("\n")
   );
   assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
+  assert.equal(message.startsWith("[TimeOpen] 예약이 확정되었어요."), true);
+  assert.doesNotMatch(message, /\[Web발신\]/);
   assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
 });
 
@@ -68,6 +70,8 @@ test("booking request SMS uses request copy", () => {
     ].join("\n")
   );
   assert.equal(message.match(/\[TimeOpen\]/g)?.length, 1);
+  assert.equal(message.startsWith("[TimeOpen] 예약 요청이 접수되었어요."), true);
+  assert.doesNotMatch(message, /\[Web발신\]/);
   assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
   assert.doesNotMatch(message, /예약금/);
   assert.doesNotMatch(message, /10분 전 도착/);
