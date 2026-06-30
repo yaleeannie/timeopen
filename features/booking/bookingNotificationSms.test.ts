@@ -12,13 +12,15 @@ import {
 
 function assertManageUrlLine(message: string, manageUrl: string) {
   const lines = message.split("\n");
-  const line = `확인·취소: ${manageUrl}`;
+  const urlIndex = lines.indexOf(manageUrl);
 
-  assert.ok(lines.includes(line), "manageUrl line must be present");
+  assert.ok(urlIndex > 0, "manageUrl must be present on its own line");
+  assert.equal(lines[urlIndex - 1], "확인·취소");
   assert.equal(lines.filter((value) => value.includes(manageUrl)).length, 1);
-  assert.match(line, /확인·취소: https:\/\//);
-  assert.doesNotMatch(line, /[.,)]$/);
-  assert.doesNotMatch(line, /["'<>[\]]/);
+  assert.match(lines[urlIndex], /^https:\/\//);
+  assert.doesNotMatch(lines[urlIndex], /[가-힣]/);
+  assert.doesNotMatch(lines[urlIndex], /[.,:)]$/);
+  assert.doesNotMatch(lines[urlIndex], /["'<>[\]]/);
 }
 
 test("booking confirmation SMS uses the compact customer format", () => {
@@ -37,12 +39,16 @@ test("booking confirmation SMS uses the compact customer format", () => {
     message,
     [
       "타임네일 예약이 확정되었어요.",
-      "6월 24일 11:20 / 젤네일",
-      "위치: 서울시 마포구 2층",
-      "확인·취소: https://timeopen.app/r/token123",
+      "젤네일, 6월 24일 11:20",
+      "서울시 마포구 2층",
+      "",
+      "확인·취소",
+      "https://timeopen.app/r/token123",
     ].join("\n")
   );
   assertManageUrlLine(message, manageUrl);
+  assert.doesNotMatch(message, /확인·취소:/);
+  assert.doesNotMatch(message, /서비스:|일시:|위치:/);
   assert.doesNotMatch(message, /문의:/);
   assert.doesNotMatch(message, /안내:/);
   assert.doesNotMatch(message, /예약 전 안내|예약금/);
@@ -63,7 +69,7 @@ test("booking confirmation SMS omits optional location and link when empty", () 
     message,
     [
       "타임네일 예약이 확정되었어요.",
-      "6월 24일 11:20 / 젤네일",
+      "젤네일, 6월 24일 11:20",
     ].join("\n")
   );
   assert.doesNotMatch(message, /위치:/);
@@ -81,7 +87,7 @@ test("booking confirmation SMS uses a natural fallback when shop name is missing
     message,
     [
       "예약이 확정되었어요.",
-      "6월 24일 11:20 / 젤네일",
+      "젤네일, 6월 24일 11:20",
     ].join("\n")
   );
   assert.doesNotMatch(message, /undefined|null|샵:/);
@@ -102,14 +108,18 @@ test("booking request SMS uses the compact customer format", () => {
     message,
     [
       "타임네일 예약 요청이 접수되었어요.",
-      "6월 24일 11:20 / 젤네일",
-      "위치: 서울시 마포구 2층",
-      "확인·취소: https://timeopen.app/r/token123",
+      "젤네일, 6월 24일 11:20",
+      "서울시 마포구 2층",
+      "",
+      "확인·취소",
+      "https://timeopen.app/r/token123",
       "",
       "샵에서 확인 후 예약 확정 안내를 보내드릴게요.",
     ].join("\n")
   );
   assertManageUrlLine(message, manageUrl);
+  assert.doesNotMatch(message, /확인·취소:/);
+  assert.doesNotMatch(message, /서비스:|일시:|위치:/);
   assert.doesNotMatch(message, /문의:/);
   assert.doesNotMatch(message, /안내:/);
   assert.doesNotMatch(message, /예약 전 안내|예약금|10분 전 도착/);
@@ -130,7 +140,7 @@ test("booking request SMS omits optional location and link when empty", () => {
     message,
     [
       "타임네일 예약 요청이 접수되었어요.",
-      "6월 24일 11:20 / 젤네일",
+      "젤네일, 6월 24일 11:20",
       "",
       "샵에서 확인 후 예약 확정 안내를 보내드릴게요.",
     ].join("\n")
@@ -152,11 +162,15 @@ test("booking changed SMS uses the compact customer format", () => {
     message,
     [
       "타임네일 예약 정보가 변경되었어요.",
-      "6월 24일 11:20 / 젤네일",
-      "확인·취소: https://timeopen.app/r/token123",
+      "젤네일, 6월 24일 11:20",
+      "",
+      "확인·취소",
+      "https://timeopen.app/r/token123",
     ].join("\n")
   );
   assertManageUrlLine(message, manageUrl);
+  assert.doesNotMatch(message, /확인·취소:/);
+  assert.doesNotMatch(message, /서비스:|일시:/);
   assert.doesNotMatch(message, /위치:|문의:|안내:|예약 전 안내|예약금/);
 });
 
@@ -171,7 +185,7 @@ test("booking changed SMS omits manage link when empty", () => {
     message,
     [
       "타임네일 예약 정보가 변경되었어요.",
-      "6월 24일 11:20 / 젤네일",
+      "젤네일, 6월 24일 11:20",
     ].join("\n")
   );
   assert.doesNotMatch(message, /확인·취소:/);
@@ -189,7 +203,7 @@ test("booking cancelled SMS uses compact copy and includes inquiry contact only 
     message,
     [
       "타임네일 예약이 취소되었어요.",
-      "6월 24일 11:20 / 젤네일",
+      "젤네일, 6월 24일 11:20",
       "문의: 010-1234-5678",
     ].join("\n")
   );
@@ -210,7 +224,7 @@ test("booking cancelled SMS omits inquiry contact when empty", () => {
     message,
     [
       "타임네일 예약이 취소되었어요.",
-      "6월 24일 11:20 / 젤네일",
+      "젤네일, 6월 24일 11:20",
     ].join("\n")
   );
   assert.doesNotMatch(message, /문의:/);

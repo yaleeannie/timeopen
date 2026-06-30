@@ -8,14 +8,14 @@ function buildShopHeadline(shopName: string | undefined, message: string) {
 }
 
 function buildReservationSummaryLine(dateTime: string, serviceName: string) {
-  return `${dateTime} / ${serviceName || "예약"}`;
+  return `${serviceName || "예약"}, ${dateTime}`;
 }
 
 function appendManageUrl(lines: string[], manageUrl: string) {
   const url = clean(manageUrl);
   if (!url) return;
 
-  lines.push(`확인·취소: ${url}`);
+  lines.push("", "확인·취소", url);
 }
 
 export function buildBookingConfirmationCustomerSms(params: {
@@ -35,7 +35,7 @@ export function buildBookingConfirmationCustomerSms(params: {
   ];
 
   if (locationText) {
-    lines.push(`위치: ${locationText}`);
+    lines.push(locationText);
   }
 
   appendManageUrl(lines, manageUrl);
@@ -59,7 +59,7 @@ export function buildBookingRequestCustomerSms(params: {
   ];
 
   if (locationText) {
-    lines.push(`위치: ${locationText}`);
+    lines.push(locationText);
   }
 
   appendManageUrl(lines, manageUrl);
