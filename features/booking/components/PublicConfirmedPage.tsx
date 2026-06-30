@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import {
   BookingLanguageSelect,
   PublicBookingI18nProvider,
@@ -21,6 +22,7 @@ type Props = {
   noticeText: string;
   bookingContact: string;
   bookingNotice: string;
+  manageUrl: string;
   organizationFound: boolean;
   reservationFound: boolean;
   organizationError?: string;
@@ -30,6 +32,18 @@ type Props = {
 function PublicConfirmedPageContent(props: Props) {
   const { locale, t } = usePublicBookingI18n();
   const isRequested = props.reservationStatus === "requested";
+  const [copyStatus, setCopyStatus] = useState("");
+
+  async function copyManageUrl() {
+    if (!props.manageUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(props.manageUrl);
+      setCopyStatus("복사됨");
+    } catch {
+      setCopyStatus("복사 실패");
+    }
+  }
 
   return (
     <main className="soft-page-bg overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
@@ -105,6 +119,25 @@ function PublicConfirmedPageContent(props: Props) {
               <div className="mt-1 whitespace-pre-wrap text-sm font-black leading-6 text-slate-800 [overflow-wrap:anywhere]">
                 {props.bookingContact}
               </div>
+            </section>
+          ) : null}
+
+          {props.manageUrl.trim() ? (
+            <section className="glass-card mt-4 rounded-[24px] p-4">
+              <div className="brand-text text-sm font-bold">예약 확인/취소 링크</div>
+              <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
+                예약 확인이나 취소가 필요할 때 이 링크를 다시 열어주세요.
+              </p>
+              <div className="mt-3 rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-xs font-bold leading-5 text-slate-600 [overflow-wrap:anywhere]">
+                {props.manageUrl}
+              </div>
+              <button
+                type="button"
+                onClick={copyManageUrl}
+                className="brand-chip mt-3 min-h-10 rounded-xl px-4 text-sm font-black"
+              >
+                {copyStatus || "링크 복사"}
+              </button>
             </section>
           ) : null}
 

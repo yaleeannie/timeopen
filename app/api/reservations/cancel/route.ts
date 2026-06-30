@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendSms } from "@/lib/notify/sendSms";
+import { buildBookingCancelledCustomerSms } from "@/features/booking/bookingNotificationSms";
 import {
   formatReservationDateCompactKorean,
   formatReservationTimeDisplay,
@@ -43,12 +44,14 @@ export async function POST(req: Request) {
       `
       id,
       organization_id,
+      service_id,
       date,
       start_time,
       status,
       customer_phone,
       organizations (
         name,
+        booking_contact,
         handle
       )
     `
@@ -93,6 +96,14 @@ export async function POST(req: Request) {
     : (reservation as any).organizations;
 
   const orgName = clean(org?.name) || clean(org?.handle);
+  const bookingContact = clean(org?.booking_contact);
+  const { data: service } = await supabase
+    .from("services")
+    .select("name")
+    .eq("organization_id", (reservation as any).organization_id)
+    .eq("id", String((reservation as any).service_id))
+    .maybeSingle();
+  const serviceName = clean((service as any)?.name) || "예약";
   const date =
     formatReservationDateCompactKorean((reservation as any).date) ||
     clean((reservation as any).date);
@@ -101,11 +112,12 @@ export async function POST(req: Request) {
     clean((reservation as any).start_time);
   const customerPhone = clean((reservation as any).customer_phone);
 
-  const cancelMsg = [
-    orgName ? `${orgName} 예약이 취소되었어요.` : "예약이 취소되었어요.",
-    "",
-    `일시: ${date} ${time}`,
-  ].join("\n");
+  const cancelMsg = buildBookingCancelledCustomerSms({
+    shopName: orgName,
+    serviceName,
+    dateTime: `${date} ${time}`,
+    bookingContact,
+  });
 
   try {
     if (customerPhone) {

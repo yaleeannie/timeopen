@@ -6,6 +6,7 @@ import {
   formatReservationDateKorean,
   formatReservationTimeRangeDisplay,
 } from "@/features/booking/reservationDisplay";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 type Props = {
   params: { handle: string };
@@ -31,6 +32,10 @@ export default async function ConfirmedPage({ params, searchParams }: Props) {
   const timeText =
     formatReservationTimeRangeDisplay(confirmation?.start_time, confirmation?.end_time) ||
     "-";
+  const manageToken = confirmation?.public_manage_token
+    ? String(confirmation.public_manage_token)
+    : "";
+  const manageUrl = manageToken ? `${getSiteUrl()}/r/${manageToken}` : "";
 
   return (
     <PublicConfirmedPage
@@ -53,6 +58,7 @@ export default async function ConfirmedPage({ params, searchParams }: Props) {
       noticeText={confirmation?.notice_text ? String(confirmation.notice_text) : ""}
       bookingContact={confirmation?.booking_contact ? String(confirmation.booking_contact) : ""}
       bookingNotice={confirmation?.booking_notice ? String(confirmation.booking_notice) : ""}
+      manageUrl={manageUrl}
       organizationFound
       reservationFound={Boolean(confirmation)}
       reservationError={error?.message}

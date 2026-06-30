@@ -13,6 +13,7 @@ import {
   buildBookingConfirmationCustomerSms,
   buildBookingRequestCustomerSms,
 } from "@/features/booking/bookingNotificationSms";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 function clean(v: unknown) {
   return typeof v === "string" ? v.trim() : "";
@@ -190,6 +191,8 @@ export async function POST(req: Request) {
   const locationText = clean(reservation.location_text);
   const noticeText = clean(reservation.notice_text);
   const bookingContact = clean(reservation.booking_contact);
+  const manageToken = clean(reservation.public_manage_token);
+  const manageUrl = manageToken ? `${getSiteUrl()}/r/${manageToken}` : "";
   const serviceName = clean(reservation.service_name) || "예약";
   const ownerPhone = process.env.OWNER_PHONE || "";
   const date =
@@ -226,6 +229,7 @@ export async function POST(req: Request) {
           dateTime: `${date} ${time}`,
           locationText,
           bookingContact,
+          manageUrl,
         })
       : buildBookingConfirmationCustomerSms({
           shopName: orgName,
@@ -234,6 +238,7 @@ export async function POST(req: Request) {
           locationText,
           noticeText,
           bookingContact,
+          manageUrl,
         });
 
   console.log("[notify/booking] ownerPhone =", ownerPhone);

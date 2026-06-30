@@ -6,6 +6,7 @@ import {
 } from "@/features/booking/reservationDisplay";
 import { sendSms } from "@/lib/notify/sendSms";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -56,6 +57,7 @@ export async function POST(req: Request) {
       service_id,
       date,
       start_time,
+      public_manage_token,
       customer_phone,
       organizations (
         name,
@@ -99,6 +101,8 @@ export async function POST(req: Request) {
     formatReservationTimeDisplay((reservation as any).start_time) ||
     clean((reservation as any).start_time);
   const customerPhone = clean((reservation as any).customer_phone);
+  const manageToken = clean((reservation as any).public_manage_token);
+  const manageUrl = manageToken ? `${getSiteUrl()}/r/${manageToken}` : "";
   const smsText = buildBookingConfirmationCustomerSms({
     shopName,
     serviceName,
@@ -106,6 +110,7 @@ export async function POST(req: Request) {
     locationText: clean(org?.location_text),
     noticeText: clean(org?.notice_text),
     bookingContact: clean(org?.booking_contact),
+    manageUrl,
   });
 
   if (!customerPhone) {

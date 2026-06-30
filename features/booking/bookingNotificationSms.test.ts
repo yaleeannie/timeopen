@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildBookingCancelledCustomerSms,
   buildBookingConfirmationCustomerSms,
   buildBookingRequestCustomerSms,
 } from "./bookingNotificationSms";
@@ -13,6 +14,7 @@ test("booking confirmation SMS includes booking inquiry contact when set", () =>
     locationText: "서울시 마포구 2층",
     noticeText: "10분 전 도착 부탁드립니다.",
     bookingContact: "010-1234-5678",
+    manageUrl: "https://timeopen.app/r/token123",
   });
 
   assert.equal(
@@ -25,6 +27,7 @@ test("booking confirmation SMS includes booking inquiry contact when set", () =>
       "위치: 서울시 마포구 2층",
       "안내: 10분 전 도착 부탁드립니다.",
       "문의: 010-1234-5678",
+      "예약 확인/취소: https://timeopen.app/r/token123",
     ].join("\n")
   );
   assert.doesNotMatch(message, /\[TimeOpen\]/);
@@ -77,6 +80,7 @@ test("booking request SMS uses request copy", () => {
     dateTime: "6월 24일 11:20",
     locationText: "서울시 마포구 2층",
     bookingContact: "인스타 DM @time_nail",
+    manageUrl: "https://timeopen.app/r/token123",
   });
 
   assert.equal(
@@ -88,6 +92,7 @@ test("booking request SMS uses request copy", () => {
       "일시: 6월 24일 11:20",
       "위치: 서울시 마포구 2층",
       "문의: 인스타 DM @time_nail",
+      "예약 확인/취소: https://timeopen.app/r/token123",
       "",
       "샵에서 확인 후 예약 확정 안내를 보내드릴게요.",
     ].join("\n")
@@ -129,4 +134,28 @@ test("booking SMS policy keeps booking notice out of customer SMS", () => {
   assert.match(request, /문의: 010-1234-5678/);
   assert.doesNotMatch(request, /안내:/);
   assert.doesNotMatch(request, /예약금/);
+});
+
+test("booking cancelled SMS uses shop-first customer copy", () => {
+  const message = buildBookingCancelledCustomerSms({
+    shopName: "타임네일",
+    serviceName: "젤네일",
+    dateTime: "6월 24일 11:20",
+    bookingContact: "010-1234-5678",
+  });
+
+  assert.equal(
+    message,
+    [
+      "타임네일 예약이 취소되었어요.",
+      "",
+      "서비스: 젤네일",
+      "일시: 6월 24일 11:20",
+      "문의: 010-1234-5678",
+    ].join("\n")
+  );
+  assert.doesNotMatch(message, /\[TimeOpen\]/);
+  assert.doesNotMatch(message, /TimeOpen/);
+  assert.doesNotMatch(message, /샵:/);
+  assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
 });
