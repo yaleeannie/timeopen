@@ -7,11 +7,15 @@ function buildShopHeadline(shopName: string | undefined, message: string) {
   return name ? `${name} ${message}` : message;
 }
 
-function appendStandaloneManageUrl(lines: string[], manageUrl: string) {
+function buildReservationSummaryLine(dateTime: string, serviceName: string) {
+  return `${dateTime} / ${serviceName || "예약"}`;
+}
+
+function appendManageUrl(lines: string[], manageUrl: string) {
   const url = clean(manageUrl);
   if (!url) return;
 
-  lines.push("", "예약 확인/취소", url);
+  lines.push(`확인·취소: ${url}`);
 }
 
 export function buildBookingConfirmationCustomerSms(params: {
@@ -24,29 +28,17 @@ export function buildBookingConfirmationCustomerSms(params: {
   manageUrl?: string;
 }) {
   const locationText = clean(params.locationText);
-  const noticeText = clean(params.noticeText);
-  const bookingContact = clean(params.bookingContact);
   const manageUrl = clean(params.manageUrl);
   const lines = [
     buildShopHeadline(params.shopName, "예약이 확정되었어요."),
-    "",
-    `서비스: ${params.serviceName || "예약"}`,
-    `일시: ${params.dateTime}`,
+    buildReservationSummaryLine(params.dateTime, params.serviceName),
   ];
 
   if (locationText) {
     lines.push(`위치: ${locationText}`);
   }
 
-  if (noticeText) {
-    lines.push(`안내: ${noticeText}`);
-  }
-
-  if (bookingContact) {
-    lines.push(`문의: ${bookingContact}`);
-  }
-
-  appendStandaloneManageUrl(lines, manageUrl);
+  appendManageUrl(lines, manageUrl);
 
   return lines.join("\n");
 }
@@ -60,26 +52,36 @@ export function buildBookingRequestCustomerSms(params: {
   manageUrl?: string;
 }) {
   const locationText = clean(params.locationText);
-  const bookingContact = clean(params.bookingContact);
   const manageUrl = clean(params.manageUrl);
   const lines = [
     buildShopHeadline(params.shopName, "예약 요청이 접수되었어요."),
-    "",
-    `서비스: ${params.serviceName || "예약"}`,
-    `일시: ${params.dateTime}`,
+    buildReservationSummaryLine(params.dateTime, params.serviceName),
   ];
 
   if (locationText) {
     lines.push(`위치: ${locationText}`);
   }
 
-  if (bookingContact) {
-    lines.push(`문의: ${bookingContact}`);
-  }
-
-  appendStandaloneManageUrl(lines, manageUrl);
+  appendManageUrl(lines, manageUrl);
 
   lines.push("", "샵에서 확인 후 예약 확정 안내를 보내드릴게요.");
+
+  return lines.join("\n");
+}
+
+export function buildBookingChangedCustomerSms(params: {
+  shopName: string;
+  serviceName: string;
+  dateTime: string;
+  manageUrl?: string;
+}) {
+  const manageUrl = clean(params.manageUrl);
+  const lines = [
+    buildShopHeadline(params.shopName, "예약 정보가 변경되었어요."),
+    buildReservationSummaryLine(params.dateTime, params.serviceName),
+  ];
+
+  appendManageUrl(lines, manageUrl);
 
   return lines.join("\n");
 }
@@ -93,9 +95,7 @@ export function buildBookingCancelledCustomerSms(params: {
   const bookingContact = clean(params.bookingContact);
   const lines = [
     buildShopHeadline(params.shopName, "예약이 취소되었어요."),
-    "",
-    `서비스: ${params.serviceName || "예약"}`,
-    `일시: ${params.dateTime}`,
+    buildReservationSummaryLine(params.dateTime, params.serviceName),
   ];
 
   if (bookingContact) {

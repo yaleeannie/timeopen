@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildBookingCancelledCustomerSms,
+  buildBookingChangedCustomerSms,
   buildBookingConfirmationCustomerSms,
   buildBookingRequestCustomerSms,
   buildOwnerCancellationSms,
@@ -9,19 +10,18 @@ import {
   buildOwnerReservationRequestSms,
 } from "./bookingNotificationSms";
 
-function assertStandaloneManageUrl(message: string, manageUrl: string) {
+function assertManageUrlLine(message: string, manageUrl: string) {
   const lines = message.split("\n");
-  const urlIndex = lines.indexOf(manageUrl);
+  const line = `확인·취소: ${manageUrl}`;
 
-  assert.ok(urlIndex > 0, "manageUrl must be present on its own line");
-  assert.equal(lines[urlIndex - 1], "예약 확인/취소");
-  assert.match(lines[urlIndex], /^https:\/\//);
-  assert.doesNotMatch(lines[urlIndex], /[가-힣]/);
-  assert.doesNotMatch(lines[urlIndex], /[.,)]$/);
-  assert.doesNotMatch(lines[urlIndex], /["'<>[\]]/);
+  assert.ok(lines.includes(line), "manageUrl line must be present");
+  assert.equal(lines.filter((value) => value.includes(manageUrl)).length, 1);
+  assert.match(line, /확인·취소: https:\/\//);
+  assert.doesNotMatch(line, /[.,)]$/);
+  assert.doesNotMatch(line, /["'<>[\]]/);
 }
 
-test("booking confirmation SMS includes booking inquiry contact when set", () => {
+test("booking confirmation SMS uses the compact customer format", () => {
   const manageUrl = "https://timeopen.app/r/token123";
   const message = buildBookingConfirmationCustomerSms({
     shopName: "타임네일",
@@ -37,38 +37,37 @@ test("booking confirmation SMS includes booking inquiry contact when set", () =>
     message,
     [
       "타임네일 예약이 확정되었어요.",
-      "",
-      "서비스: 젤네일",
-      "일시: 6월 24일 11:20",
+      "6월 24일 11:20 / 젤네일",
       "위치: 서울시 마포구 2층",
-      "안내: 10분 전 도착 부탁드립니다.",
-      "문의: 010-1234-5678",
-      "",
-      "예약 확인/취소",
-      "https://timeopen.app/r/token123",
+      "확인·취소: https://timeopen.app/r/token123",
     ].join("\n")
   );
-  assertStandaloneManageUrl(message, manageUrl);
-  assert.doesNotMatch(message, /\[TimeOpen\]/);
-  assert.doesNotMatch(message, /TimeOpen/);
-  assert.doesNotMatch(message, /샵:/);
-  assert.equal(message.startsWith("타임네일 예약이 확정되었어요."), true);
-  assert.doesNotMatch(message, /\[Web발신\]/);
+  assertManageUrlLine(message, manageUrl);
+  assert.doesNotMatch(message, /문의:/);
+  assert.doesNotMatch(message, /안내:/);
+  assert.doesNotMatch(message, /예약 전 안내|예약금/);
+  assert.doesNotMatch(message, /\[TimeOpen\]|TimeOpen|\[Web발신\]|샵:/);
   assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
 });
 
-test("booking confirmation SMS omits inquiry contact when empty", () => {
+test("booking confirmation SMS omits optional location and link when empty", () => {
   const message = buildBookingConfirmationCustomerSms({
     shopName: "타임네일",
     serviceName: "젤네일",
     dateTime: "6월 24일 11:20",
-    bookingContact: "  ",
+    locationText: "  ",
+    manageUrl: "  ",
   });
 
-  assert.doesNotMatch(message, /문의/);
-  assert.doesNotMatch(message, /\[TimeOpen\]/);
-  assert.doesNotMatch(message, /TimeOpen/);
-  assert.doesNotMatch(message, /샵:/);
+  assert.equal(
+    message,
+    [
+      "타임네일 예약이 확정되었어요.",
+      "6월 24일 11:20 / 젤네일",
+    ].join("\n")
+  );
+  assert.doesNotMatch(message, /위치:/);
+  assert.doesNotMatch(message, /확인·취소:/);
 });
 
 test("booking confirmation SMS uses a natural fallback when shop name is missing", () => {
@@ -82,17 +81,13 @@ test("booking confirmation SMS uses a natural fallback when shop name is missing
     message,
     [
       "예약이 확정되었어요.",
-      "",
-      "서비스: 젤네일",
-      "일시: 6월 24일 11:20",
+      "6월 24일 11:20 / 젤네일",
     ].join("\n")
   );
-  assert.doesNotMatch(message, /undefined/);
-  assert.doesNotMatch(message, /null/);
-  assert.doesNotMatch(message, /샵:/);
+  assert.doesNotMatch(message, /undefined|null|샵:/);
 });
 
-test("booking request SMS uses request copy", () => {
+test("booking request SMS uses the compact customer format", () => {
   const manageUrl = "https://timeopen.app/r/token123";
   const message = buildBookingRequestCustomerSms({
     shopName: "타임네일",
@@ -107,80 +102,82 @@ test("booking request SMS uses request copy", () => {
     message,
     [
       "타임네일 예약 요청이 접수되었어요.",
-      "",
-      "서비스: 젤네일",
-      "일시: 6월 24일 11:20",
+      "6월 24일 11:20 / 젤네일",
       "위치: 서울시 마포구 2층",
-      "문의: 인스타 DM @time_nail",
-      "",
-      "예약 확인/취소",
-      "https://timeopen.app/r/token123",
+      "확인·취소: https://timeopen.app/r/token123",
       "",
       "샵에서 확인 후 예약 확정 안내를 보내드릴게요.",
     ].join("\n")
   );
-  assertStandaloneManageUrl(message, manageUrl);
-  assert.doesNotMatch(message, /\[TimeOpen\]/);
-  assert.doesNotMatch(message, /TimeOpen/);
-  assert.doesNotMatch(message, /샵:/);
-  assert.equal(message.startsWith("타임네일 예약 요청이 접수되었어요."), true);
-  assert.doesNotMatch(message, /\[Web발신\]/);
+  assertManageUrlLine(message, manageUrl);
+  assert.doesNotMatch(message, /문의:/);
+  assert.doesNotMatch(message, /안내:/);
+  assert.doesNotMatch(message, /예약 전 안내|예약금|10분 전 도착/);
+  assert.doesNotMatch(message, /\[TimeOpen\]|TimeOpen|\[Web발신\]|샵:/);
   assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
-  assert.doesNotMatch(message, /예약금/);
-  assert.doesNotMatch(message, /10분 전 도착/);
 });
 
-test("customer manage URL is never rendered on the same line as Korean text", () => {
+test("booking request SMS omits optional location and link when empty", () => {
+  const message = buildBookingRequestCustomerSms({
+    shopName: "타임네일",
+    serviceName: "젤네일",
+    dateTime: "6월 24일 11:20",
+    locationText: "  ",
+    manageUrl: "  ",
+  });
+
+  assert.equal(
+    message,
+    [
+      "타임네일 예약 요청이 접수되었어요.",
+      "6월 24일 11:20 / 젤네일",
+      "",
+      "샵에서 확인 후 예약 확정 안내를 보내드릴게요.",
+    ].join("\n")
+  );
+  assert.doesNotMatch(message, /위치:/);
+  assert.doesNotMatch(message, /확인·취소:/);
+});
+
+test("booking changed SMS uses the compact customer format", () => {
   const manageUrl = "https://timeopen.app/r/token123";
-  const confirmation = buildBookingConfirmationCustomerSms({
-    shopName: "타임네일",
-    serviceName: "젤네일",
-    dateTime: "6월 24일 11:20",
-    manageUrl,
-  });
-  const request = buildBookingRequestCustomerSms({
+  const message = buildBookingChangedCustomerSms({
     shopName: "타임네일",
     serviceName: "젤네일",
     dateTime: "6월 24일 11:20",
     manageUrl,
   });
 
-  assertStandaloneManageUrl(confirmation, manageUrl);
-  assertStandaloneManageUrl(request, manageUrl);
-  assert.doesNotMatch(confirmation, new RegExp(`예약 확인/취소: ${manageUrl}`));
-  assert.doesNotMatch(request, new RegExp(`예약 확인/취소: ${manageUrl}`));
+  assert.equal(
+    message,
+    [
+      "타임네일 예약 정보가 변경되었어요.",
+      "6월 24일 11:20 / 젤네일",
+      "확인·취소: https://timeopen.app/r/token123",
+    ].join("\n")
+  );
+  assertManageUrlLine(message, manageUrl);
+  assert.doesNotMatch(message, /위치:|문의:|안내:|예약 전 안내|예약금/);
 });
 
-test("booking SMS policy keeps booking notice out of customer SMS", () => {
-  const confirmation = buildBookingConfirmationCustomerSms({
+test("booking changed SMS omits manage link when empty", () => {
+  const message = buildBookingChangedCustomerSms({
     shopName: "타임네일",
     serviceName: "젤네일",
     dateTime: "6월 24일 11:20",
-    locationText: "서울시 마포구 2층",
-    noticeText: "10분 전 도착 부탁드립니다.",
-    bookingContact: "010-1234-5678",
-  });
-  const request = buildBookingRequestCustomerSms({
-    shopName: "타임네일",
-    serviceName: "젤네일",
-    dateTime: "6월 24일 11:20",
-    locationText: "서울시 마포구 2층",
-    bookingContact: "010-1234-5678",
   });
 
-  assert.match(confirmation, /위치: 서울시 마포구 2층/);
-  assert.match(confirmation, /안내: 10분 전 도착 부탁드립니다\./);
-  assert.match(confirmation, /문의: 010-1234-5678/);
-  assert.doesNotMatch(confirmation, /예약 전 안내/);
-  assert.doesNotMatch(confirmation, /예약금/);
-
-  assert.match(request, /위치: 서울시 마포구 2층/);
-  assert.match(request, /문의: 010-1234-5678/);
-  assert.doesNotMatch(request, /안내:/);
-  assert.doesNotMatch(request, /예약금/);
+  assert.equal(
+    message,
+    [
+      "타임네일 예약 정보가 변경되었어요.",
+      "6월 24일 11:20 / 젤네일",
+    ].join("\n")
+  );
+  assert.doesNotMatch(message, /확인·취소:/);
 });
 
-test("booking cancelled SMS uses shop-first customer copy", () => {
+test("booking cancelled SMS uses compact copy and includes inquiry contact only when set", () => {
   const message = buildBookingCancelledCustomerSms({
     shopName: "타임네일",
     serviceName: "젤네일",
@@ -192,16 +189,31 @@ test("booking cancelled SMS uses shop-first customer copy", () => {
     message,
     [
       "타임네일 예약이 취소되었어요.",
-      "",
-      "서비스: 젤네일",
-      "일시: 6월 24일 11:20",
+      "6월 24일 11:20 / 젤네일",
       "문의: 010-1234-5678",
     ].join("\n")
   );
-  assert.doesNotMatch(message, /\[TimeOpen\]/);
-  assert.doesNotMatch(message, /TimeOpen/);
-  assert.doesNotMatch(message, /샵:/);
+  assert.doesNotMatch(message, /위치:|확인·취소:|안내:|예약 전 안내|예약금/);
+  assert.doesNotMatch(message, /\[TimeOpen\]|TimeOpen|\[Web발신\]|샵:/);
   assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
+});
+
+test("booking cancelled SMS omits inquiry contact when empty", () => {
+  const message = buildBookingCancelledCustomerSms({
+    shopName: "타임네일",
+    serviceName: "젤네일",
+    dateTime: "6월 24일 11:20",
+    bookingContact: "  ",
+  });
+
+  assert.equal(
+    message,
+    [
+      "타임네일 예약이 취소되었어요.",
+      "6월 24일 11:20 / 젤네일",
+    ].join("\n")
+  );
+  assert.doesNotMatch(message, /문의:/);
 });
 
 test("owner new reservation SMS is short and includes customer contact", () => {
