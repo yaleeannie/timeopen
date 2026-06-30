@@ -4,6 +4,9 @@ import {
   buildBookingCancelledCustomerSms,
   buildBookingConfirmationCustomerSms,
   buildBookingRequestCustomerSms,
+  buildOwnerCancellationSms,
+  buildOwnerNewReservationSms,
+  buildOwnerReservationRequestSms,
 } from "./bookingNotificationSms";
 
 test("booking confirmation SMS includes booking inquiry contact when set", () => {
@@ -157,5 +160,76 @@ test("booking cancelled SMS uses shop-first customer copy", () => {
   assert.doesNotMatch(message, /\[TimeOpen\]/);
   assert.doesNotMatch(message, /TimeOpen/);
   assert.doesNotMatch(message, /샵:/);
+  assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
+});
+
+test("owner new reservation SMS is short and includes customer contact", () => {
+  const message = buildOwnerNewReservationSms({
+    customerName: "김고객",
+    serviceName: "젤네일",
+    dateTime: "6월 24일 11:20",
+    customerPhone: "010-1111-2222",
+  });
+
+  assert.equal(
+    message,
+    [
+      "새 예약이 들어왔어요.",
+      "",
+      "고객: 김고객",
+      "서비스: 젤네일",
+      "일시: 6월 24일 11:20",
+      "연락처: 010-1111-2222",
+    ].join("\n")
+  );
+  assert.doesNotMatch(message, /\[TimeOpen\]|TimeOpen|예약금|위치:|안내:/);
+  assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
+});
+
+test("owner requested reservation SMS asks owner to confirm in reservation management", () => {
+  const message = buildOwnerReservationRequestSms({
+    customerName: "김고객",
+    serviceName: "속눈썹펌",
+    dateTime: "6월 24일 11:20",
+    customerPhone: "010-1111-2222",
+  });
+
+  assert.equal(
+    message,
+    [
+      "확인 대기 예약이 들어왔어요.",
+      "",
+      "고객: 김고객",
+      "서비스: 속눈썹펌",
+      "일시: 6월 24일 11:20",
+      "연락처: 010-1111-2222",
+      "",
+      "예약관리에서 확정해주세요.",
+    ].join("\n")
+  );
+  assert.doesNotMatch(message, /\[TimeOpen\]|TimeOpen|예약금|위치:|안내:/);
+  assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
+});
+
+test("owner cancellation SMS includes customer contact", () => {
+  const message = buildOwnerCancellationSms({
+    customerName: "김고객",
+    serviceName: "케어",
+    dateTime: "6월 24일 11:20",
+    customerPhone: "010-1111-2222",
+  });
+
+  assert.equal(
+    message,
+    [
+      "고객이 예약을 취소했어요.",
+      "",
+      "고객: 김고객",
+      "서비스: 케어",
+      "일시: 6월 24일 11:20",
+      "연락처: 010-1111-2222",
+    ].join("\n")
+  );
+  assert.doesNotMatch(message, /\[TimeOpen\]|TimeOpen|예약금|위치:|안내:/);
   assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
 });

@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { buildBookingCancelledCustomerSms } from "@/features/booking/bookingNotificationSms";
+import {
+  buildBookingCancelledCustomerSms,
+  buildOwnerCancellationSms,
+} from "@/features/booking/bookingNotificationSms";
 import {
   formatReservationDateCompactKorean,
   formatReservationTimeDisplay,
@@ -63,7 +66,10 @@ export async function POST(req: Request) {
   const shopName = clean(reservation.organization_name);
   const serviceName = clean(reservation.service_name) || "예약";
   const bookingContact = clean(reservation.booking_contact);
+  const customerName = clean(reservation.customer_name);
   const customerPhone = clean(reservation.customer_phone);
+  const ownerSmsEnabled = reservation.owner_sms_notifications_enabled === true;
+  const ownerPhone = ownerSmsEnabled ? clean(reservation.owner_notification_phone) : "";
   const date =
     formatReservationDateCompactKorean(reservation.reservation_date) ||
     clean(reservation.reservation_date);
@@ -71,34 +77,59 @@ export async function POST(req: Request) {
     formatReservationTimeDisplay(reservation.start_time) ||
     clean(reservation.start_time);
 
-  if (!customerPhone) {
-    return NextResponse.json({
-      ok: true,
-      smsStatus: "skipped",
-      message: "예약이 취소되었어요.",
+  const dateTime = `${date} ${time}`.trim();
+  let customerSmsStatus: "success" | "failed" | "skipped" = "skipped";
+  let ownerSmsStatus: "success" | "failed" | "skipped" = "skipped";
+
+  if (customerPhone) {
+    const smsText = buildBookingCancelledCustomerSms({
+      shopName,
+      serviceName,
+      dateTime,
+      bookingContact,
     });
+
+    try {
+      await sendSms(customerPhone, smsText, { subject: shopName });
+      customerSmsStatus = "success";
+    } catch (smsError) {
+      console.error("[public-cancel] customer sms failed", smsError);
+      customerSmsStatus = "failed";
+    }
   }
 
-  const smsText = buildBookingCancelledCustomerSms({
-    shopName,
-    serviceName,
-    dateTime: `${date} ${time}`.trim(),
-    bookingContact,
-  });
-
-  try {
-    await sendSms(customerPhone, smsText, { subject: shopName });
-    return NextResponse.json({
-      ok: true,
-      smsStatus: "success",
-      message: "예약이 취소되었어요.",
+  if (ownerPhone) {
+    const ownerSmsText = buildOwnerCancellationSms({
+      customerName,
+      serviceName,
+      dateTime,
+      customerPhone,
     });
-  } catch (smsError) {
-    console.error("[public-cancel] sms failed", smsError);
+
+    try {
+      await sendSms(ownerPhone, ownerSmsText, { subject: shopName });
+      ownerSmsStatus = "success";
+    } catch (smsError) {
+      console.error("[public-cancel] owner sms failed", smsError);
+      ownerSmsStatus = "failed";
+    }
+  } else if (ownerSmsEnabled) {
+    console.warn("[public-cancel] owner sms skipped: owner notification phone is empty");
+  }
+
+  if (customerSmsStatus === "failed") {
     return NextResponse.json({
       ok: true,
-      smsStatus: "failed",
+      smsStatus: customerSmsStatus,
+      ownerSmsStatus,
       message: "예약은 취소됐지만 문자 발송에 실패했어요.",
     });
   }
+
+  return NextResponse.json({
+    ok: true,
+    smsStatus: customerSmsStatus,
+    ownerSmsStatus,
+    message: "예약이 취소되었어요.",
+  });
 }

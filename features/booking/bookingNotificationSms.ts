@@ -101,3 +101,53 @@ export function buildBookingCancelledCustomerSms(params: {
 
   return lines.join("\n");
 }
+
+export function buildOwnerNewReservationSms(params: {
+  customerName: string;
+  serviceName: string;
+  dateTime: string;
+  customerPhone: string;
+}) {
+  return [
+    "새 예약이 들어왔어요.",
+    "",
+    `고객: ${params.customerName || "-"}`,
+    `서비스: ${params.serviceName || "예약"}`,
+    `일시: ${params.dateTime}`,
+    `연락처: ${params.customerPhone || "-"}`,
+  ].join("\n");
+}
+
+export function buildOwnerReservationRequestSms(params: {
+  customerName: string;
+  serviceName: string;
+  dateTime: string;
+  customerPhone: string;
+}) {
+  return [
+    "확인 대기 예약이 들어왔어요.",
+    "",
+    `고객: ${params.customerName || "-"}`,
+    `서비스: ${params.serviceName || "예약"}`,
+    `일시: ${params.dateTime}`,
+    `연락처: ${params.customerPhone || "-"}`,
+    "",
+    "예약관리에서 확정해주세요.",
+  ].join("\n");
+}
+
+export function buildOwnerCancellationSms(params: {
+  customerName: string;
+  serviceName: string;
+  dateTime: string;
+  customerPhone: string;
+}) {
+  return [
+    "고객이 예약을 취소했어요.",
+    "",
+    `고객: ${params.customerName || "-"}`,
+    `서비스: ${params.serviceName || "예약"}`,
+    `일시: ${params.dateTime}`,
+    `연락처: ${params.customerPhone || "-"}`,
+  ].join("\n");
+}

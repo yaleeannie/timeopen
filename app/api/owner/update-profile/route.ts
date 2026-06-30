@@ -31,6 +31,14 @@ export async function POST(req: Request) {
   const booking_notice =
     typeof body?.booking_notice === "string" ? body.booking_notice.trim() : "";
 
+  const owner_sms_notifications_enabled =
+    body?.owner_sms_notifications_enabled === true;
+
+  const owner_notification_phone =
+    typeof body?.owner_notification_phone === "string"
+      ? body.owner_notification_phone.trim()
+      : "";
+
   const locationValidation = validateOptionalText(
     location_text,
     FIELD_LIMITS.noticeMax,
@@ -73,6 +81,25 @@ export async function POST(req: Request) {
     );
   }
 
+  const ownerNotificationPhoneValidation = validateOptionalText(
+    owner_notification_phone,
+    FIELD_LIMITS.bookingContactMax,
+    "알림 받을 연락처"
+  );
+  if (!ownerNotificationPhoneValidation.ok) {
+    return NextResponse.json(
+      { error: ownerNotificationPhoneValidation.error },
+      { status: 400 }
+    );
+  }
+
+  if (owner_sms_notifications_enabled && !owner_notification_phone) {
+    return NextResponse.json(
+      { error: "문자 알림을 받으려면 알림 받을 연락처를 입력해주세요." },
+      { status: 400 }
+    );
+  }
+
   if (!organizationId) {
     return NextResponse.json({ error: "organizationId가 필요합니다." }, { status: 400 });
   }
@@ -97,6 +124,8 @@ export async function POST(req: Request) {
       notice_text: notice_text || null,
       booking_contact: booking_contact || null,
       booking_notice: booking_notice || null,
+      owner_sms_notifications_enabled,
+      owner_notification_phone: owner_notification_phone || null,
     })
     .eq("id", organizationId);
 

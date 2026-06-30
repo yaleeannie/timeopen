@@ -21,6 +21,8 @@ type Props = {
   initialNotice: string;
   initialBookingContact: string;
   initialBookingNotice: string;
+  initialOwnerSmsNotificationsEnabled: boolean;
+  initialOwnerNotificationPhone: string;
   initialName?: string;
   initialHandle?: string;
   initialHandleChangedAt?: string;
@@ -60,6 +62,8 @@ export default function ProfileEditor({
   initialNotice,
   initialBookingContact,
   initialBookingNotice,
+  initialOwnerSmsNotificationsEnabled,
+  initialOwnerNotificationPhone,
   initialName = "",
   initialHandle = "",
   initialHandleChangedAt = "",
@@ -100,6 +104,10 @@ export default function ProfileEditor({
   const [noticeText, setNoticeText] = useState(initialNotice ?? "");
   const [bookingContact, setBookingContact] = useState(initialBookingContact ?? "");
   const [bookingNotice, setBookingNotice] = useState(initialBookingNotice ?? "");
+  const [ownerSmsNotificationsEnabled, setOwnerSmsNotificationsEnabled] =
+    useState(initialOwnerSmsNotificationsEnabled);
+  const [ownerNotificationPhone, setOwnerNotificationPhone] =
+    useState(initialOwnerNotificationPhone ?? "");
   const [linkTheme, setLinkTheme] = useState<LinkTheme>(initialTheme);
   const [bookingEnabled, setBookingEnabled] = useState(initialBookingEnabled);
   const [bookingConfirmationMode, setBookingConfirmationMode] =
@@ -133,6 +141,14 @@ export default function ProfileEditor({
   useEffect(() => {
     setBookingNotice(initialBookingNotice ?? "");
   }, [initialBookingNotice]);
+
+  useEffect(() => {
+    setOwnerSmsNotificationsEnabled(initialOwnerSmsNotificationsEnabled);
+  }, [initialOwnerSmsNotificationsEnabled]);
+
+  useEffect(() => {
+    setOwnerNotificationPhone(initialOwnerNotificationPhone ?? "");
+  }, [initialOwnerNotificationPhone]);
 
   useEffect(() => {
     setLinkTheme(initialTheme);
@@ -305,6 +321,8 @@ export default function ProfileEditor({
           notice_text: noticeText,
           booking_contact: bookingContact,
           booking_notice: bookingNotice,
+          owner_sms_notifications_enabled: ownerSmsNotificationsEnabled,
+          owner_notification_phone: ownerNotificationPhone,
         }),
       });
 
@@ -746,6 +764,36 @@ export default function ProfileEditor({
       </div>
       <div className="-mt-1 mb-4 text-right text-xs font-bold text-gray-400">
         {bookingNotice.length}/{FIELD_LIMITS.noticeMax}
+      </div>
+
+      <div className="mb-1.5 text-sm font-bold text-gray-700">사장님 알림</div>
+      <label className="mb-3 flex items-start gap-3 rounded-2xl border border-white/80 bg-white/55 px-3 py-3">
+        <input
+          type="checkbox"
+          checked={ownerSmsNotificationsEnabled}
+          onChange={(event) => setOwnerSmsNotificationsEnabled(event.target.checked)}
+          className="mt-1 h-4 w-4 accent-[#00C1FF]"
+        />
+        <span>
+          <span className="block text-sm font-black text-slate-900">
+            문자 알림 받기
+          </span>
+          <span className="mt-1 block text-xs font-medium leading-5 text-gray-500">
+            새 예약, 확인 대기 예약, 고객 취소가 생기면 이 번호로 알려드려요.
+          </span>
+        </span>
+      </label>
+
+      <div className="mb-1.5 text-sm font-bold text-gray-700">알림 받을 연락처</div>
+      <input
+        value={ownerNotificationPhone}
+        onChange={(e) => setOwnerNotificationPhone(e.target.value)}
+        placeholder="예) 010-1234-5678"
+        maxLength={FIELD_LIMITS.bookingContactMax}
+        className="brand-input mb-2 min-h-11 w-full min-w-0 rounded-xl px-3 py-2.5 text-base"
+      />
+      <div className="mb-4 text-sm leading-5 text-gray-500">
+        문자 알림 받기를 꺼두면 연락처를 입력하지 않아도 돼요.
       </div>
 
       <button

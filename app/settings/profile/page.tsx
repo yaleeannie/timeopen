@@ -22,7 +22,7 @@ export default async function ProfilePage() {
 
   const { data: orgRow } = await supabase
     .from("organizations")
-    .select("name, handle, handle_changed_at, location_text, notice_text, booking_contact, booking_notice, link_theme, booking_enabled, booking_confirmation_mode, withdrawal_requested_at, disabled_at")
+    .select("name, handle, handle_changed_at, location_text, notice_text, booking_contact, booking_notice, owner_sms_notifications_enabled, owner_notification_phone, link_theme, booking_enabled, booking_confirmation_mode, withdrawal_requested_at, disabled_at")
     .eq("id", organizationId)
     .maybeSingle();
 
@@ -44,6 +44,10 @@ export default async function ProfilePage() {
             initialNotice={orgRow?.notice_text ?? ""}
             initialBookingContact={orgRow?.booking_contact ?? ""}
             initialBookingNotice={orgRow?.booking_notice ?? ""}
+            initialOwnerSmsNotificationsEnabled={
+              orgRow?.owner_sms_notifications_enabled === true
+            }
+            initialOwnerNotificationPhone={orgRow?.owner_notification_phone ?? ""}
             initialTheme={normalizeLinkTheme(orgRow?.link_theme)}
             initialBookingEnabled={orgRow?.booking_enabled !== false}
             initialBookingConfirmationMode={normalizeBookingConfirmationMode(

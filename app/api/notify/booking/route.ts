@@ -10,6 +10,8 @@ import {
   formatReservationTimeDisplay,
 } from "@/features/booking/reservationDisplay";
 import {
+  buildOwnerNewReservationSms,
+  buildOwnerReservationRequestSms,
   buildBookingConfirmationCustomerSms,
   buildBookingRequestCustomerSms,
 } from "@/features/booking/bookingNotificationSms";
@@ -194,7 +196,8 @@ export async function POST(req: Request) {
   const manageToken = clean(reservation.public_manage_token);
   const manageUrl = manageToken ? `${getSiteUrl()}/r/${manageToken}` : "";
   const serviceName = clean(reservation.service_name) || "예약";
-  const ownerPhone = process.env.OWNER_PHONE || "";
+  const ownerSmsEnabled = reservation.owner_sms_notifications_enabled === true;
+  const ownerPhone = ownerSmsEnabled ? clean(reservation.owner_notification_phone) : "";
   const date =
     formatReservationDateCompactKorean(reservation.reservation_date) ||
     clean(reservation.reservation_date);
@@ -204,23 +207,20 @@ export async function POST(req: Request) {
   const customerName = clean(reservation.customer_name);
   const customerPhone = clean(reservation.customer_phone);
 
-  const ownerLines = [
-    "[TimeOpen]",
-    "",
-    "새 예약",
-    "",
-    "서비스",
-    serviceName,
-    "",
-    "일시",
-    `${date} ${time}`,
-    "",
-    "고객",
-    customerName || "-",
-    customerPhone || "-",
-  ];
-
-  const ownerMsg = ownerLines.join("\n");
+  const ownerMsg =
+    reservationStatus === "requested"
+      ? buildOwnerReservationRequestSms({
+          customerName,
+          serviceName,
+          dateTime: `${date} ${time}`,
+          customerPhone,
+        })
+      : buildOwnerNewReservationSms({
+          customerName,
+          serviceName,
+          dateTime: `${date} ${time}`,
+          customerPhone,
+        });
   const guestMsg =
     reservationStatus === "requested"
       ? buildBookingRequestCustomerSms({
@@ -242,14 +242,15 @@ export async function POST(req: Request) {
         });
 
   console.log("[notify/booking] ownerPhone =", ownerPhone);
+  console.log("[notify/booking] ownerSmsEnabled =", ownerSmsEnabled);
   console.log("[notify/booking] customerPhone =", customerPhone);
   console.log("[notify/booking] serviceName =", serviceName);
 
-  // ✅ 판매자 문자 따로
+  // ✅ 사장님 문자 따로: 조직별 설정이 켜져 있고 전용 수신 번호가 있을 때만 전송
   if (ownerPhone) {
     try {
       console.log("[notify/booking] owner sms start");
-      const result = await sendSms(ownerPhone, ownerMsg);
+      const result = await sendSms(ownerPhone, ownerMsg, { subject: orgName });
       console.log("[notify/booking] owner sms done");
       await saveSmsLog({
         supabase,
@@ -284,7 +285,9 @@ export async function POST(req: Request) {
       toPhone: "",
       status: "skipped",
       messageLength: ownerMsg.length,
-      errorMessage: "OWNER_PHONE is empty",
+      errorMessage: ownerSmsEnabled
+        ? "owner notification phone is empty"
+        : "owner sms notifications disabled",
     });
   }
 
