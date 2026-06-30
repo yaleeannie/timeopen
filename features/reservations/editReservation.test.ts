@@ -69,10 +69,9 @@ test("reservation update SMS copy is Korean and transactional", () => {
   assert.equal(
     message,
     [
-      "타임네일 예약 정보가 변경되었어요.",
+      "타임네일 예약 변경",
       "",
-      "서비스: 젤네일",
-      "일시: 6월 24일 11:20",
+      "젤네일, 6월 24일 11:20",
     ].join("\n")
   );
   assert.doesNotMatch(message, /문의:/);
@@ -82,37 +81,44 @@ test("reservation update SMS copy is Korean and transactional", () => {
   assert.doesNotMatch(message, /\[TimeOpen\]/);
   assert.doesNotMatch(message, /TimeOpen/);
   assert.doesNotMatch(message, /샵:/);
-  assert.equal(message.startsWith("타임네일 예약 정보가 변경되었어요."), true);
+  assert.equal(message.startsWith("타임네일 예약 변경"), true);
   assert.doesNotMatch(message, /\[Web발신\]/);
   assert.doesNotMatch(message, /\d{1,2}:\d{2}:\d{2}/);
 });
 
-test("reservation update SMS includes booking inquiry contact when provided", () => {
+test("reservation update SMS includes standalone manage link when provided", () => {
   const message = buildReservationUpdatedSms({
     shopName: "타임네일",
     serviceName: "젤네일",
     dateTime: "6월 24일 11:20",
     bookingContact: "인스타 DM @time_nail",
+    manageUrl: "https://timeopen.app/r/k7Qp9xLm2A4z",
   });
 
   assert.equal(
     message,
     [
-      "타임네일 예약 정보가 변경되었어요.",
+      "타임네일 예약 변경",
       "",
-      "서비스: 젤네일",
-      "일시: 6월 24일 11:20",
-      "문의: 인스타 DM @time_nail",
+      "젤네일, 6월 24일 11:20",
+      "",
+      "확인·취소",
+      "https://timeopen.app/r/k7Qp9xLm2A4z",
     ].join("\n")
   );
+  const lines = message.split("\n");
+  const urlIndex = lines.indexOf("https://timeopen.app/r/k7Qp9xLm2A4z");
+  assert.equal(lines[urlIndex - 1], "확인·취소");
   assert.doesNotMatch(message, /\[TimeOpen\]/);
   assert.doesNotMatch(message, /TimeOpen/);
   assert.doesNotMatch(message, /샵:/);
-  assert.equal(message.startsWith("타임네일 예약 정보가 변경되었어요."), true);
+  assert.equal(message.startsWith("타임네일 예약 변경"), true);
   assert.doesNotMatch(message, /\[Web발신\]/);
   assert.doesNotMatch(message, /위치:/);
   assert.doesNotMatch(message, /안내:/);
   assert.doesNotMatch(message, /예약금/);
+  assert.doesNotMatch(message, /문의:/);
+  assert.doesNotMatch(message, /확인·취소:/);
 });
 
 test("reservation update SMS uses a natural fallback when shop name is missing", () => {
@@ -125,10 +131,9 @@ test("reservation update SMS uses a natural fallback when shop name is missing",
   assert.equal(
     message,
     [
-      "예약 정보가 변경되었어요.",
+      "예약 변경",
       "",
-      "서비스: 젤네일",
-      "일시: 6월 24일 11:20",
+      "젤네일, 6월 24일 11:20",
     ].join("\n")
   );
   assert.doesNotMatch(message, /undefined/);

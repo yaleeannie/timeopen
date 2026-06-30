@@ -10,6 +10,7 @@ import {
   formatReservationDateCompactKorean,
   formatReservationTimeDisplay,
 } from "@/features/booking/reservationDisplay";
+import { getSiteUrl } from "@/lib/siteUrl";
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -68,6 +69,7 @@ export async function POST(req: Request) {
       date,
       start_time,
       customer_phone,
+      public_manage_token,
       organizations (
         name,
         handle,
@@ -109,11 +111,14 @@ export async function POST(req: Request) {
     formatReservationTimeDisplay((reservation as any).start_time) ||
     clean((reservation as any).start_time);
   const customerPhone = clean((reservation as any).customer_phone);
+  const manageToken = clean((reservation as any).public_manage_token);
+  const manageUrl = manageToken ? `${getSiteUrl()}/r/${manageToken}` : "";
   const smsText = buildReservationUpdatedSms({
     shopName,
     serviceName,
     dateTime: `${date} ${time}`.trim(),
     bookingContact,
+    manageUrl,
   });
 
   if (!customerPhone) {

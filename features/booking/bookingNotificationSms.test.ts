@@ -24,7 +24,7 @@ function assertManageUrlLine(message: string, manageUrl: string) {
 }
 
 test("booking confirmation SMS uses the compact customer format", () => {
-  const manageUrl = "https://timeopen.app/r/token123";
+  const manageUrl = "https://timeopen.app/r/k7Qp9xLm2A4z";
   const message = buildBookingConfirmationCustomerSms({
     shopName: "타임네일",
     serviceName: "젤네일",
@@ -38,12 +38,13 @@ test("booking confirmation SMS uses the compact customer format", () => {
   assert.equal(
     message,
     [
-      "타임네일 예약이 확정되었어요.",
+      "타임네일 예약 확정",
+      "",
       "젤네일, 6월 24일 11:20",
       "서울시 마포구 2층",
       "",
       "확인·취소",
-      "https://timeopen.app/r/token123",
+      "https://timeopen.app/r/k7Qp9xLm2A4z",
     ].join("\n")
   );
   assertManageUrlLine(message, manageUrl);
@@ -68,7 +69,8 @@ test("booking confirmation SMS omits optional location and link when empty", () 
   assert.equal(
     message,
     [
-      "타임네일 예약이 확정되었어요.",
+      "타임네일 예약 확정",
+      "",
       "젤네일, 6월 24일 11:20",
     ].join("\n")
   );
@@ -86,7 +88,8 @@ test("booking confirmation SMS uses a natural fallback when shop name is missing
   assert.equal(
     message,
     [
-      "예약이 확정되었어요.",
+      "예약 확정",
+      "",
       "젤네일, 6월 24일 11:20",
     ].join("\n")
   );
@@ -94,7 +97,7 @@ test("booking confirmation SMS uses a natural fallback when shop name is missing
 });
 
 test("booking request SMS uses the compact customer format", () => {
-  const manageUrl = "https://timeopen.app/r/token123";
+  const manageUrl = "https://timeopen.app/r/k7Qp9xLm2A4z";
   const message = buildBookingRequestCustomerSms({
     shopName: "타임네일",
     serviceName: "젤네일",
@@ -107,14 +110,15 @@ test("booking request SMS uses the compact customer format", () => {
   assert.equal(
     message,
     [
-      "타임네일 예약 요청이 접수되었어요.",
+      "타임네일 예약 요청 접수",
+      "",
       "젤네일, 6월 24일 11:20",
       "서울시 마포구 2층",
       "",
       "확인·취소",
-      "https://timeopen.app/r/token123",
+      "https://timeopen.app/r/k7Qp9xLm2A4z",
       "",
-      "샵에서 확인 후 예약 확정 안내를 보내드릴게요.",
+      "샵에서 확인 후 확정 안내를 보내드릴게요.",
     ].join("\n")
   );
   assertManageUrlLine(message, manageUrl);
@@ -139,10 +143,11 @@ test("booking request SMS omits optional location and link when empty", () => {
   assert.equal(
     message,
     [
-      "타임네일 예약 요청이 접수되었어요.",
+      "타임네일 예약 요청 접수",
+      "",
       "젤네일, 6월 24일 11:20",
       "",
-      "샵에서 확인 후 예약 확정 안내를 보내드릴게요.",
+      "샵에서 확인 후 확정 안내를 보내드릴게요.",
     ].join("\n")
   );
   assert.doesNotMatch(message, /위치:/);
@@ -150,7 +155,7 @@ test("booking request SMS omits optional location and link when empty", () => {
 });
 
 test("booking changed SMS uses the compact customer format", () => {
-  const manageUrl = "https://timeopen.app/r/token123";
+  const manageUrl = "https://timeopen.app/r/k7Qp9xLm2A4z";
   const message = buildBookingChangedCustomerSms({
     shopName: "타임네일",
     serviceName: "젤네일",
@@ -161,11 +166,12 @@ test("booking changed SMS uses the compact customer format", () => {
   assert.equal(
     message,
     [
-      "타임네일 예약 정보가 변경되었어요.",
+      "타임네일 예약 변경",
+      "",
       "젤네일, 6월 24일 11:20",
       "",
       "확인·취소",
-      "https://timeopen.app/r/token123",
+      "https://timeopen.app/r/k7Qp9xLm2A4z",
     ].join("\n")
   );
   assertManageUrlLine(message, manageUrl);
@@ -184,7 +190,8 @@ test("booking changed SMS omits manage link when empty", () => {
   assert.equal(
     message,
     [
-      "타임네일 예약 정보가 변경되었어요.",
+      "타임네일 예약 변경",
+      "",
       "젤네일, 6월 24일 11:20",
     ].join("\n")
   );
@@ -202,7 +209,8 @@ test("booking cancelled SMS uses compact copy and includes inquiry contact only 
   assert.equal(
     message,
     [
-      "타임네일 예약이 취소되었어요.",
+      "타임네일 예약 취소",
+      "",
       "젤네일, 6월 24일 11:20",
       "문의: 010-1234-5678",
     ].join("\n")
@@ -223,7 +231,8 @@ test("booking cancelled SMS omits inquiry contact when empty", () => {
   assert.equal(
     message,
     [
-      "타임네일 예약이 취소되었어요.",
+      "타임네일 예약 취소",
+      "",
       "젤네일, 6월 24일 11:20",
     ].join("\n")
   );

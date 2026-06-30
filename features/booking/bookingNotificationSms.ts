@@ -30,7 +30,8 @@ export function buildBookingConfirmationCustomerSms(params: {
   const locationText = clean(params.locationText);
   const manageUrl = clean(params.manageUrl);
   const lines = [
-    buildShopHeadline(params.shopName, "예약이 확정되었어요."),
+    buildShopHeadline(params.shopName, "예약 확정"),
+    "",
     buildReservationSummaryLine(params.dateTime, params.serviceName),
   ];
 
@@ -54,7 +55,8 @@ export function buildBookingRequestCustomerSms(params: {
   const locationText = clean(params.locationText);
   const manageUrl = clean(params.manageUrl);
   const lines = [
-    buildShopHeadline(params.shopName, "예약 요청이 접수되었어요."),
+    buildShopHeadline(params.shopName, "예약 요청 접수"),
+    "",
     buildReservationSummaryLine(params.dateTime, params.serviceName),
   ];
 
@@ -64,7 +66,7 @@ export function buildBookingRequestCustomerSms(params: {
 
   appendManageUrl(lines, manageUrl);
 
-  lines.push("", "샵에서 확인 후 예약 확정 안내를 보내드릴게요.");
+  lines.push("", "샵에서 확인 후 확정 안내를 보내드릴게요.");
 
   return lines.join("\n");
 }
@@ -77,7 +79,8 @@ export function buildBookingChangedCustomerSms(params: {
 }) {
   const manageUrl = clean(params.manageUrl);
   const lines = [
-    buildShopHeadline(params.shopName, "예약 정보가 변경되었어요."),
+    buildShopHeadline(params.shopName, "예약 변경"),
+    "",
     buildReservationSummaryLine(params.dateTime, params.serviceName),
   ];
 
@@ -94,7 +97,8 @@ export function buildBookingCancelledCustomerSms(params: {
 }) {
   const bookingContact = clean(params.bookingContact);
   const lines = [
-    buildShopHeadline(params.shopName, "예약이 취소되었어요."),
+    buildShopHeadline(params.shopName, "예약 취소"),
+    "",
     buildReservationSummaryLine(params.dateTime, params.serviceName),
   ];
 

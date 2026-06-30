@@ -1,4 +1,5 @@
 import { validateCustomerName } from "@/features/validation/fieldLimits";
+import { buildBookingChangedCustomerSms } from "@/features/booking/bookingNotificationSms";
 
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -96,20 +97,14 @@ export function buildReservationUpdatedSms(params: {
   serviceName: string;
   dateTime: string;
   bookingContact?: string;
+  manageUrl?: string;
 }) {
-  const shopName = params.shopName?.trim();
-  const lines = [
-    shopName ? `${shopName} 예약 정보가 변경되었어요.` : "예약 정보가 변경되었어요.",
-    "",
-    `서비스: ${params.serviceName || "예약"}`,
-    `일시: ${params.dateTime}`,
-  ];
-
-  if (params.bookingContact?.trim()) {
-    lines.push(`문의: ${params.bookingContact.trim()}`);
-  }
-
-  return lines.join("\n");
+  return buildBookingChangedCustomerSms({
+    shopName: params.shopName,
+    serviceName: params.serviceName,
+    dateTime: params.dateTime,
+    manageUrl: params.manageUrl,
+  });
 }
 
 export function mutationDoesNotContainRestrictedReservationFields(
