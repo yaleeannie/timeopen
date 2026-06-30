@@ -10,6 +10,14 @@ const migrationSql = readFileSync(
   "utf8"
 );
 
+const pgcryptoHotfixSql = readFileSync(
+  new URL(
+    "../../supabase/migrations/20260630130000_enable_pgcrypto_for_reservation_manage_tokens.sql",
+    import.meta.url
+  ),
+  "utf8"
+);
+
 test("customer management token migration adds secure token columns", () => {
   assert.match(migrationSql, /public_manage_token text null/);
   assert.match(migrationSql, /public_manage_token_created_at timestamptz null/);
@@ -19,7 +27,8 @@ test("customer management token migration adds secure token columns", () => {
 
 test("new reservations receive an opaque non-id public management token", () => {
   assert.match(migrationSql, /public_manage_token,\s*public_manage_token_created_at/s);
-  assert.match(migrationSql, /encode\(gen_random_bytes\(32\), 'hex'\)/);
+  assert.match(pgcryptoHotfixSql, /create extension if not exists pgcrypto with schema extensions/);
+  assert.match(pgcryptoHotfixSql, /encode\(extensions\.gen_random_bytes\(32\), 'hex'\)/);
   assert.doesNotMatch(migrationSql, /public_manage_token,\s*id/s);
 });
 
