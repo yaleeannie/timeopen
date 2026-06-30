@@ -7,6 +7,13 @@ function buildShopHeadline(shopName: string | undefined, message: string) {
   return name ? `${name} ${message}` : message;
 }
 
+function appendStandaloneManageUrl(lines: string[], manageUrl: string) {
+  const url = clean(manageUrl);
+  if (!url) return;
+
+  lines.push("", "예약 확인/취소", url);
+}
+
 export function buildBookingConfirmationCustomerSms(params: {
   shopName: string;
   serviceName: string;
@@ -39,9 +46,7 @@ export function buildBookingConfirmationCustomerSms(params: {
     lines.push(`문의: ${bookingContact}`);
   }
 
-  if (manageUrl) {
-    lines.push(`예약 확인/취소: ${manageUrl}`);
-  }
+  appendStandaloneManageUrl(lines, manageUrl);
 
   return lines.join("\n");
 }
@@ -72,9 +77,7 @@ export function buildBookingRequestCustomerSms(params: {
     lines.push(`문의: ${bookingContact}`);
   }
 
-  if (manageUrl) {
-    lines.push(`예약 확인/취소: ${manageUrl}`);
-  }
+  appendStandaloneManageUrl(lines, manageUrl);
 
   lines.push("", "샵에서 확인 후 예약 확정 안내를 보내드릴게요.");
 
