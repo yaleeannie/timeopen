@@ -2,6 +2,17 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+const SUPPORTED_OTP_TYPES = [
+  "signup",
+  "magiclink",
+  "recovery",
+  "invite",
+  "email_change",
+  "email",
+] as const;
+
+type SupportedOtpType = (typeof SUPPORTED_OTP_TYPES)[number];
+
 function safeNext(next: string | null) {
   // 오픈 리다이렉트 방지: 내부 경로만 허용
   if (!next) return "/owner";
@@ -9,29 +20,71 @@ function safeNext(next: string | null) {
   return next;
 }
 
+function normalizeOtpType(type: string | null): SupportedOtpType | null {
+  if (!type) return null;
+  return (SUPPORTED_OTP_TYPES as readonly string[]).includes(type)
+    ? (type as SupportedOtpType)
+    : null;
+}
+
+function shouldRedirectToOnboarding(flow: string | null, otpType: SupportedOtpType | null) {
+  return flow === "signup" || otpType === "signup" || otpType === "email";
+}
+
+function buildFailureRedirect(
+  origin: string,
+  next: string,
+  flow: string | null,
+  otpType: SupportedOtpType | null
+) {
+  const isSignupConfirmation = shouldRedirectToOnboarding(flow, otpType);
+  const failureUrl = new URL(isSignupConfirmation ? "/login" : next, origin);
+
+  if (isSignupConfirmation || failureUrl.pathname === "/login") {
+    failureUrl.searchParams.set("message", "email_confirm_failed");
+  } else {
+    failureUrl.searchParams.set("auth", "fail");
+    failureUrl.searchParams.set("reason", "auth_callback_failed");
+  }
+
+  return failureUrl;
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
 
   const code = url.searchParams.get("code");
+  const tokenHash = url.searchParams.get("token_hash");
+  const otpType = normalizeOtpType(url.searchParams.get("type"));
   const flow = url.searchParams.get("flow");
   const requestedNext = safeNext(url.searchParams.get("next"));
-  const next = flow === "signup" ? "/onboarding" : requestedNext;
+  const next = shouldRedirectToOnboarding(flow, otpType) ? "/onboarding" : requestedNext;
 
-  // 인증 코드가 없으면 기존 목적지에 실패 정보를 전달합니다.
-  if (!code) {
-    const failureUrl = new URL(flow === "signup" ? "/login" : next, url.origin);
-    failureUrl.searchParams.set("auth", "fail");
-    failureUrl.searchParams.set("reason", "missing_code");
+  if (!code && (!tokenHash || !otpType)) {
+    console.error("[auth callback] missing code or token_hash", {
+      flow,
+      type: url.searchParams.get("type"),
+    });
+    const failureUrl = buildFailureRedirect(url.origin, next, flow, otpType);
     return NextResponse.redirect(failureUrl);
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { error } = code
+    ? await supabase.auth.exchangeCodeForSession(code)
+    : await supabase.auth.verifyOtp({
+        token_hash: tokenHash!,
+        type: otpType!,
+      });
 
   if (error) {
-    const failureUrl = new URL(flow === "signup" ? "/login" : next, url.origin);
-    failureUrl.searchParams.set("auth", "fail");
-    failureUrl.searchParams.set("reason", error.message);
+    console.error("[auth callback] session exchange failed", {
+      flow,
+      type: otpType,
+      message: error.message,
+      status: error.status,
+    });
+    const failureUrl = buildFailureRedirect(url.origin, next, flow, otpType);
     return NextResponse.redirect(failureUrl);
   }
 

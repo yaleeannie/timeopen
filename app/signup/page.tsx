@@ -4,6 +4,7 @@ import { useState } from "react";
 import AuthShell from "@/components/AuthShell";
 import { validateEmail } from "@/features/auth/email";
 import { buildOwnerLegalConsentMetadata } from "@/features/legal/consent";
+import { getSiteUrl } from "@/lib/siteUrl";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
@@ -51,7 +52,9 @@ export default function SignupPage() {
 
   try {
     const supabase = createSupabaseBrowserClient();
-    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    const configuredSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
+    const callbackOrigin = configuredSiteUrl ? getSiteUrl() : window.location.origin;
+    const callbackUrl = new URL("/auth/callback", callbackOrigin);
     callbackUrl.searchParams.set("next", "/onboarding");
     callbackUrl.searchParams.set("flow", "signup");
     const consentMetadata = buildOwnerLegalConsentMetadata({

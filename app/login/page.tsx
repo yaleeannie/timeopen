@@ -15,6 +15,8 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("withdrawal") === "requested") {
       setMsg("탈퇴 요청이 접수되었어요.");
+    } else if (params.get("message") === "email_confirm_failed") {
+      setMsg("이메일 인증 링크를 처리하지 못했어요. 다시 로그인해 주세요.");
     }
   }, []);
 
