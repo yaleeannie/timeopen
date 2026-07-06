@@ -41,8 +41,8 @@ test("reset-password page validates session and shows safe invalid-link copy", (
 });
 
 test("reset-password page validates password and confirmation", () => {
-  assert.match(resetPasswordPage, /password\.length < 6/);
-  assert.match(resetPasswordPage, /비밀번호를 6자 이상으로 입력해주세요\./);
+  assert.match(resetPasswordPage, /password\.length < 8/);
+  assert.match(resetPasswordPage, /비밀번호를 8자 이상으로 입력해주세요\./);
   assert.match(resetPasswordPage, /password !== passwordConfirm/);
   assert.match(resetPasswordPage, /비밀번호가 서로 다릅니다\./);
 });

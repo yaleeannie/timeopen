@@ -48,8 +48,8 @@ export default function ResetPasswordPage() {
   async function onUpdatePassword() {
     if (loading) return;
 
-    if (!password || password.length < 6) {
-      setMessage("비밀번호를 6자 이상으로 입력해주세요.");
+    if (!password || password.length < 8) {
+      setMessage("비밀번호를 8자 이상으로 입력해주세요.");
       return;
     }
 
@@ -132,7 +132,7 @@ export default function ResetPasswordPage() {
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="새 비밀번호 (6자 이상)"
+            placeholder="새 비밀번호 (8자 이상)"
             type="password"
             autoComplete="new-password"
             className="brand-input mb-4 min-h-12 w-full min-w-0 rounded-2xl px-4 py-3 text-base"
