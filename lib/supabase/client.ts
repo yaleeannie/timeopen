@@ -9,7 +9,11 @@ export function createSupabaseBrowserClient() {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
   }
 
-  return createBrowserClient(url, anon);
+  return createBrowserClient(url, anon, {
+    auth: {
+      flowType: "pkce",
+    },
+  });
 }
 
 /**

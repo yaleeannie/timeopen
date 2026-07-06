@@ -16,7 +16,7 @@ export default function LoginPage() {
     if (params.get("withdrawal") === "requested") {
       setMsg("탈퇴 요청이 접수되었어요.");
     } else if (params.get("message") === "email_confirm_failed") {
-      setMsg("이메일 인증 링크를 처리하지 못했어요. 다시 로그인해 주세요.");
+      setMsg("이메일 인증 링크가 만료되었거나 이미 사용되었을 수 있어요. 새 인증 메일을 다시 받아주세요.");
     }
   }, []);
 
@@ -114,7 +114,12 @@ export default function LoginPage() {
                   : "border-red-100 bg-red-50 text-red-700"
               }`}
             >
-              {msg}
+              <div>{msg}</div>
+              {msg.includes("새 인증 메일") ? (
+                <a href="/signup" className="mt-2 inline-flex text-red-800 underline underline-offset-4">
+                  회원가입 다시 시도하기
+                </a>
+              ) : null}
             </div>
           ) : null}
 

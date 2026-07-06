@@ -7,6 +7,23 @@ import { buildOwnerLegalConsentMetadata } from "@/features/legal/consent";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
+function getSignupCallbackOrigin() {
+  const configuredSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
+
+  if (configuredSiteUrl) {
+    return getSiteUrl();
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname)
+  ) {
+    return window.location.origin;
+  }
+
+  return getSiteUrl();
+}
+
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -52,8 +69,7 @@ export default function SignupPage() {
 
   try {
     const supabase = createSupabaseBrowserClient();
-    const configuredSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
-    const callbackOrigin = configuredSiteUrl ? getSiteUrl() : window.location.origin;
+    const callbackOrigin = getSignupCallbackOrigin();
     const callbackUrl = new URL("/auth/callback", callbackOrigin);
     callbackUrl.searchParams.set("next", "/onboarding");
     callbackUrl.searchParams.set("flow", "signup");
