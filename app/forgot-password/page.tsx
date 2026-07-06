@@ -3,7 +3,25 @@
 import { useState } from "react";
 import AuthShell from "@/components/AuthShell";
 import { validateEmail } from "@/features/auth/email";
+import { getSiteUrl } from "@/lib/siteUrl";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+
+function getPasswordResetCallbackOrigin() {
+  const configuredSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
+
+  if (configuredSiteUrl) {
+    return getSiteUrl();
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname)
+  ) {
+    return window.location.origin;
+  }
+
+  return getSiteUrl();
+}
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -24,11 +42,12 @@ export default function ForgotPasswordPage() {
     try {
       const supabase = createSupabaseBrowserClient();
 
-      // ✅ reset 링크가 열릴 페이지
-      const redirectTo = `${window.location.origin}/auth/callback?next=/auth/reset`;
+      const callbackUrl = new URL("/auth/callback", getPasswordResetCallbackOrigin());
+      callbackUrl.searchParams.set("next", "/reset-password");
+      callbackUrl.searchParams.set("flow", "recovery");
 
       const { error } = await supabase.auth.resetPasswordForEmail(emailValidation.value, {
-        redirectTo,
+        redirectTo: callbackUrl.toString(),
       });
 
       if (error) {
