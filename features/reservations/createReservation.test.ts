@@ -120,10 +120,25 @@ test("owner reservation success toast auto-dismisses and cleans up its timer", (
   assert.match(reservationsClientSource, /fixed left-1\/2 top-1\/2 z-\[100\]/);
   assert.match(reservationsClientSource, /-translate-x-1\/2 -translate-y-1\/2/);
   assert.match(reservationsClientSource, /max-w-\[calc\(100vw-32px\)\]/);
+  assert.match(reservationsClientSource, /flex-col items-center justify-center/);
   assert.doesNotMatch(
     manualReservationCreatorSource,
     /mb-3 rounded-2xl bg-\[#e8fbff\]/
   );
+});
+
+test("owner reservation toast formats long SMS messages as explicit lines", () => {
+  assert.match(reservationsClientSource, /function getReservationToastLines/);
+  assert.match(
+    reservationsClientSource,
+    /return \["예약이 추가됐고", "고객에게 안내 문자를 보냈어요\."\]/
+  );
+  assert.match(
+    reservationsClientSource,
+    /return \["예약은 추가됐지만", "문자 발송에 실패했어요\."\]/
+  );
+  assert.match(reservationsClientSource, /getReservationToastLines\(toast\.message\)\.map/);
+  assert.match(reservationsClientSource, /className="block"/);
 });
 
 test("owner reservation creation modal uses a light solid TimeOpen style", () => {

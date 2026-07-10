@@ -82,6 +82,18 @@ function getTodayISO() {
   }).format(new Date());
 }
 
+function getReservationToastLines(message: string) {
+  if (message === "예약이 추가됐고 고객에게 안내 문자를 보냈어요.") {
+    return ["예약이 추가됐고", "고객에게 안내 문자를 보냈어요."];
+  }
+
+  if (message === "예약은 추가됐지만 문자 발송에 실패했어요.") {
+    return ["예약은 추가됐지만", "문자 발송에 실패했어요."];
+  }
+
+  return [message];
+}
+
 function ManualReservationCreator({ services }: { services: ReservationServiceOption[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -232,7 +244,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
         <div
           role="status"
           aria-live="polite"
-          className={`fixed left-1/2 top-1/2 z-[100] flex w-fit max-w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 scale-100 items-center justify-center gap-2 rounded-2xl border bg-white px-5 py-4 text-center text-sm font-black opacity-100 shadow-lg transition-all duration-200 ${
+          className={`fixed left-1/2 top-1/2 z-[100] flex w-fit max-w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 scale-100 flex-col items-center justify-center gap-2 rounded-2xl border bg-white px-5 py-4 text-center text-sm font-black opacity-100 shadow-lg transition-all duration-200 ${
             toast.tone === "warning"
               ? "border-amber-200 text-amber-700"
               : "border-sky-100 text-slate-900"
@@ -248,7 +260,13 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
           >
             {toast.tone === "warning" ? "!" : "✓"}
           </span>
-          <span>{toast.message}</span>
+          <span className="grid gap-0.5 leading-5">
+            {getReservationToastLines(toast.message).map((line) => (
+              <span key={line} className="block">
+                {line}
+              </span>
+            ))}
+          </span>
         </div>
       ) : null}
 
