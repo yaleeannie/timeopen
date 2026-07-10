@@ -18,6 +18,10 @@ const slotsRouteSource = readFileSync(
   new URL("../../app/api/reservations/slots/route.ts", import.meta.url),
   "utf8"
 );
+const manualReservationCreatorSource = reservationsClientSource.slice(
+  reservationsClientSource.indexOf("function ManualReservationCreator"),
+  reservationsClientSource.indexOf("function ReservationCard")
+);
 
 test("validates owner-created reservation input", () => {
   const validation = validateReservationCreateInput({
@@ -104,14 +108,31 @@ test("reservation management page renders owner reservation creation flow", () =
 test("owner reservation success toast auto-dismisses and cleans up its timer", () => {
   assert.match(
     reservationsClientSource,
-    /useEffect\(\(\) => \{\s+if \(!message\) return;[\s\S]+window\.setTimeout\(\(\) => \{\s+setMessage\(""\);[\s\S]+3000\);[\s\S]+return \(\) => window\.clearTimeout\(timer\);[\s\S]+\}, \[message\]\);/s
+    /useEffect\(\(\) => \{\s+if \(!toast\) return;[\s\S]+window\.setTimeout\(\(\) => \{\s+setToast\(null\);[\s\S]+2800\);[\s\S]+return \(\) => window\.clearTimeout\(timer\);[\s\S]+\}, \[toast\]\);/s
   );
   assert.match(
     reservationsClientSource,
-    /function resetAndClose\(options\?: \{ keepMessage\?: boolean \}\)/
+    /function resetAndClose\(options\?: \{ keepToast\?: boolean \}\)/
   );
-  assert.match(reservationsClientSource, /if \(!options\?\.keepMessage\)/);
-  assert.match(reservationsClientSource, /resetAndClose\(\{ keepMessage: true \}\)/);
+  assert.match(reservationsClientSource, /if \(!options\?\.keepToast\)/);
+  assert.match(reservationsClientSource, /resetAndClose\(\{ keepToast: true \}\)/);
+  assert.match(reservationsClientSource, /role="status"/);
+  assert.match(reservationsClientSource, /fixed bottom-5 left-1\/2 z-\[60\]/);
+  assert.doesNotMatch(
+    manualReservationCreatorSource,
+    /mb-3 rounded-2xl bg-\[#e8fbff\]/
+  );
+});
+
+test("owner reservation creation modal uses a light solid TimeOpen style", () => {
+  assert.match(reservationsClientSource, /bg-slate-900\/10/);
+  assert.match(reservationsClientSource, /backdrop-blur-\[1px\]/);
+  assert.match(reservationsClientSource, /border border-sky-100 bg-white/);
+  assert.match(reservationsClientSource, /shadow-\[0_24px_80px_rgba\(14,165,233,0\.12\)\]/);
+  assert.match(reservationsClientSource, /border-slate-200 bg-white text-slate-700/);
+  assert.match(reservationsClientSource, /border-sky-300 bg-sky-50 text-slate-900/);
+  assert.match(reservationsClientSource, /border-sky-500 bg-sky-500 text-white/);
+  assert.match(reservationsClientSource, /border-slate-200 bg-sky-50\/50/);
 });
 
 test("manual reservation slot picker reuses owner slots endpoint without edit reservation id", () => {

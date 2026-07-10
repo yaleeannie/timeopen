@@ -89,7 +89,10 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
   const [saving, setSaving] = useState(false);
   const [slotError, setSlotError] = useState("");
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState<{
+    message: string;
+    tone: "success" | "warning";
+  } | null>(null);
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const requestIdRef = useRef(0);
   const [form, setForm] = useState({
@@ -102,14 +105,14 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
   });
 
   useEffect(() => {
-    if (!message) return;
+    if (!toast) return;
 
     const timer = window.setTimeout(() => {
-      setMessage("");
-    }, 3000);
+      setToast(null);
+    }, 2800);
 
     return () => window.clearTimeout(timer);
-  }, [message]);
+  }, [toast]);
 
   useEffect(() => {
     if (!open && services[0]?.id) {
@@ -160,10 +163,10 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function resetAndClose(options?: { keepMessage?: boolean }) {
+  function resetAndClose(options?: { keepToast?: boolean }) {
     setOpen(false);
-    if (!options?.keepMessage) {
-      setMessage("");
+    if (!options?.keepToast) {
+      setToast(null);
     }
     setError("");
     setSlotError("");
@@ -183,7 +186,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
 
     setSaving(true);
     setError("");
-    setMessage("");
+    setToast(null);
 
     try {
       const response = await fetch("/api/reservations/create", {
@@ -197,8 +200,11 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
         throw new Error(result?.error || "예약을 추가하지 못했어요.");
       }
 
-      setMessage(result?.message || "예약이 추가되었어요.");
-      resetAndClose({ keepMessage: true });
+      setToast({
+        message: result?.message || "예약이 추가되었어요.",
+        tone: result?.smsStatus === "failed" ? "warning" : "success",
+      });
+      resetAndClose({ keepToast: true });
       router.refresh();
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : "예약을 추가하지 못했어요.");
@@ -213,7 +219,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
         type="button"
         onClick={() => {
           setOpen(true);
-          setMessage("");
+          setToast(null);
           setError("");
         }}
         disabled={services.length === 0}
@@ -222,15 +228,33 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
         예약 추가
       </button>
 
-      {message ? (
-        <div className="mb-3 rounded-2xl bg-[#e8fbff] px-4 py-3 text-sm font-bold text-[#008fc0]">
-          {message}
+      {toast ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed bottom-5 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center gap-2 rounded-xl border bg-white px-4 py-3 text-sm font-black shadow-[0_18px_50px_rgba(14,165,233,0.16)] transition-all duration-200 sm:bottom-auto sm:top-6 ${
+            toast.tone === "warning"
+              ? "border-amber-200 text-amber-700"
+              : "border-sky-100 text-slate-900"
+          }`}
+        >
+          <span
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
+              toast.tone === "warning"
+                ? "bg-amber-50 text-amber-600"
+                : "bg-sky-50 text-sky-500"
+            }`}
+            aria-hidden="true"
+          >
+            {toast.tone === "warning" ? "!" : "✓"}
+          </span>
+          <span>{toast.message}</span>
         </div>
       ) : null}
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/35 px-3 py-4 backdrop-blur-sm sm:items-center">
-          <div className="glass-shell max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-[28px] p-4 shadow-2xl sm:p-5">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/10 px-3 py-4 backdrop-blur-[1px] sm:items-center">
+          <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-[28px] border border-sky-100 bg-white p-4 shadow-[0_24px_80px_rgba(14,165,233,0.12)] sm:p-5">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-black tracking-[-0.03em] text-slate-950">
@@ -244,7 +268,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
                 type="button"
                 onClick={() => resetAndClose()}
                 disabled={saving}
-                className="rounded-full px-3 py-2 text-sm font-black text-slate-400 hover:bg-white/70"
+                className="rounded-full px-3 py-2 text-sm font-black text-slate-400 hover:bg-slate-50 hover:text-slate-700"
                 aria-label="예약 추가 닫기"
               >
                 ×
@@ -271,12 +295,12 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
                           }
                           className={`w-[154px] shrink-0 rounded-2xl border px-3 py-2 text-left transition ${
                             selected
-                              ? "brand-selected"
-                              : "border-white/80 bg-white/65 text-slate-700 hover:bg-white"
+                              ? "border-sky-300 bg-sky-50 text-slate-900 shadow-[0_8px_24px_rgba(14,165,233,0.12)]"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-sky-200 hover:bg-sky-50/50"
                           }`}
                         >
                           <div className="truncate text-xs font-black">{service.name}</div>
-                          <div className={`mt-0.5 text-[11px] font-bold ${selected ? "text-white/85" : "text-slate-500"}`}>
+                          <div className={`mt-0.5 text-[11px] font-bold ${selected ? "text-slate-600" : "text-slate-500"}`}>
                             {service.durationMin}분
                             {formatPrice(service.price) ? ` · ${formatPrice(service.price)}` : ""}
                           </div>
@@ -295,14 +319,14 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, date: event.target.value, startTime: "" }))
                   }
-                  className="min-h-11 w-full min-w-0 rounded-xl border border-white/80 bg-white/70 px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
+                  className="min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                 />
               </label>
 
               <section className="min-w-0">
                 <div className="mb-1.5 text-xs font-black text-slate-700">예약 가능한 시간</div>
                 {loadingSlots ? (
-                  <div className="rounded-xl bg-white/55 px-3 py-3 text-xs font-bold text-slate-500">
+                  <div className="rounded-xl bg-slate-50 px-3 py-3 text-xs font-bold text-slate-500">
                     시간을 불러오는 중이에요.
                   </div>
                 ) : slotError ? (
@@ -310,11 +334,11 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
                     {slotError}
                   </div>
                 ) : availableTimes.length === 0 ? (
-                  <div className="rounded-xl bg-white/55 px-3 py-3 text-xs font-bold text-slate-500">
+                  <div className="rounded-xl bg-slate-50 px-3 py-3 text-xs font-bold text-slate-500">
                     선택한 날짜에 예약 가능한 시간이 없어요.
                   </div>
                 ) : (
-                  <div className="max-h-[180px] overflow-y-auto rounded-2xl border border-white/70 bg-white/35 p-2 sm:max-h-[220px]">
+                  <div className="max-h-[180px] overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 sm:max-h-[220px]">
                     <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5">
                       {availableTimes.map((time) => {
                         const selected = form.startTime === time;
@@ -325,8 +349,8 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
                             onClick={() => update("startTime", time)}
                             className={`min-h-9 rounded-xl border text-xs font-black transition ${
                               selected
-                                ? "brand-selected"
-                                : "border-white/80 bg-white/70 text-slate-700 hover:bg-[#e8fbff]"
+                                ? "border-sky-500 bg-sky-500 text-white shadow-sm"
+                                : "border-slate-200 bg-white text-slate-700 hover:border-sky-200 hover:bg-sky-50"
                             }`}
                           >
                             {time}
@@ -346,7 +370,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
                     value={form.customerName}
                     onChange={(event) => update("customerName", event.target.value)}
                     maxLength={30}
-                    className="min-h-11 w-full min-w-0 rounded-xl border border-white/80 bg-white/70 px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
+                    className="min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                   />
                 </label>
                 <label className="grid gap-1 text-xs font-bold text-slate-500">
@@ -355,12 +379,12 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
                     value={form.customerPhone}
                     onChange={(event) => update("customerPhone", event.target.value)}
                     maxLength={50}
-                    className="min-h-11 w-full min-w-0 rounded-xl border border-white/80 bg-white/70 px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#00c9ff]"
+                    className="min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                   />
                 </label>
               </section>
 
-              <label className="rounded-2xl border border-white/70 bg-white/50 px-3 py-3 text-sm font-bold text-slate-700">
+              <label className="rounded-2xl border border-slate-200 bg-sky-50/50 px-3 py-3 text-sm font-bold text-slate-700">
                 <span className="flex items-start gap-2">
                   <input
                     type="checkbox"
@@ -389,7 +413,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
                 type="button"
                 onClick={() => resetAndClose()}
                 disabled={saving}
-                className="min-h-11 rounded-xl px-4 text-sm font-black text-slate-500 transition hover:bg-white/75"
+                className="min-h-11 rounded-xl px-4 text-sm font-black text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
               >
                 취소
               </button>
@@ -405,7 +429,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
                   !form.customerName.trim() ||
                   !form.customerPhone.trim()
                 }
-                className="brand-button min-h-11 rounded-xl px-4 text-sm font-black disabled:opacity-50"
+                className="min-h-11 rounded-xl bg-[#00c9ff] px-4 text-sm font-black text-white shadow-[0_12px_30px_rgba(0,201,255,0.24)] transition hover:bg-sky-400 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
               >
                 {saving ? "예약 추가 중..." : "예약 추가"}
               </button>
