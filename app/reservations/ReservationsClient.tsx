@@ -73,6 +73,392 @@ function formatPrice(price: number | null) {
   return typeof price === "number" ? `${price.toLocaleString()}원` : "";
 }
 
+function getTodayISO() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function getReservationToastLines(message: string) {
+  if (message === "예약이 추가됐고 고객에게 안내 문자를 보냈어요.") {
+    return ["예약이 추가됐고", "고객에게 안내 문자를 보냈어요."];
+  }
+
+  if (message === "예약은 추가됐지만 문자 발송에 실패했어요.") {
+    return ["예약은 추가됐지만", "문자 발송에 실패했어요."];
+  }
+
+  return [message];
+}
+
+function ManualReservationCreator({ services }: { services: ReservationServiceOption[] }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [slotError, setSlotError] = useState("");
+  const [error, setError] = useState("");
+  const [toast, setToast] = useState<{
+    message: string;
+    tone: "success" | "warning";
+  } | null>(null);
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const requestIdRef = useRef(0);
+  const [form, setForm] = useState({
+    serviceId: services[0]?.id ?? "",
+    date: getTodayISO(),
+    startTime: "",
+    customerName: "",
+    customerPhone: "",
+    sendCustomerSms: false,
+  });
+
+  useEffect(() => {
+    if (!toast) return;
+
+    const timer = window.setTimeout(() => {
+      setToast(null);
+    }, 2800);
+
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  useEffect(() => {
+    if (!open && services[0]?.id) {
+      setForm((prev) => ({ ...prev, serviceId: prev.serviceId || services[0].id }));
+    }
+  }, [open, services]);
+
+  useEffect(() => {
+    if (!open || !form.serviceId || !form.date) return;
+
+    const requestId = ++requestIdRef.current;
+    setLoadingSlots(true);
+    setSlotError("");
+
+    fetch("/api/reservations/slots", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        serviceId: form.serviceId,
+        date: form.date,
+      }),
+    })
+      .then(async (response) => {
+        const json = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(json?.error || "예약 가능 시간을 불러오지 못했어요.");
+        return Array.isArray(json?.times) ? json.times.map(String) : [];
+      })
+      .then((times) => {
+        if (requestIdRef.current !== requestId) return;
+        setAvailableTimes(times);
+        if (!times.includes(form.startTime)) {
+          setForm((prev) => ({ ...prev, startTime: "" }));
+        }
+      })
+      .catch((fetchError) => {
+        if (requestIdRef.current !== requestId) return;
+        setAvailableTimes([]);
+        setSlotError(fetchError instanceof Error ? fetchError.message : "예약 가능 시간을 불러오지 못했어요.");
+      })
+      .finally(() => {
+        if (requestIdRef.current === requestId) {
+          setLoadingSlots(false);
+        }
+      });
+  }, [open, form.serviceId, form.date]);
+
+  function update(field: keyof typeof form, value: string | boolean) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function resetAndClose(options?: { keepToast?: boolean }) {
+    setOpen(false);
+    if (!options?.keepToast) {
+      setToast(null);
+    }
+    setError("");
+    setSlotError("");
+    setAvailableTimes([]);
+    setForm({
+      serviceId: services[0]?.id ?? "",
+      date: getTodayISO(),
+      startTime: "",
+      customerName: "",
+      customerPhone: "",
+      sendCustomerSms: false,
+    });
+  }
+
+  async function createReservation() {
+    if (saving) return;
+
+    setSaving(true);
+    setError("");
+    setToast(null);
+
+    try {
+      const response = await fetch("/api/reservations/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(result?.error || "예약을 추가하지 못했어요.");
+      }
+
+      setToast({
+        message: result?.message || "예약이 추가되었어요.",
+        tone: result?.smsStatus === "failed" ? "warning" : "success",
+      });
+      resetAndClose({ keepToast: true });
+      router.refresh();
+    } catch (createError) {
+      setError(createError instanceof Error ? createError.message : "예약을 추가하지 못했어요.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="shrink-0">
+      <button
+        type="button"
+        onClick={() => {
+          setOpen(true);
+          setToast(null);
+          setError("");
+        }}
+        disabled={services.length === 0}
+        className="brand-button min-h-10 shrink-0 rounded-2xl px-4 text-sm font-black disabled:opacity-50"
+      >
+        예약 추가
+      </button>
+
+      {toast ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed left-1/2 top-1/2 z-[100] flex w-fit max-w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 scale-100 flex-col items-center justify-center gap-2 rounded-2xl border bg-white px-5 py-4 text-center text-sm font-black opacity-100 shadow-lg transition-all duration-200 ${
+            toast.tone === "warning"
+              ? "border-amber-200 text-amber-700"
+              : "border-sky-100 text-slate-900"
+          }`}
+        >
+          <span
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
+              toast.tone === "warning"
+                ? "bg-amber-50 text-amber-600"
+                : "bg-sky-50 text-sky-500"
+            }`}
+            aria-hidden="true"
+          >
+            {toast.tone === "warning" ? "!" : "✓"}
+          </span>
+          <span className="grid gap-0.5 leading-5">
+            {getReservationToastLines(toast.message).map((line) => (
+              <span key={line} className="block">
+                {line}
+              </span>
+            ))}
+          </span>
+        </div>
+      ) : null}
+
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/10 px-3 py-4 backdrop-blur-[1px] sm:items-center">
+          <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-[28px] border border-sky-100 bg-white p-4 shadow-[0_24px_80px_rgba(14,165,233,0.12)] sm:p-5">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-black tracking-[-0.03em] text-slate-950">
+                  예약 추가
+                </h2>
+                <p className="mt-1 text-sm font-medium leading-5 text-slate-500">
+                  전화, DM, 현장 예약을 TimeOpen 일정에 추가해요.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => resetAndClose()}
+                disabled={saving}
+                className="rounded-full px-3 py-2 text-sm font-black text-slate-400 hover:bg-slate-50 hover:text-slate-700"
+                aria-label="예약 추가 닫기"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid min-w-0 gap-3">
+              <section className="min-w-0">
+                <div className="mb-1.5 text-xs font-black text-slate-700">서비스 선택</div>
+                <div className="-mx-1 overflow-x-auto px-1 pb-1">
+                  <div className="flex w-max max-w-none gap-2">
+                    {services.map((service) => {
+                      const selected = form.serviceId === service.id;
+                      return (
+                        <button
+                          key={service.id}
+                          type="button"
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              serviceId: service.id,
+                              startTime: service.id === prev.serviceId ? prev.startTime : "",
+                            }))
+                          }
+                          className={`w-[154px] shrink-0 rounded-2xl border px-3 py-2 text-left transition ${
+                            selected
+                              ? "border-sky-300 bg-sky-50 text-slate-900 shadow-[0_8px_24px_rgba(14,165,233,0.12)]"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-sky-200 hover:bg-sky-50/50"
+                          }`}
+                        >
+                          <div className="truncate text-xs font-black">{service.name}</div>
+                          <div className={`mt-0.5 text-[11px] font-bold ${selected ? "text-slate-600" : "text-slate-500"}`}>
+                            {service.durationMin}분
+                            {formatPrice(service.price) ? ` · ${formatPrice(service.price)}` : ""}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </section>
+
+              <label className="grid gap-1 text-xs font-black text-slate-700">
+                날짜 선택
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, date: event.target.value, startTime: "" }))
+                  }
+                  className="min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                />
+              </label>
+
+              <section className="min-w-0">
+                <div className="mb-1.5 text-xs font-black text-slate-700">예약 가능한 시간</div>
+                {loadingSlots ? (
+                  <div className="rounded-xl bg-slate-50 px-3 py-3 text-xs font-bold text-slate-500">
+                    시간을 불러오는 중이에요.
+                  </div>
+                ) : slotError ? (
+                  <div className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700">
+                    {slotError}
+                  </div>
+                ) : availableTimes.length === 0 ? (
+                  <div className="rounded-xl bg-slate-50 px-3 py-3 text-xs font-bold text-slate-500">
+                    선택한 날짜에 예약 가능한 시간이 없어요.
+                  </div>
+                ) : (
+                  <div className="max-h-[180px] overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 sm:max-h-[220px]">
+                    <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5">
+                      {availableTimes.map((time) => {
+                        const selected = form.startTime === time;
+                        return (
+                          <button
+                            key={time}
+                            type="button"
+                            onClick={() => update("startTime", time)}
+                            className={`min-h-9 rounded-xl border text-xs font-black transition ${
+                              selected
+                                ? "border-sky-500 bg-sky-500 text-white shadow-sm"
+                                : "border-slate-200 bg-white text-slate-700 hover:border-sky-200 hover:bg-sky-50"
+                            }`}
+                          >
+                            {time}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              <section className="grid min-w-0 gap-2">
+                <div className="text-xs font-black text-slate-700">고객 정보</div>
+                <label className="grid gap-1 text-xs font-bold text-slate-500">
+                  고객 이름
+                  <input
+                    value={form.customerName}
+                    onChange={(event) => update("customerName", event.target.value)}
+                    maxLength={30}
+                    className="min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                  />
+                </label>
+                <label className="grid gap-1 text-xs font-bold text-slate-500">
+                  고객 연락처
+                  <input
+                    value={form.customerPhone}
+                    onChange={(event) => update("customerPhone", event.target.value)}
+                    maxLength={50}
+                    className="min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                  />
+                </label>
+              </section>
+
+              <label className="rounded-2xl border border-slate-200 bg-sky-50/50 px-3 py-3 text-sm font-bold text-slate-700">
+                <span className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={form.sendCustomerSms}
+                    onChange={(event) => update("sendCustomerSms", event.target.checked)}
+                    className="mt-1 h-4 w-4"
+                  />
+                  <span>
+                    고객에게 예약 확정 문자 보내기
+                    <span className="mt-1 block text-xs font-medium leading-5 text-slate-500">
+                      전화나 DM으로 이미 안내했다면 체크하지 않아도 돼요.
+                    </span>
+                  </span>
+                </span>
+              </label>
+
+              {error ? (
+                <div className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700">
+                  {error}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => resetAndClose()}
+                disabled={saving}
+                className="min-h-11 rounded-xl px-4 text-sm font-black text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={createReservation}
+                disabled={
+                  saving ||
+                  loadingSlots ||
+                  !form.serviceId ||
+                  !form.date ||
+                  !form.startTime ||
+                  !form.customerName.trim() ||
+                  !form.customerPhone.trim()
+                }
+                className="min-h-11 rounded-xl bg-[#00c9ff] px-4 text-sm font-black text-white shadow-[0_12px_30px_rgba(0,201,255,0.24)] transition hover:bg-sky-400 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+              >
+                {saving ? "예약 추가 중..." : "예약 추가"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ReservationCard({
   reservation,
   services,
@@ -493,11 +879,14 @@ export default function ReservationsClient({
 
   return (
     <>
-      <div className="mb-3 flex items-baseline justify-between gap-3 px-1">
-        <h2 className="min-w-0 text-base font-black">{selectedDateLabel}</h2>
-        <span className="brand-chip shrink-0 rounded-full px-2.5 py-1 text-xs font-bold">
-          {count}건
-        </span>
+      <div className="mb-3 flex items-start justify-between gap-3 px-1">
+        <div className="min-w-0">
+          <h2 className="min-w-0 text-base font-black">{selectedDateLabel}</h2>
+          <span className="brand-chip mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-bold">
+            {count}건
+          </span>
+        </div>
+        <ManualReservationCreator services={services} />
       </div>
 
       {count === 0 ? (

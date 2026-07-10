@@ -6,6 +6,7 @@ import {
   getBookingSlotStepMinutes,
   normalizeBookingSlotInterval,
 } from "@/features/booking/slotMode";
+import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const toHHMM = (value: unknown) => (typeof value === "string" ? value.slice(0, 5) : "");
@@ -81,31 +82,46 @@ export async function POST(req: Request) {
   const serviceId = typeof body?.serviceId === "string" ? body.serviceId : "";
   const dateISO = typeof body?.date === "string" ? body.date : "";
 
-  if (!reservationId || !serviceId || !/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) {
-    return NextResponse.json({ error: "reservationId, serviceId, date required" }, { status: 400 });
+  if (!serviceId || !/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) {
+    return NextResponse.json({ error: "serviceId, date required" }, { status: 400 });
   }
 
-  const { data: reservation, error: reservationError } = await supabase
-    .from("reservations")
-    .select("id, organization_id")
-    .eq("id", reservationId)
-    .maybeSingle();
+  let organizationId = "";
 
-  if (reservationError || !reservation) {
-    return NextResponse.json({ error: "예약을 찾지 못했어요." }, { status: 404 });
-  }
+  if (reservationId) {
+    const { data: reservation, error: reservationError } = await supabase
+      .from("reservations")
+      .select("id, organization_id")
+      .eq("id", reservationId)
+      .maybeSingle();
 
-  const organizationId = String((reservation as any).organization_id);
-  const { data: member } = await supabase
-    .from("organization_members")
-    .select("role")
-    .eq("organization_id", organizationId)
-    .eq("user_id", user.id)
-    .in("role", ["owner", "member"])
-    .maybeSingle();
+    if (reservationError || !reservation) {
+      return NextResponse.json({ error: "예약을 찾지 못했어요." }, { status: 404 });
+    }
 
-  if (!member) {
-    return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+    organizationId = String((reservation as any).organization_id);
+    const { data: member } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", organizationId)
+      .eq("user_id", user.id)
+      .in("role", ["owner", "member"])
+      .maybeSingle();
+
+    if (!member) {
+      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+    }
+  } else {
+    const ownerContext = await getOwnerContext();
+
+    if (!ownerContext.user || !ownerContext.organizationId) {
+      return NextResponse.json(
+        { error: ownerContext.error ?? "권한이 없습니다." },
+        { status: 403 }
+      );
+    }
+
+    organizationId = ownerContext.organizationId;
   }
 
   const { data: service, error: serviceError } = await supabase
@@ -154,12 +170,17 @@ export async function POST(req: Request) {
     .eq("date", dateISO)
     .maybeSingle();
 
-  const { data: busyRows } = await supabase
+  const busyQuery = supabase
     .from("reservations")
     .select("id, start_time, end_time, buffer_min, status")
     .eq("organization_id", organizationId)
-    .eq("date", dateISO)
-    .neq("id", reservationId);
+    .eq("date", dateISO);
+
+  if (reservationId) {
+    busyQuery.neq("id", reservationId);
+  }
+
+  const { data: busyRows } = await busyQuery;
 
   const busy = (busyRows ?? [])
     .filter((row: any) => !["cancelled", "canceled"].includes(String(row.status ?? "confirmed")))
