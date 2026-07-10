@@ -101,6 +101,19 @@ test("reservation management page renders owner reservation creation flow", () =
   assert.match(reservationsClientSource, /예약 추가 중\.\.\./);
 });
 
+test("owner reservation success toast auto-dismisses and cleans up its timer", () => {
+  assert.match(
+    reservationsClientSource,
+    /useEffect\(\(\) => \{\s+if \(!message\) return;[\s\S]+window\.setTimeout\(\(\) => \{\s+setMessage\(""\);[\s\S]+3000\);[\s\S]+return \(\) => window\.clearTimeout\(timer\);[\s\S]+\}, \[message\]\);/s
+  );
+  assert.match(
+    reservationsClientSource,
+    /function resetAndClose\(options\?: \{ keepMessage\?: boolean \}\)/
+  );
+  assert.match(reservationsClientSource, /if \(!options\?\.keepMessage\)/);
+  assert.match(reservationsClientSource, /resetAndClose\(\{ keepMessage: true \}\)/);
+});
+
 test("manual reservation slot picker reuses owner slots endpoint without edit reservation id", () => {
   assert.match(reservationsClientSource, /fetch\("\/api\/reservations\/slots"/);
   assert.match(

@@ -102,6 +102,16 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
   });
 
   useEffect(() => {
+    if (!message) return;
+
+    const timer = window.setTimeout(() => {
+      setMessage("");
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [message]);
+
+  useEffect(() => {
     if (!open && services[0]?.id) {
       setForm((prev) => ({ ...prev, serviceId: prev.serviceId || services[0].id }));
     }
@@ -150,8 +160,11 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function resetAndClose() {
+  function resetAndClose(options?: { keepMessage?: boolean }) {
     setOpen(false);
+    if (!options?.keepMessage) {
+      setMessage("");
+    }
     setError("");
     setSlotError("");
     setAvailableTimes([]);
@@ -185,7 +198,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
       }
 
       setMessage(result?.message || "예약이 추가되었어요.");
-      resetAndClose();
+      resetAndClose({ keepMessage: true });
       router.refresh();
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : "예약을 추가하지 못했어요.");
@@ -229,7 +242,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
               </div>
               <button
                 type="button"
-                onClick={resetAndClose}
+                onClick={() => resetAndClose()}
                 disabled={saving}
                 className="rounded-full px-3 py-2 text-sm font-black text-slate-400 hover:bg-white/70"
                 aria-label="예약 추가 닫기"
@@ -374,7 +387,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
             <div className="mt-4 flex flex-wrap justify-end gap-2">
               <button
                 type="button"
-                onClick={resetAndClose}
+                onClick={() => resetAndClose()}
                 disabled={saving}
                 className="min-h-11 rounded-xl px-4 text-sm font-black text-slate-500 transition hover:bg-white/75"
               >
