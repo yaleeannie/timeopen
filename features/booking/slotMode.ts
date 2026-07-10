@@ -6,13 +6,23 @@ export const BOOKING_SLOT_INTERVAL_OPTIONS = [10, 15, 30, 60] as const;
 export type BookingSlotMode = (typeof BOOKING_SLOT_MODES)[number];
 export type BookingSlotIntervalMinutes = (typeof BOOKING_SLOT_INTERVAL_OPTIONS)[number];
 
+function parseBookingSlotInterval(value: unknown) {
+  return typeof value === "number"
+    ? value
+    : typeof value === "string" && value.trim() !== ""
+      ? Number(value)
+      : NaN;
+}
+
 export function normalizeBookingSlotMode(value: unknown): BookingSlotMode {
   return value === "service_duration" ? "service_duration" : "flexible";
 }
 
 export function normalizeBookingSlotInterval(value: unknown): BookingSlotIntervalMinutes {
-  return BOOKING_SLOT_INTERVAL_OPTIONS.includes(value as BookingSlotIntervalMinutes)
-    ? (value as BookingSlotIntervalMinutes)
+  const numericValue = parseBookingSlotInterval(value);
+
+  return BOOKING_SLOT_INTERVAL_OPTIONS.includes(numericValue as BookingSlotIntervalMinutes)
+    ? (numericValue as BookingSlotIntervalMinutes)
     : SLOT_INTERVAL_MINUTES;
 }
 
@@ -28,12 +38,7 @@ export function validateBookingSlotMode(value: unknown) {
 }
 
 export function validateBookingSlotInterval(value: unknown) {
-  const numericValue =
-    typeof value === "number"
-      ? value
-      : typeof value === "string" && value.trim() !== ""
-        ? Number(value)
-        : NaN;
+  const numericValue = parseBookingSlotInterval(value);
 
   if (!BOOKING_SLOT_INTERVAL_OPTIONS.includes(numericValue as BookingSlotIntervalMinutes)) {
     return {

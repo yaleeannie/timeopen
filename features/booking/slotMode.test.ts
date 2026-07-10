@@ -33,6 +33,12 @@ test("defaults booking slot interval to 10 minutes", () => {
   assert.equal(normalizeBookingSlotInterval("unknown"), SLOT_INTERVAL_MINUTES);
 });
 
+test("normalizes numeric string booking slot intervals from API responses", () => {
+  assert.equal(normalizeBookingSlotInterval("15"), 15);
+  assert.equal(normalizeBookingSlotInterval("30"), 30);
+  assert.equal(normalizeBookingSlotInterval("60"), 60);
+});
+
 test("validates supported booking slot intervals", () => {
   for (const value of [10, 15, 30, 60]) {
     assert.deepEqual(validateBookingSlotInterval(value), {
@@ -66,6 +72,15 @@ test("flexible mode uses the configured interval with 10-minute fallback", () =>
       intervalMin: 30,
     }),
     30
+  );
+  assert.equal(
+    getBookingSlotStepMinutes({
+      mode: "flexible",
+      durationMin: 90,
+      cleanupMin: 10,
+      intervalMin: "60",
+    }),
+    60
   );
 });
 

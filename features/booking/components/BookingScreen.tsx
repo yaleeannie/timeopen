@@ -366,6 +366,21 @@ export default function BookingScreen({
         notBefore,
       });
 
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[BookingScreen] generated public slots", {
+          handle,
+          organizationId,
+          booking_slot_interval_min: activeBookingSlotIntervalMin,
+          generatedSlotStep: getBookingSlotStepMinutes({
+            mode: "flexible",
+            durationMin: nextService.duration_min,
+            cleanupMin,
+            intervalMin: activeBookingSlotIntervalMin,
+          }),
+          firstSlots: result.slice(0, 5),
+        });
+      }
+
       if (reqIdRef.current !== myReq) return;
 
       setAvailableTimes(result);
