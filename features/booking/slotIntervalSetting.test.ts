@@ -74,7 +74,8 @@ test("owner availability settings expose and save Korean booking interval option
   assert.match(availabilitySettings, /booking_slot_interval_min: nextInterval/);
   assert.match(availabilitySettings, /option === 30/);
   assert.match(availabilitySettings, /추천/);
-  assert.match(availabilitySettings, /setBookingSlotIntervalMin\(nextInterval\)/);
+  assert.match(availabilitySettings, /json\?\.booking_slot_interval_min \?\? nextInterval/);
+  assert.match(availabilitySettings, /setBookingSlotIntervalMin\(savedInterval\)/);
   assert.match(availabilitySettings, /예약 시간 단위를 저장 중\.\.\./);
   assert.match(
     availabilitySettings,
@@ -93,6 +94,12 @@ test("owner availability settings hide booking slot mode UI", () => {
 test("settings API validates and updates interval without requiring mode changes", () => {
   assert.match(settingsRoute, /validateBookingSlotInterval/);
   assert.match(settingsRoute, /booking_slot_interval_min/);
+  assert.match(settingsRoute, /select\("booking_slot_mode, booking_slot_interval_min"\)/);
+  assert.match(settingsRoute, /updatedOrganization\?\.booking_slot_interval_min/);
+  assert.match(
+    settingsRoute,
+    /예약 시간 단위 저장 컬럼이 아직 적용되지 않았어요\. 로컬 DB에 최신 마이그레이션을 적용해주세요\./
+  );
   assert.match(settingsRoute, /Object\.keys\(updates\)\.length === 0/);
 });
 

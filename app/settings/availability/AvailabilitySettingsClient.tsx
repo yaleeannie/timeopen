@@ -277,7 +277,10 @@ export default function AvailabilitySettingsClient({
         return;
       }
 
-      setBookingSlotIntervalMin(nextInterval);
+      const savedInterval = normalizeBookingSlotInterval(
+        json?.booking_slot_interval_min ?? nextInterval
+      );
+      setBookingSlotIntervalMin(savedInterval);
       setMsg("예약 시간 단위가 저장되었습니다.");
     } catch (e) {
       console.error(e);
