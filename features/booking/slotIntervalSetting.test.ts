@@ -9,6 +9,13 @@ const migrationSql = readFileSync(
   ),
   "utf8"
 );
+const publicSettingsMigrationSql = readFileSync(
+  new URL(
+    "../../supabase/migrations/20260710100000_fix_public_booking_settings_lookup.sql",
+    import.meta.url
+  ),
+  "utf8"
+);
 const publicBookingPage = readFileSync(
   new URL("../../app/u/[handle]/page.tsx", import.meta.url),
   "utf8"
@@ -44,6 +51,10 @@ const ownerSlotsRoute = readFileSync(
   new URL("../../app/api/reservations/slots/route.ts", import.meta.url),
   "utf8"
 );
+const publicOrganizationHelper = readFileSync(
+  new URL("../../features/organizations/fetchOrganizationByHandle.ts", import.meta.url),
+  "utf8"
+);
 
 test("migration adds booking slot interval with 10-minute default and check constraint", () => {
   assert.match(
@@ -56,6 +67,21 @@ test("migration adds booking slot interval with 10-minute default and check cons
   );
   assert.match(migrationSql, /booking_slot_interval_min integer/);
   assert.match(migrationSql, /o\.booking_slot_interval_min/);
+});
+
+test("latest public organization settings RPC preserves booking settings", () => {
+  assert.match(
+    publicSettingsMigrationSql,
+    /create function public\.get_public_organization_by_handle\(p_handle text\)/
+  );
+  assert.match(publicSettingsMigrationSql, /booking_contact text/);
+  assert.match(publicSettingsMigrationSql, /booking_slot_interval_min integer/);
+  assert.match(publicSettingsMigrationSql, /o\.booking_contact/);
+  assert.match(publicSettingsMigrationSql, /o\.booking_slot_interval_min/);
+  assert.match(
+    publicSettingsMigrationSql,
+    /Returns the current public booking organization settings/
+  );
 });
 
 test("public booking page uses organization interval for visible slot generation", () => {
@@ -77,6 +103,21 @@ test("public availability API returns organization booking interval", () => {
   assert.match(fetchAvailabilityRoute, /organization\?\.booking_slot_interval_min/);
   assert.match(fetchAvailabilityRoute, /booking_slot_interval_min: bookingSlotIntervalMin/);
   assert.match(fetchAvailabilityRoute, /generatedSlotStep: bookingSlotIntervalMin/);
+});
+
+test("public organization helper type includes public booking settings", () => {
+  for (const field of [
+    "booking_notice",
+    "booking_contact",
+    "link_theme",
+    "booking_slot_mode",
+    "booking_slot_interval_min",
+    "booking_enabled",
+    "withdrawal_requested_at",
+    "disabled_at",
+  ]) {
+    assert.match(publicOrganizationHelper, new RegExp(`${field}:`));
+  }
 });
 
 test("owner availability settings expose and save Korean booking interval options", () => {

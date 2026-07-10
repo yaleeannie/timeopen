@@ -16,6 +16,7 @@ export type Organization = {
   location_text: string | null;
   notice_text: string | null;
   booking_notice: string | null;
+  booking_contact: string | null;
   link_theme: LinkTheme | null;
   booking_slot_mode: BookingSlotMode | null;
   booking_slot_interval_min: BookingSlotIntervalMinutes | null;
