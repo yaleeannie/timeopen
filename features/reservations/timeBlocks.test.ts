@@ -9,6 +9,13 @@ const migration = readFileSync(
   ),
   "utf8"
 );
+const publicLookupMigration = readFileSync(
+  new URL(
+    "../../supabase/migrations/20260710133000_add_public_time_block_lookup.sql",
+    import.meta.url
+  ),
+  "utf8"
+);
 const reservationsClientSource = readFileSync(
   new URL("../../app/reservations/ReservationsClient.tsx", import.meta.url),
   "utf8"
@@ -27,6 +34,14 @@ const createBlockRouteSource = readFileSync(
 );
 const deleteBlockRouteSource = readFileSync(
   new URL("../../app/api/reservations/time-blocks/delete/route.ts", import.meta.url),
+  "utf8"
+);
+const fetchAvailabilityRouteSource = readFileSync(
+  new URL("../../app/api/fetchAvailability/route.ts", import.meta.url),
+  "utf8"
+);
+const bookingScreenSource = readFileSync(
+  new URL("../../features/booking/components/BookingScreen.tsx", import.meta.url),
   "utf8"
 );
 const tablePolicySection = migration.slice(
@@ -152,4 +167,38 @@ test("time block API routes call authenticated RPCs and return Korean feedback",
   assert.match(createBlockRouteSource, /시간이 막혔어요\./);
   assert.match(deleteBlockRouteSource, /delete_reservation_time_block/);
   assert.match(deleteBlockRouteSource, /막힌 시간이 해제되었어요\./);
+});
+
+test("public time block lookup RPC exposes only time ranges by current handle and date", () => {
+  assert.match(
+    publicLookupMigration,
+    /create function public\.get_public_reservation_time_blocks/
+  );
+  assert.match(publicLookupMigration, /returns table \(\s+start_time time,\s+end_time time\s+\)/s);
+  assert.match(publicLookupMigration, /o\.handle = lower\(btrim\(p_handle\)\)/);
+  assert.match(publicLookupMigration, /coalesce\(o\.booking_enabled, true\) is true/);
+  assert.match(publicLookupMigration, /o\.withdrawal_requested_at is null/);
+  assert.match(publicLookupMigration, /o\.disabled_at is null/);
+  assert.match(publicLookupMigration, /b\.block_date = p_date/);
+  assert.match(publicLookupMigration, /grant execute on function public\.get_public_reservation_time_blocks\(text, date\) to anon/);
+  assert.doesNotMatch(publicLookupMigration, /reason/);
+  assert.doesNotMatch(publicLookupMigration, /created_by/);
+  assert.doesNotMatch(publicLookupMigration, /create policy[\s\S]+to anon/);
+});
+
+test("public fetchAvailability loads time blocks through the secure RPC", () => {
+  assert.match(fetchAvailabilityRouteSource, /get_public_reservation_time_blocks/);
+  assert.match(fetchAvailabilityRouteSource, /p_handle: handle/);
+  assert.match(fetchAvailabilityRouteSource, /p_date: requestedDate/);
+  assert.match(fetchAvailabilityRouteSource, /time_blocks: timeBlocks/);
+  assert.match(fetchAvailabilityRouteSource, /loadedBlockCount: timeBlocks\.length/);
+  assert.doesNotMatch(fetchAvailabilityRouteSource, /\.from\("reservation_time_blocks"\)/);
+});
+
+test("public booking slot calculation merges public time blocks into busy ranges", () => {
+  assert.match(bookingScreenSource, /normalizeTimeRanges/);
+  assert.match(bookingScreenSource, /body: JSON\.stringify\(\{ handle, date: nextDateISO \}\)/);
+  assert.match(bookingScreenSource, /availabilityRes\?\.time_blocks/);
+  assert.match(bookingScreenSource, /const busy = \[\.\.\.\(busyRes\?\.busy \?\? \[\]\), \.\.\.publicTimeBlocks\]/);
+  assert.match(bookingScreenSource, /loadedBlockCount: publicTimeBlocks\.length/);
 });

@@ -22,7 +22,7 @@ import {
   getEarliestAvailableTime,
   shouldShowEarliestTimeHint,
 } from "@/features/booking/timeSelection";
-import type { WeeklySchedule } from "@/features/availability/weeklySchedule";
+import type { TimeRange, WeeklySchedule } from "@/features/availability/weeklySchedule";
 
 import { fetchBusyFromDb } from "@/features/availability/fetchBusyFromDb";
 import { saveReservation } from "@/features/booking/saveReservation";
@@ -59,6 +59,17 @@ function minToHhmm(v: number) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 const toHHMM = (t: any) => (typeof t === "string" ? t.slice(0, 5) : "");
+
+function normalizeTimeRanges(rows: unknown): TimeRange[] {
+  if (!Array.isArray(rows)) return [];
+
+  return rows
+    .map((row: any) => ({
+      start: toHHMM(row?.start ?? row?.start_time),
+      end: toHHMM(row?.end ?? row?.end_time),
+    }))
+    .filter((row) => row.start && row.end && row.start < row.end);
+}
 
 function convertRowsToWeeklySchedule(rows: any[]): WeeklySchedule {
   const schedule: WeeklySchedule = {
@@ -322,10 +333,17 @@ export default function BookingScreen({
     setTimesError("");
 
     try {
-      const [ex, holiday, busyRes] = await Promise.all([
+      const [ex, holiday, busyRes, availabilityRes] = await Promise.all([
         fetchExceptionForDate({ handle, dateISO: nextDateISO }),
         fetchHolidayForDate({ handle, dateISO: nextDateISO }),
         fetchBusyFromDb({ handle, dateISO: nextDateISO }),
+        fetch("/api/fetchAvailability", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ handle, date: nextDateISO }),
+        })
+          .then((response) => response.json())
+          .catch(() => null),
       ]);
 
       if (reqIdRef.current !== myReq) return;
@@ -349,7 +367,8 @@ export default function BookingScreen({
         notBefore = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       }
 
-      const busy = busyRes?.busy ?? [];
+      const publicTimeBlocks = normalizeTimeRanges(availabilityRes?.time_blocks);
+      const busy = [...(busyRes?.busy ?? []), ...publicTimeBlocks];
 
       const result = computeAvailableStartTimes({
         workWindows: daily.workWindows,
@@ -377,6 +396,7 @@ export default function BookingScreen({
             cleanupMin,
             intervalMin: activeBookingSlotIntervalMin,
           }),
+          loadedBlockCount: publicTimeBlocks.length,
           firstSlots: result.slice(0, 5),
         });
       }
