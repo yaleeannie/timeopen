@@ -16,6 +16,16 @@ function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function mapUpdateError(message: string | undefined) {
+  if (/selected time is blocked/i.test(message ?? "")) {
+    return "선택한 시간은 예약이 막혀 있어요.";
+  }
+  if (/selected time is no longer available/i.test(message ?? "")) {
+    return "이미 예약이 있는 시간이에요.";
+  }
+  return "예약을 수정하지 못했어요.";
+}
+
 export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -54,7 +64,7 @@ export async function POST(req: Request) {
       hint: updateError.hint,
     });
     return NextResponse.json(
-      { error: "예약을 수정하지 못했어요." },
+      { error: mapUpdateError(updateError.message) },
       { status: 400 }
     );
   }

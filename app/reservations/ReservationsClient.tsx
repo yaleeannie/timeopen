@@ -13,6 +13,7 @@ export type ReservationServiceOption = {
 
 export type ReservationCardItem = {
   id: string;
+  itemType?: "reservation" | "block";
   serviceId: string;
   createdAt: string;
   status: string | null;
@@ -23,12 +24,14 @@ export type ReservationCardItem = {
   start: string;
   end: string;
   smsStatus: "success" | "partial" | "failed" | "none";
+  reason?: string;
 };
 
 type Props = {
   selectedDateLabel: string;
   reservations: ReservationCardItem[];
   services: ReservationServiceOption[];
+  bookingSlotIntervalMin: number;
   emptyText: string;
   emptyHelper: string;
   sortMode: "created_desc" | "start_asc";
@@ -92,6 +95,57 @@ function getReservationToastLines(message: string) {
   }
 
   return [message];
+}
+
+function FloatingReservationToast({
+  toast,
+}: {
+  toast: { message: string; tone: "success" | "warning" } | null;
+}) {
+  if (!toast) return null;
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={`fixed left-1/2 top-1/2 z-[100] flex w-fit max-w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 scale-100 flex-col items-center justify-center gap-2 rounded-2xl border bg-white px-5 py-4 text-center text-sm font-black opacity-100 shadow-lg transition-all duration-200 ${
+        toast.tone === "warning"
+          ? "border-amber-200 text-amber-700"
+          : "border-sky-100 text-slate-900"
+      }`}
+    >
+      <span
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
+          toast.tone === "warning"
+            ? "bg-amber-50 text-amber-600"
+            : "bg-sky-50 text-sky-500"
+        }`}
+        aria-hidden="true"
+      >
+        {toast.tone === "warning" ? "!" : "✓"}
+      </span>
+      <span className="grid gap-0.5 leading-5">
+        {getReservationToastLines(toast.message).map((line) => (
+          <span key={line} className="block">
+            {line}
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+}
+
+function buildTimeOptions(intervalMin: number) {
+  const step = [10, 15, 30, 60].includes(intervalMin) ? intervalMin : 10;
+  const options: string[] = [];
+
+  for (let minute = 0; minute < 24 * 60; minute += step) {
+    const hour = Math.floor(minute / 60);
+    const min = minute % 60;
+    options.push(`${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}`);
+  }
+
+  return options;
 }
 
 function ManualReservationCreator({ services }: { services: ReservationServiceOption[] }) {
@@ -240,35 +294,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
         예약 추가
       </button>
 
-      {toast ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className={`fixed left-1/2 top-1/2 z-[100] flex w-fit max-w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 scale-100 flex-col items-center justify-center gap-2 rounded-2xl border bg-white px-5 py-4 text-center text-sm font-black opacity-100 shadow-lg transition-all duration-200 ${
-            toast.tone === "warning"
-              ? "border-amber-200 text-amber-700"
-              : "border-sky-100 text-slate-900"
-          }`}
-        >
-          <span
-            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
-              toast.tone === "warning"
-                ? "bg-amber-50 text-amber-600"
-                : "bg-sky-50 text-sky-500"
-            }`}
-            aria-hidden="true"
-          >
-            {toast.tone === "warning" ? "!" : "✓"}
-          </span>
-          <span className="grid gap-0.5 leading-5">
-            {getReservationToastLines(toast.message).map((line) => (
-              <span key={line} className="block">
-                {line}
-              </span>
-            ))}
-          </span>
-        </div>
-      ) : null}
+      <FloatingReservationToast toast={toast} />
 
       {open ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/10 px-3 py-4 backdrop-blur-[1px] sm:items-center">
@@ -459,6 +485,232 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
   );
 }
 
+function TimeBlockCreator({ bookingSlotIntervalMin }: { bookingSlotIntervalMin: number }) {
+  const router = useRouter();
+  const timeOptions = useMemo(
+    () => buildTimeOptions(bookingSlotIntervalMin),
+    [bookingSlotIntervalMin]
+  );
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [toast, setToast] = useState<{
+    message: string;
+    tone: "success" | "warning";
+  } | null>(null);
+  const [form, setForm] = useState({
+    blockDate: getTodayISO(),
+    startTime: "",
+    endTime: "",
+    reason: "",
+  });
+
+  useEffect(() => {
+    if (!toast) return;
+
+    const timer = window.setTimeout(() => {
+      setToast(null);
+    }, 2800);
+
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  function resetAndClose(options?: { keepToast?: boolean }) {
+    setOpen(false);
+    if (!options?.keepToast) {
+      setToast(null);
+    }
+    setError("");
+    setForm({
+      blockDate: getTodayISO(),
+      startTime: "",
+      endTime: "",
+      reason: "",
+    });
+  }
+
+  function update(field: keyof typeof form, value: string) {
+    setForm((prev) => {
+      if (field === "startTime") {
+        return {
+          ...prev,
+          startTime: value,
+          endTime: prev.endTime && prev.endTime > value ? prev.endTime : "",
+        };
+      }
+
+      return { ...prev, [field]: value };
+    });
+  }
+
+  async function createTimeBlock() {
+    if (saving) return;
+
+    setSaving(true);
+    setError("");
+    setToast(null);
+
+    try {
+      const response = await fetch("/api/reservations/time-blocks/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(result?.error || "시간을 막지 못했어요. 다시 시도해주세요.");
+      }
+
+      setToast({ message: result?.message || "시간이 막혔어요.", tone: "success" });
+      resetAndClose({ keepToast: true });
+      router.refresh();
+    } catch (createError) {
+      setError(
+        createError instanceof Error
+          ? createError.message
+          : "시간을 막지 못했어요. 다시 시도해주세요."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="shrink-0">
+      <button
+        type="button"
+        onClick={() => {
+          setOpen(true);
+          setToast(null);
+          setError("");
+        }}
+        className="brand-outline min-h-10 shrink-0 rounded-2xl px-4 text-sm font-black"
+      >
+        시간 막기
+      </button>
+
+      <FloatingReservationToast toast={toast} />
+
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/10 px-3 py-4 backdrop-blur-[1px] sm:items-center">
+          <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-[28px] border border-sky-100 bg-white p-4 shadow-[0_24px_80px_rgba(14,165,233,0.12)] sm:p-5">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-black tracking-[-0.03em] text-slate-950">
+                  시간 막기
+                </h2>
+                <p className="mt-1 text-sm font-medium leading-5 text-slate-500">
+                  개인 일정이나 외부 예약으로 받을 수 없는 시간을 막아둬요.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => resetAndClose()}
+                disabled={saving}
+                className="rounded-full px-3 py-2 text-sm font-black text-slate-400 hover:bg-slate-50 hover:text-slate-700"
+                aria-label="시간 막기 닫기"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid min-w-0 gap-3">
+              <label className="grid gap-1 text-xs font-black text-slate-700">
+                날짜
+                <input
+                  type="date"
+                  value={form.blockDate}
+                  onChange={(event) => update("blockDate", event.target.value)}
+                  className="min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                />
+              </label>
+
+              <div className="grid min-w-0 grid-cols-2 gap-2">
+                <label className="grid min-w-0 gap-1 text-xs font-black text-slate-700">
+                  시작 시간
+                  <select
+                    value={form.startTime}
+                    onChange={(event) => update("startTime", event.target.value)}
+                    className="min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                  >
+                    <option value="">선택</option>
+                    {timeOptions.map((time) => (
+                      <option key={time} value={time}>
+                        {time}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="grid min-w-0 gap-1 text-xs font-black text-slate-700">
+                  종료 시간
+                  <select
+                    value={form.endTime}
+                    onChange={(event) => update("endTime", event.target.value)}
+                    className="min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                  >
+                    <option value="">선택</option>
+                    {timeOptions
+                      .filter((time) => !form.startTime || time > form.startTime)
+                      .map((time) => (
+                        <option key={time} value={time}>
+                          {time}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </div>
+
+              <label className="grid gap-1 text-xs font-black text-slate-700">
+                사유
+                <input
+                  value={form.reason}
+                  onChange={(event) => update("reason", event.target.value)}
+                  maxLength={120}
+                  placeholder="예: 개인 일정, 점심시간, 외부 일정"
+                  className="min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                />
+              </label>
+
+              {error ? (
+                <div className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700">
+                  {error}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => resetAndClose()}
+                disabled={saving}
+                className="min-h-11 rounded-xl px-4 text-sm font-black text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={createTimeBlock}
+                disabled={
+                  saving ||
+                  !form.blockDate ||
+                  !form.startTime ||
+                  !form.endTime ||
+                  form.startTime >= form.endTime
+                }
+                className="min-h-11 rounded-xl bg-[#00c9ff] px-4 text-sm font-black text-white shadow-[0_12px_30px_rgba(0,201,255,0.24)] transition hover:bg-sky-400 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+              >
+                {saving ? "막는 중..." : "시간 막기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ReservationCard({
   reservation,
   services,
@@ -477,6 +729,10 @@ function ReservationCard({
   const [slotError, setSlotError] = useState("");
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const requestIdRef = useRef(0);
+  const [toast, setToast] = useState<{
+    message: string;
+    tone: "success" | "warning";
+  } | null>(null);
   const [form, setForm] = useState({
     serviceId: reservation.serviceId,
     customerName: reservation.customerName === "-" ? "" : reservation.customerName,
@@ -487,6 +743,16 @@ function ReservationCard({
 
   const editable =
     reservation.status !== "cancelled" && reservation.status !== "canceled";
+
+  useEffect(() => {
+    if (!toast) return;
+
+    const timer = window.setTimeout(() => {
+      setToast(null);
+    }, 2800);
+
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   function update(field: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -556,9 +822,9 @@ function ReservationCard({
       const response = await fetch("/api/reservations/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            reservationId: reservation.id,
-            ...form,
+        body: JSON.stringify({
+          reservationId: reservation.id,
+          ...form,
         }),
       });
       const result = await response.json().catch(() => null);
@@ -603,6 +869,90 @@ function ReservationCard({
     } finally {
       setConfirming(false);
     }
+  }
+
+  async function deleteTimeBlock() {
+    if (cancelling) return;
+    if (typeof window !== "undefined" && !window.confirm("막힌 시간을 해제할까요?")) {
+      return;
+    }
+
+    setCancelling(true);
+    setError("");
+    setMessage("");
+    setToast(null);
+
+    try {
+      const response = await fetch("/api/reservations/time-blocks/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ blockId: reservation.id }),
+      });
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error || "막힌 시간을 해제하지 못했어요. 다시 시도해주세요."
+        );
+      }
+
+      setToast({ message: result?.message || "막힌 시간이 해제되었어요.", tone: "success" });
+      router.refresh();
+    } catch (deleteError) {
+      setToast({
+        message:
+          deleteError instanceof Error
+            ? deleteError.message
+            : "막힌 시간을 해제하지 못했어요. 다시 시도해주세요.",
+        tone: "warning",
+      });
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  if (reservation.itemType === "block") {
+    return (
+      <div className="relative grid min-w-0 grid-cols-[64px_1fr] gap-2">
+        <FloatingReservationToast toast={toast} />
+        <div className="relative z-10 pt-3 text-center">
+          <div className="inline-flex min-h-8 items-center rounded-full border border-slate-200 bg-white px-2 text-xs font-black text-slate-500 shadow-sm">
+            {reservation.start || "-"}
+          </div>
+        </div>
+
+        <article className="min-w-0 rounded-[18px] border border-slate-200 bg-slate-50/80 p-3">
+          <div className="flex min-w-0 items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-black text-slate-800">예약 막힘</div>
+              <div className="mt-0.5 truncate text-xs font-bold text-slate-500">
+                {timeRange(reservation.start, reservation.end)}
+              </div>
+            </div>
+            <span className="shrink-0 rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-black text-slate-500">
+              예약 막힘
+            </span>
+          </div>
+
+          {reservation.reason ? (
+            <div className="mt-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-slate-600">
+              {reservation.reason}
+            </div>
+          ) : null}
+
+          <div className="mt-2 flex justify-end border-t border-white pt-2">
+            <button
+              type="button"
+              onClick={deleteTimeBlock}
+              disabled={cancelling}
+              className="min-h-9 rounded-xl px-2.5 text-xs font-bold text-slate-500 transition hover:bg-white hover:text-slate-800 disabled:opacity-50"
+            >
+              {cancelling ? "해제 중..." : "막기 해제"}
+            </button>
+          </div>
+        </article>
+      </div>
+    );
   }
 
   return (
@@ -855,6 +1205,7 @@ export default function ReservationsClient({
   selectedDateLabel,
   reservations,
   services,
+  bookingSlotIntervalMin,
   emptyText,
   emptyHelper,
   sortMode,
@@ -886,7 +1237,10 @@ export default function ReservationsClient({
             {count}건
           </span>
         </div>
-        <ManualReservationCreator services={services} />
+        <div className="flex shrink-0 flex-wrap justify-end gap-2">
+          <TimeBlockCreator bookingSlotIntervalMin={bookingSlotIntervalMin} />
+          <ManualReservationCreator services={services} />
+        </div>
       </div>
 
       {count === 0 ? (
