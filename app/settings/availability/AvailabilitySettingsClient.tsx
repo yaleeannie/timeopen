@@ -300,6 +300,55 @@ export default function AvailabilitySettingsClient({
 
   return (
     <div className="min-w-0 space-y-5">
+      <section className="glass-card overflow-hidden rounded-[26px] p-5">
+        <div className="brand-chip inline-flex rounded-full px-3 py-1 text-xs font-black shadow-sm">
+          예약 설정
+        </div>
+        <h2 className="mt-3 text-xl font-black tracking-[-0.03em] text-gray-950">
+          예약 시간 단위
+        </h2>
+        <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
+          고객에게 보여줄 예약 가능 시간 간격이에요.
+        </p>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {BOOKING_SLOT_INTERVAL_OPTIONS.map((option) => {
+            const selected = bookingSlotIntervalMin === option;
+            const label = option === 60 ? "1시간" : `${option}분`;
+
+            return (
+              <button
+                key={option}
+                type="button"
+                disabled={savingSlotInterval}
+                onClick={() => {
+                  if (!selected) void saveBookingSlotInterval(option);
+                }}
+                className={`min-h-12 rounded-2xl border px-3 py-2 text-sm font-black transition disabled:opacity-60 ${
+                  selected
+                    ? "brand-gradient border-transparent text-white shadow-[0_12px_28px_rgba(0,193,255,0.18)]"
+                    : "border-white/70 bg-white/55 text-gray-600 hover:border-[#00c1ff]/40 hover:bg-white/85"
+                }`}
+              >
+                {label}
+                {option === 30 ? (
+                  <span
+                    className={`ml-1 text-[10px] font-black ${
+                      selected ? "text-white/85" : "brand-text"
+                    }`}
+                  >
+                    추천
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+        {savingSlotInterval ? (
+          <p className="mt-3 text-xs font-bold brand-text">예약 시간 단위를 저장 중...</p>
+        ) : null}
+      </section>
+
       <section className="glass-card overflow-hidden rounded-[26px]">
         <div className="bg-gradient-to-br from-[#e7fbff]/90 via-white/55 to-white/35 px-5 pb-5 pt-5">
           <div className="brand-chip inline-flex rounded-full px-3 py-1 text-xs font-black shadow-sm">
@@ -385,55 +434,6 @@ export default function AvailabilitySettingsClient({
             {saving ? "적용 중..." : "선택한 요일에 일괄 적용"}
           </button>
         </div>
-      </section>
-
-      <section className="glass-card overflow-hidden rounded-[26px] p-5">
-        <div className="brand-chip inline-flex rounded-full px-3 py-1 text-xs font-black shadow-sm">
-          예약 설정
-        </div>
-        <h2 className="mt-3 text-xl font-black tracking-[-0.03em] text-gray-950">
-          예약 시간 단위
-        </h2>
-        <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
-          고객에게 보여줄 예약 가능 시간 간격이에요.
-        </p>
-
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {BOOKING_SLOT_INTERVAL_OPTIONS.map((option) => {
-            const selected = bookingSlotIntervalMin === option;
-            const label = option === 60 ? "1시간" : `${option}분`;
-
-            return (
-              <button
-                key={option}
-                type="button"
-                disabled={savingSlotInterval}
-                onClick={() => {
-                  if (!selected) void saveBookingSlotInterval(option);
-                }}
-                className={`min-h-12 rounded-2xl border px-3 py-2 text-sm font-black transition disabled:opacity-60 ${
-                  selected
-                    ? "brand-gradient border-transparent text-white shadow-[0_12px_28px_rgba(0,193,255,0.18)]"
-                    : "border-white/70 bg-white/55 text-gray-600 hover:border-[#00c1ff]/40 hover:bg-white/85"
-                }`}
-              >
-                {label}
-                {option === 30 ? (
-                  <span
-                    className={`ml-1 text-[10px] font-black ${
-                      selected ? "text-white/85" : "brand-text"
-                    }`}
-                  >
-                    추천
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
-        {savingSlotInterval ? (
-          <p className="mt-3 text-xs font-bold brand-text">예약 시간 단위를 저장 중...</p>
-        ) : null}
       </section>
 
       <section>

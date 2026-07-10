@@ -28,6 +28,10 @@ const bookingScreen = readFileSync(
   new URL("../../features/booking/components/BookingScreen.tsx", import.meta.url),
   "utf8"
 );
+const slotModeSource = readFileSync(
+  new URL("../../features/booking/slotMode.ts", import.meta.url),
+  "utf8"
+);
 const availabilityPage = readFileSync(
   new URL("../../app/settings/availability/page.tsx", import.meta.url),
   "utf8"
@@ -53,6 +57,10 @@ const ownerSlotsRoute = readFileSync(
 );
 const publicOrganizationHelper = readFileSync(
   new URL("../../features/organizations/fetchOrganizationByHandle.ts", import.meta.url),
+  "utf8"
+);
+const reservationsClient = readFileSync(
+  new URL("../../app/reservations/ReservationsClient.tsx", import.meta.url),
   "utf8"
 );
 
@@ -138,6 +146,8 @@ test("owner availability settings expose and save Korean booking interval option
   assert.match(availabilitySettings, /예약 시간 단위/);
   assert.match(availabilitySettings, /고객에게 보여줄 예약 가능 시간 간격이에요\./);
   assert.match(availabilitySettings, /BOOKING_SLOT_INTERVAL_OPTIONS/);
+  assert.match(slotModeSource, /BOOKING_SLOT_INTERVAL_OPTIONS = \[10, 15, 30, 60\]/);
+  assert.match(availabilitySettings, /option === 60 \? "1시간" : `\$\{option\}분`/);
   assert.match(availabilitySettings, /booking_slot_interval_min: nextInterval/);
   assert.match(availabilitySettings, /option === 30/);
   assert.match(availabilitySettings, /추천/);
@@ -148,6 +158,15 @@ test("owner availability settings expose and save Korean booking interval option
     availabilitySettings,
     /예약 시간 단위를 저장하지 못했어요\. 다시 시도해주세요\./
   );
+});
+
+test("owner availability settings keep booking interval selector visible before quick setup", () => {
+  const intervalIndex = availabilitySettings.indexOf("예약 시간 단위");
+  const quickSetupIndex = availabilitySettings.indexOf("빠르게 적용하기");
+
+  assert.ok(intervalIndex > -1);
+  assert.ok(quickSetupIndex > -1);
+  assert.ok(intervalIndex < quickSetupIndex);
 });
 
 test("owner availability settings hide booking slot mode UI", () => {
@@ -182,4 +201,10 @@ test("owner reservation edit slots use the same organization interval", () => {
   assert.match(ownerSlotsRoute, /normalizeBookingSlotInterval/);
   assert.match(ownerSlotsRoute, /intervalMin: bookingSlotIntervalMin/);
   assert.match(ownerSlotsRoute, /mode: "flexible"/);
+});
+
+test("owner manual reservation toast remains centered and unchanged", () => {
+  assert.match(reservationsClient, /function ManualReservationCreator/);
+  assert.match(reservationsClient, /fixed left-1\/2 top-1\/2 z-\[100\]/);
+  assert.match(reservationsClient, /getReservationToastLines\(toast\.message\)\.map/);
 });
