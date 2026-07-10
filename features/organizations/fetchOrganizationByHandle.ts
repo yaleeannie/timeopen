@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabase/client";
 import type { LinkTheme } from "@/features/booking/themes";
-import type { BookingSlotMode } from "@/features/booking/slotMode";
+import type {
+  BookingSlotIntervalMinutes,
+  BookingSlotMode,
+} from "@/features/booking/slotMode";
 
 export type Organization = {
   id: string;
@@ -15,6 +18,7 @@ export type Organization = {
   booking_notice: string | null;
   link_theme: LinkTheme | null;
   booking_slot_mode: BookingSlotMode | null;
+  booking_slot_interval_min: BookingSlotIntervalMinutes | null;
   booking_enabled: boolean | null;
   withdrawal_requested_at: string | null;
   disabled_at: string | null;

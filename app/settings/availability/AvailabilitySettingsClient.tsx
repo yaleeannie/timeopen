@@ -6,7 +6,10 @@ import { fetchAvailabilityFromDb } from "@/features/availability/fetchAvailabili
 import { weeklyScheduleToFormState } from "@/features/availability/weeklyScheduleToFormState";
 import { WEEKDAYS, type AvailabilityFormState, type WeekdayKey } from "@/features/availability/types";
 import {
+  BOOKING_SLOT_INTERVAL_OPTIONS,
+  normalizeBookingSlotInterval,
   normalizeBookingSlotMode,
+  type BookingSlotIntervalMinutes,
   type BookingSlotMode,
 } from "@/features/booking/slotMode";
 
@@ -129,14 +132,20 @@ function toApiRows(state: AvailabilityFormState) {
 export default function AvailabilitySettingsClient({
   organizationId,
   initialBookingSlotMode,
+  initialBookingSlotIntervalMin,
 }: {
   organizationId: string;
   initialBookingSlotMode?: unknown;
+  initialBookingSlotIntervalMin?: unknown;
 }) {
   const [state, setState] = useState<AvailabilityFormState>(defaultState());
   const [bookingSlotMode, setBookingSlotMode] = useState<BookingSlotMode>(
     normalizeBookingSlotMode(initialBookingSlotMode)
   );
+  const [bookingSlotIntervalMin, setBookingSlotIntervalMin] =
+    useState<BookingSlotIntervalMinutes>(
+      normalizeBookingSlotInterval(initialBookingSlotIntervalMin)
+    );
   const [quickWeekdays, setQuickWeekdays] = useState<WeekdayKey[]>([
     "mon",
     "tue",
@@ -150,6 +159,7 @@ export default function AvailabilitySettingsClient({
   const [quickBreakEnd, setQuickBreakEnd] = useState("");
   const [saving, setSaving] = useState(false);
   const [savingSlotMode, setSavingSlotMode] = useState(false);
+  const [savingSlotInterval, setSavingSlotInterval] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -288,6 +298,36 @@ export default function AvailabilitySettingsClient({
     }
   }
 
+  async function saveBookingSlotInterval(nextInterval: BookingSlotIntervalMinutes) {
+    const previousInterval = bookingSlotIntervalMin;
+    setBookingSlotIntervalMin(nextInterval);
+    setMsg(null);
+    setSavingSlotInterval(true);
+
+    try {
+      const res = await fetch("/api/settings/booking-slot-mode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_slot_interval_min: nextInterval }),
+      });
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setMsg(json?.error ?? `저장 실패 (HTTP ${res.status})`);
+        setBookingSlotIntervalMin(previousInterval);
+        return;
+      }
+
+      setMsg("예약 시간 단위가 저장되었습니다.");
+    } catch (e) {
+      console.error(e);
+      setMsg("네트워크 오류입니다. 잠시 후 다시 시도해주세요.");
+      setBookingSlotIntervalMin(previousInterval);
+    } finally {
+      setSavingSlotInterval(false);
+    }
+  }
+
   function toggleQuickWeekday(key: WeekdayKey) {
     setQuickWeekdays((current) =>
       current.includes(key)
@@ -390,6 +430,47 @@ export default function AvailabilitySettingsClient({
           예약 설정
         </div>
         <h2 className="mt-3 text-xl font-black tracking-[-0.03em] text-gray-950">
+          예약 시간 단위
+        </h2>
+        <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
+          고객에게 보여줄 예약 가능 시간 간격이에요.
+        </p>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {BOOKING_SLOT_INTERVAL_OPTIONS.map((option) => {
+            const selected = bookingSlotIntervalMin === option;
+            const label = option === 60 ? "1시간" : `${option}분`;
+
+            return (
+              <button
+                key={option}
+                type="button"
+                disabled={savingSlotInterval}
+                onClick={() => {
+                  if (!selected) void saveBookingSlotInterval(option);
+                }}
+                className={`min-h-12 rounded-2xl border px-3 py-2 text-sm font-black transition disabled:opacity-60 ${
+                  selected
+                    ? "brand-gradient border-transparent text-white shadow-[0_12px_28px_rgba(0,193,255,0.18)]"
+                    : "border-white/70 bg-white/55 text-gray-600 hover:border-[#00c1ff]/40 hover:bg-white/85"
+                }`}
+              >
+                {label}
+                {option === 30 ? (
+                  <span
+                    className={`ml-1 text-[10px] font-black ${
+                      selected ? "text-white/85" : "brand-text"
+                    }`}
+                  >
+                    추천
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+
+        <h2 className="mt-6 text-xl font-black tracking-[-0.03em] text-gray-950">
           예약 시간 표시 방식
         </h2>
         <p className="mt-1 text-sm font-medium leading-6 text-gray-500">
@@ -402,7 +483,7 @@ export default function AvailabilitySettingsClient({
               value: "flexible" as const,
               title: "촘촘하게 받기",
               description:
-                "10분 단위로 예약 가능 시간을 보여줘요. 고객이 더 많은 시간 중에서 선택할 수 있어요.",
+                "선택한 예약 시간 단위로 예약 가능 시간을 보여줘요. 고객이 더 많은 시간 중에서 선택할 수 있어요.",
             },
             {
               value: "service_duration" as const,

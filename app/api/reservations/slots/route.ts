@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { buildDailySchedule } from "@/features/availability/buildDailySchedule";
 import { computeAvailableStartTimes } from "@/features/availability/computeAvailableStartTimes";
 import type { WeeklySchedule } from "@/features/availability/weeklySchedule";
-import { getBookingSlotStepMinutes, normalizeBookingSlotMode } from "@/features/booking/slotMode";
+import {
+  getBookingSlotStepMinutes,
+  normalizeBookingSlotInterval,
+  normalizeBookingSlotMode,
+} from "@/features/booking/slotMode";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const toHHMM = (value: unknown) => (typeof value === "string" ? value.slice(0, 5) : "");
@@ -119,7 +123,7 @@ export async function POST(req: Request) {
 
   const { data: org } = await supabase
     .from("organizations")
-    .select("booking_slot_mode")
+    .select("booking_slot_mode, booking_slot_interval_min")
     .eq("id", organizationId)
     .maybeSingle();
 
@@ -172,6 +176,9 @@ export async function POST(req: Request) {
   const durationMin = Number((service as any).duration_min ?? 0);
   const cleanupMin = Number((service as any).cleanup_min ?? 0);
   const bookingSlotMode = normalizeBookingSlotMode((org as any)?.booking_slot_mode);
+  const bookingSlotIntervalMin = normalizeBookingSlotInterval(
+    (org as any)?.booking_slot_interval_min
+  );
   const notBefore = dateISO === getSeoulTodayISO() ? getSeoulNowHHMM() : undefined;
 
   const times = computeAvailableStartTimes({
@@ -184,6 +191,7 @@ export async function POST(req: Request) {
       mode: bookingSlotMode,
       durationMin,
       cleanupMin,
+      intervalMin: bookingSlotIntervalMin,
     }),
     notBefore,
   });

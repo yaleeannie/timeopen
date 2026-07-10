@@ -1,15 +1,24 @@
 import type { BookingSlotMode } from "./slotMode";
+import { normalizeBookingSlotInterval } from "./slotMode";
 
 export function buildBookingTimeSelectionKey(input: {
   organizationId: string | null | undefined;
   dateISO: string | null | undefined;
   serviceId: string | null | undefined;
   bookingSlotMode: BookingSlotMode;
+  bookingSlotIntervalMin?: number | null | undefined;
   durationMin: number | null | undefined;
   cleanupMin: number | null | undefined;
 }) {
-  const { organizationId, dateISO, serviceId, bookingSlotMode, durationMin, cleanupMin } =
-    input;
+  const {
+    organizationId,
+    dateISO,
+    serviceId,
+    bookingSlotMode,
+    bookingSlotIntervalMin,
+    durationMin,
+    cleanupMin,
+  } = input;
 
   if (!organizationId || !dateISO || !serviceId || !durationMin) return null;
 
@@ -18,6 +27,7 @@ export function buildBookingTimeSelectionKey(input: {
     dateISO,
     serviceId,
     bookingSlotMode,
+    normalizeBookingSlotInterval(bookingSlotIntervalMin),
     durationMin,
     cleanupMin ?? 0,
   ].join("_");

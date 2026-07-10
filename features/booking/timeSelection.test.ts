@@ -14,10 +14,11 @@ test("builds the same stable key shape for time slot readiness", () => {
       dateISO: "2026-06-24",
       serviceId: "svc-1",
       bookingSlotMode: "flexible",
+      bookingSlotIntervalMin: 30,
       durationMin: 90,
       cleanupMin: 10,
     }),
-    "org-1_2026-06-24_svc-1_flexible_90_10"
+    "org-1_2026-06-24_svc-1_flexible_30_90_10"
   );
 });
 
@@ -28,6 +29,7 @@ test("time selection key changes for service-duration mode inputs", () => {
       dateISO: "2026-06-24",
       serviceId: "svc-1",
       bookingSlotMode: "flexible",
+      bookingSlotIntervalMin: 10,
       durationMin: 90,
       cleanupMin: 10,
     }),
@@ -36,6 +38,30 @@ test("time selection key changes for service-duration mode inputs", () => {
       dateISO: "2026-06-24",
       serviceId: "svc-1",
       bookingSlotMode: "service_duration",
+      bookingSlotIntervalMin: 10,
+      durationMin: 90,
+      cleanupMin: 10,
+    })
+  );
+});
+
+test("time selection key changes for configured interval inputs", () => {
+  assert.notEqual(
+    buildBookingTimeSelectionKey({
+      organizationId: "org-1",
+      dateISO: "2026-06-24",
+      serviceId: "svc-1",
+      bookingSlotMode: "flexible",
+      bookingSlotIntervalMin: 10,
+      durationMin: 90,
+      cleanupMin: 10,
+    }),
+    buildBookingTimeSelectionKey({
+      organizationId: "org-1",
+      dateISO: "2026-06-24",
+      serviceId: "svc-1",
+      bookingSlotMode: "flexible",
+      bookingSlotIntervalMin: 30,
       durationMin: 90,
       cleanupMin: 10,
     })
@@ -49,6 +75,7 @@ test("time selection key is null until required values exist", () => {
       dateISO: null,
       serviceId: "svc-1",
       bookingSlotMode: "flexible",
+      bookingSlotIntervalMin: 10,
       durationMin: 90,
       cleanupMin: 0,
     }),

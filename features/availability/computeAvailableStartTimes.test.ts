@@ -21,6 +21,39 @@ test("기본 영업시간에서 10분 단위 슬롯을 생성한다", () => {
   assert.deepEqual(result, ["09:00", "09:10", "09:20", "09:30"]);
 });
 
+test("설정된 15분 단위 슬롯을 생성한다", () => {
+  const result = computeAvailableStartTimes({
+    ...baseParams,
+    workWindows: [{ start: "09:00", end: "10:00" }],
+    durationMin: 30,
+    stepMin: 15,
+  });
+
+  assert.deepEqual(result, ["09:00", "09:15", "09:30"]);
+});
+
+test("설정된 30분 단위 슬롯을 생성한다", () => {
+  const result = computeAvailableStartTimes({
+    ...baseParams,
+    workWindows: [{ start: "09:00", end: "10:30" }],
+    durationMin: 30,
+    stepMin: 30,
+  });
+
+  assert.deepEqual(result, ["09:00", "09:30", "10:00"]);
+});
+
+test("설정된 60분 단위 슬롯을 생성한다", () => {
+  const result = computeAvailableStartTimes({
+    ...baseParams,
+    workWindows: [{ start: "09:00", end: "12:00" }],
+    durationMin: 30,
+    stepMin: 60,
+  });
+
+  assert.deepEqual(result, ["09:00", "10:00", "11:00"]);
+});
+
 test("예약 종료가 영업 종료와 정확히 같으면 포함한다", () => {
   const result = computeAvailableStartTimes({
     ...baseParams,

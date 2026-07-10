@@ -28,7 +28,7 @@ export default async function AvailabilitySettingsPage() {
   const supabase = await createSupabaseServerClient();
   const { data: organization } = await supabase
     .from("organizations")
-    .select("booking_slot_mode")
+    .select("booking_slot_mode, booking_slot_interval_min")
     .eq("id", organizationId)
     .maybeSingle();
 
@@ -45,6 +45,7 @@ export default async function AvailabilitySettingsPage() {
       <AvailabilityManagementClient
         organizationId={organizationId}
         initialBookingSlotMode={organization?.booking_slot_mode}
+        initialBookingSlotIntervalMin={organization?.booking_slot_interval_min}
       />
       <nav className="brand-nav mt-7 grid grid-cols-4 gap-1 rounded-2xl p-2">
         <a href="/owner" className="flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-gray-500">대시보드</a>

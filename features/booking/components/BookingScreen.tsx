@@ -13,6 +13,7 @@ import { fetchExceptionForDate } from "@/features/availability/fetchExceptionFor
 import { fetchHolidayForDate } from "@/features/availability/fetchHolidayForDate";
 import { computeAvailableStartTimes } from "@/features/availability/computeAvailableStartTimes";
 import {
+  type BookingSlotIntervalMinutes,
   getBookingSlotStepMinutes,
   type BookingSlotMode,
 } from "@/features/booking/slotMode";
@@ -40,6 +41,7 @@ import { canSubmitCustomerReservation } from "@/features/legal/consent";
 type Props = {
   handle: string;
   bookingSlotMode: BookingSlotMode;
+  bookingSlotIntervalMin: BookingSlotIntervalMinutes;
   initialOrganizationId?: string | null;
   initialOrgName?: string;
   initialLocation?: string;
@@ -136,6 +138,7 @@ function TimeLoadingSkeleton({ label }: { label: string }) {
 export default function BookingScreen({
   handle,
   bookingSlotMode,
+  bookingSlotIntervalMin,
   initialOrganizationId = null,
   initialOrgName = "",
   initialLocation = "",
@@ -198,10 +201,19 @@ export default function BookingScreen({
       dateISO,
       serviceId,
       bookingSlotMode,
+      bookingSlotIntervalMin,
       durationMin: service?.duration_min ?? null,
       cleanupMin: service?.cleanup_min ?? 0,
     });
-  }, [bookingSlotMode, organizationId, dateISO, serviceId, service?.duration_min, service?.cleanup_min]);
+  }, [
+    bookingSlotIntervalMin,
+    bookingSlotMode,
+    organizationId,
+    dateISO,
+    serviceId,
+    service?.duration_min,
+    service?.cleanup_min,
+  ]);
 
   const isTimesReadyForCurrent = currentKey != null && computedKeyRef.current === currentKey;
   const showEarliestTimeHint =
@@ -291,6 +303,7 @@ export default function BookingScreen({
       dateISO: nextDateISO,
       serviceId: nextServiceId,
       bookingSlotMode,
+      bookingSlotIntervalMin,
       durationMin: nextService.duration_min,
       cleanupMin,
     });
@@ -342,6 +355,7 @@ export default function BookingScreen({
           mode: bookingSlotMode,
           durationMin: nextService.duration_min,
           cleanupMin,
+          intervalMin: bookingSlotIntervalMin,
         }),
         notBefore,
       });
