@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
+import OwnerWhatsNewPopup from "@/app/owner/OwnerWhatsNewPopup";
 import ReservationsClient, {
   type ReservationCardItem,
   type ReservationServiceOption,
@@ -42,6 +43,16 @@ type SmsLogRow = {
 };
 
 type SmsDisplayStatus = "success" | "partial" | "failed" | "none";
+
+type TimeBlockRow = {
+  id: string;
+  organization_id: string;
+  block_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  reason: string | null;
+  created_at: string | null;
+};
 
 type Props = {
   searchParams?: {
@@ -341,6 +352,24 @@ function toReservationCards(
   }));
 }
 
+function toTimeBlockCards(blocks: TimeBlockRow[]): ReservationCardItem[] {
+  return blocks.map((block) => ({
+    id: block.id,
+    itemType: "block",
+    serviceId: "",
+    createdAt: block.created_at ?? "",
+    status: "blocked",
+    customerName: "",
+    customerPhone: "",
+    serviceName: "예약 막힘",
+    date: block.block_date ? String(block.block_date).slice(0, 10) : "-",
+    start: formatTimeText(block.start_time),
+    end: formatTimeText(block.end_time),
+    smsStatus: "none",
+    reason: block.reason ?? "",
+  }));
+}
+
 export default async function ReservationsPage({ searchParams }: Props) {
   const { user, organizationId, handle, error } = await getOwnerContext();
 
@@ -372,7 +401,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
 
   const { data: organizationRow, error: orgErr } = await supabase
     .from("organizations")
-    .select("booking_confirmation_mode")
+    .select("booking_confirmation_mode, booking_slot_interval_min")
     .eq("id", organizationId)
     .maybeSingle();
 
@@ -410,6 +439,21 @@ export default async function ReservationsPage({ searchParams }: Props) {
     return (
       <div style={{ padding: 16 }}>
         <div>services 조회 실패: {svcErr.message}</div>
+      </div>
+    );
+  }
+
+  const { data: blockRows, error: blockErr } = await supabase
+    .from("reservation_time_blocks")
+    .select("id, organization_id, block_date, start_time, end_time, reason, created_at")
+    .eq("organization_id", organizationId)
+    .order("block_date", { ascending: true })
+    .order("start_time", { ascending: true });
+
+  if (blockErr) {
+    return (
+      <div style={{ padding: 16 }}>
+        <div>reservation_time_blocks 조회 실패: {blockErr.message}</div>
       </div>
     );
   }
@@ -498,6 +542,11 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const bookingConfirmationMode = normalizeBookingConfirmationMode(
     organizationRow?.booking_confirmation_mode
   );
+  const bookingSlotIntervalMin = [10, 15, 30, 60].includes(
+    Number((organizationRow as any)?.booking_slot_interval_min)
+  )
+    ? Number((organizationRow as any)?.booking_slot_interval_min)
+    : 10;
   const isManualConfirmationMode = bookingConfirmationMode === "manual";
   const selectedView = isManualConfirmationMode
     ? normalizeReservationView(searchParams?.view)
@@ -510,12 +559,26 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const calendarReservationRows = reservationRows.filter(({ row }) =>
     isScheduleReservationStatus(row.status)
   );
+  const timeBlockRows = ((blockRows ?? []) as TimeBlockRow[]).map((block) => ({
+    ...block,
+    block_date: block.block_date ? String(block.block_date).slice(0, 10) : null,
+    start_time: formatTimeText(block.start_time),
+    end_time: formatTimeText(block.end_time),
+  }));
   const reservationCountByDate = calendarReservationRows.reduce((counts, reservation) => {
     if (reservation.date !== "-") {
       counts.set(reservation.date, (counts.get(reservation.date) ?? 0) + 1);
     }
     return counts;
   }, new Map<string, number>());
+  for (const block of timeBlockRows) {
+    if (block.block_date) {
+      reservationCountByDate.set(
+        block.block_date,
+        (reservationCountByDate.get(block.block_date) ?? 0) + 1
+      );
+    }
+  }
   const selectedReservations = groupedReservations.find(
     ([date]) => date === selectedDate
   )?.[1] ?? [];
@@ -533,6 +596,8 @@ export default async function ReservationsPage({ searchParams }: Props) {
         b.start === "-" ? "99:99" : b.start
       )
     )
+  ).concat(
+    toTimeBlockCards(timeBlockRows.filter((block) => block.block_date === selectedDate))
   );
   const listLabel = selectedStatusFilter === "all"
     ? "전체 예약"
@@ -550,6 +615,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
 
   return (
     <main className="soft-page-bg overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
+      <OwnerWhatsNewPopup />
       <div className="glass-shell mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] sm:rounded-[36px]">
         <div className="px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7">
         <header className="mb-6">
@@ -633,6 +699,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
               selectedDateLabel={listLabel}
               reservations={listReservationCards}
               services={serviceOptions}
+              bookingSlotIntervalMin={bookingSlotIntervalMin}
               emptyText={listEmptyText}
               emptyHelper="상단 필터를 바꿔 다른 예약 상태를 확인해보세요."
               sortMode="created_desc"
@@ -748,6 +815,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
               selectedDateLabel={formatDateLabel(selectedDate)}
               reservations={calendarReservationCards}
               services={serviceOptions}
+              bookingSlotIntervalMin={bookingSlotIntervalMin}
               emptyText="선택한 날짜에 예약이 없어요."
               emptyHelper="캘린더에서 다른 날짜를 선택해 예약 일정을 확인해보세요."
               sortMode="start_asc"

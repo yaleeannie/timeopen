@@ -48,6 +48,12 @@ export async function saveReservation(params: Params): Promise<string> {
   });
 
   if (error) {
+    if (/selected time is blocked/i.test(error.message)) {
+      throw new Error("선택한 시간은 예약이 막혀 있어요. 다른 시간을 선택해주세요.");
+    }
+    if (/selected time is no longer available/i.test(error.message)) {
+      throw new Error("이미 예약된 시간이에요. 다른 시간을 선택해주세요.");
+    }
     throw new Error(error.message);
   }
 

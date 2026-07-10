@@ -6,6 +6,7 @@ import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { getPlanDisplay } from "@/features/billing/planStatus";
 import { filterDashboardScheduleReservations } from "./dashboardSchedule";
+import OwnerWhatsNewPopup from "./OwnerWhatsNewPopup";
 import OwnerDashboardClient, {
   type DashboardReservation,
   type IncompleteSetting,
@@ -300,22 +301,25 @@ export default async function OwnerPage() {
   }).format(new Date());
 
   return (
-    <OwnerDashboardClient
-      storeName={storeName}
-      greeting={greetingForHour(getSeoulHour())}
-      todayISO={todayISO}
-      todayDateText={todayDateText}
-      scheduleDates={scheduleDates}
-      reservations={scheduleReservations}
-      thisWeekReservationCount={thisWeekReservationCount}
-      incompleteSettings={incompleteSettings}
-      bookingUrl={bookingUrl}
-      canLink={canLink}
-      planDisplay={{
-        label: planDisplay.label,
-        helperText: planDisplay.helperText,
-        billingNotice: planDisplay.billingNotice,
-      }}
-    />
+    <>
+      <OwnerWhatsNewPopup />
+      <OwnerDashboardClient
+        storeName={storeName}
+        greeting={greetingForHour(getSeoulHour())}
+        todayISO={todayISO}
+        todayDateText={todayDateText}
+        scheduleDates={scheduleDates}
+        reservations={scheduleReservations}
+        thisWeekReservationCount={thisWeekReservationCount}
+        incompleteSettings={incompleteSettings}
+        bookingUrl={bookingUrl}
+        canLink={canLink}
+        planDisplay={{
+          label: planDisplay.label,
+          helperText: planDisplay.helperText,
+          billingNotice: planDisplay.billingNotice,
+        }}
+      />
+    </>
   );
 }

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
 import OpenSlotShareCard from "@/app/owner/OpenSlotShareCard";
+import OwnerWhatsNewPopup from "@/app/owner/OwnerWhatsNewPopup";
 import { normalizeLinkTheme } from "@/features/booking/themes";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import { getBookingUrl } from "@/lib/siteUrl";
@@ -37,6 +38,7 @@ export default async function OpenSlotPage() {
 
   return (
     <main className="soft-page-bg overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
+      <OwnerWhatsNewPopup />
       <div className="glass-shell mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] sm:rounded-[36px]">
         <div className="px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7">
           <header className="mb-5">

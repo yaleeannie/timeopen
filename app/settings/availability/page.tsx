@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
+import OwnerWhatsNewPopup from "@/app/owner/OwnerWhatsNewPopup";
 import AvailabilityManagementClient from "./AvailabilityManagementClient";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -9,6 +10,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export default async function AvailabilitySettingsPage() {
   const Shell = ({ children }: { children: ReactNode }) => (
     <main className="soft-page-bg overflow-x-hidden px-3 py-4 text-slate-900 sm:px-5 sm:py-7">
+      <OwnerWhatsNewPopup />
       <div className="glass-shell mx-auto w-full min-w-0 max-w-lg overflow-hidden rounded-[28px] sm:rounded-[36px]">
         <div className="px-4 pb-7 pt-5 sm:px-6 sm:pb-9 sm:pt-7">{children}</div>
       </div>

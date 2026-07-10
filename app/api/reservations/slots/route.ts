@@ -181,6 +181,11 @@ export async function POST(req: Request) {
   }
 
   const { data: busyRows } = await busyQuery;
+  const { data: blockRows } = await supabase
+    .from("reservation_time_blocks")
+    .select("start_time, end_time")
+    .eq("organization_id", organizationId)
+    .eq("block_date", dateISO);
 
   const busy = (busyRows ?? [])
     .filter((row: any) => !["cancelled", "canceled"].includes(String(row.status ?? "confirmed")))
@@ -188,7 +193,15 @@ export async function POST(req: Request) {
     .map((row: any) => ({
       start: toHHMM(row.start_time),
       end: addMinutesToTime(toHHMM(row.end_time), Number(row.buffer_min ?? 0)),
-    }));
+    }))
+    .concat(
+      (blockRows ?? [])
+        .filter((row: any) => row.start_time && row.end_time)
+        .map((row: any) => ({
+          start: toHHMM(row.start_time),
+          end: toHHMM(row.end_time),
+        }))
+    );
 
   const [year, month, day] = dateISO.split("-").map(Number);
   const weekly = convertRowsToWeeklySchedule(availabilityRows ?? []);
