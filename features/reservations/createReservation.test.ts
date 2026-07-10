@@ -117,7 +117,9 @@ test("owner reservation success toast auto-dismisses and cleans up its timer", (
   assert.match(reservationsClientSource, /if \(!options\?\.keepToast\)/);
   assert.match(reservationsClientSource, /resetAndClose\(\{ keepToast: true \}\)/);
   assert.match(reservationsClientSource, /role="status"/);
-  assert.match(reservationsClientSource, /fixed bottom-5 left-1\/2 z-\[60\]/);
+  assert.match(reservationsClientSource, /fixed left-1\/2 top-1\/2 z-\[100\]/);
+  assert.match(reservationsClientSource, /-translate-x-1\/2 -translate-y-1\/2/);
+  assert.match(reservationsClientSource, /max-w-\[calc\(100vw-32px\)\]/);
   assert.doesNotMatch(
     manualReservationCreatorSource,
     /mb-3 rounded-2xl bg-\[#e8fbff\]/

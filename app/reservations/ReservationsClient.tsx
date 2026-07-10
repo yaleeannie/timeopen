@@ -232,7 +232,7 @@ function ManualReservationCreator({ services }: { services: ReservationServiceOp
         <div
           role="status"
           aria-live="polite"
-          className={`fixed bottom-5 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center gap-2 rounded-xl border bg-white px-4 py-3 text-sm font-black shadow-[0_18px_50px_rgba(14,165,233,0.16)] transition-all duration-200 sm:bottom-auto sm:top-6 ${
+          className={`fixed left-1/2 top-1/2 z-[100] flex w-fit max-w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 scale-100 items-center justify-center gap-2 rounded-2xl border bg-white px-5 py-4 text-center text-sm font-black opacity-100 shadow-lg transition-all duration-200 ${
             toast.tone === "warning"
               ? "border-amber-200 text-amber-700"
               : "border-sky-100 text-slate-900"
