@@ -26,7 +26,7 @@ export type Organization = {
 };
 
 export async function fetchOrganizationByHandle(handle: string): Promise<Organization | null> {
-  const { data, error } = await supabase.rpc("get_public_organization_by_handle", {
+  const { data, error } = await supabase.rpc("get_public_booking_settings_by_handle", {
     p_handle: handle,
   });
 

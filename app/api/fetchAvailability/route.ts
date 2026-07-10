@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     supabase.rpc("get_availability_rows_by_handle", {
       p_handle: handle,
     }),
-    supabase.rpc("get_public_organization_by_handle", {
+    supabase.rpc("get_public_booking_settings_by_handle", {
       p_handle: handle,
     }),
   ]);
