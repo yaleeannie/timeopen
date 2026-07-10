@@ -94,12 +94,18 @@ test("owner availability settings hide booking slot mode UI", () => {
 test("settings API validates and updates interval without requiring mode changes", () => {
   assert.match(settingsRoute, /validateBookingSlotInterval/);
   assert.match(settingsRoute, /booking_slot_interval_min/);
-  assert.match(settingsRoute, /select\("booking_slot_mode, booking_slot_interval_min"\)/);
-  assert.match(settingsRoute, /updatedOrganization\?\.booking_slot_interval_min/);
+  assert.match(settingsRoute, /bookingSlotIntervalMin/);
+  assert.match(settingsRoute, /hasSnakeCaseInterval/);
+  assert.match(settingsRoute, /hasCamelCaseInterval/);
+  assert.match(settingsRoute, /\.update\(updates\)/);
+  assert.doesNotMatch(settingsRoute, /\.select\("booking_slot_mode, booking_slot_interval_min"\)/);
+  assert.match(settingsRoute, /\.\.\.updates/);
   assert.match(
     settingsRoute,
     /예약 시간 단위 저장 컬럼이 아직 적용되지 않았어요\. 로컬 DB에 최신 마이그레이션을 적용해주세요\./
   );
+  assert.match(settingsRoute, /logBookingSlotSettingsFailure\("column_check"/);
+  assert.match(settingsRoute, /logBookingSlotSettingsFailure\("update"/);
   assert.match(settingsRoute, /Object\.keys\(updates\)\.length === 0/);
 });
 
