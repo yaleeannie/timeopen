@@ -5,7 +5,6 @@ import type { WeeklySchedule } from "@/features/availability/weeklySchedule";
 import {
   getBookingSlotStepMinutes,
   normalizeBookingSlotInterval,
-  normalizeBookingSlotMode,
 } from "@/features/booking/slotMode";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -123,7 +122,7 @@ export async function POST(req: Request) {
 
   const { data: org } = await supabase
     .from("organizations")
-    .select("booking_slot_mode, booking_slot_interval_min")
+    .select("booking_slot_interval_min")
     .eq("id", organizationId)
     .maybeSingle();
 
@@ -175,7 +174,6 @@ export async function POST(req: Request) {
   const daily = buildDailySchedule(new Date(year, month - 1, day), weekly, exception as any);
   const durationMin = Number((service as any).duration_min ?? 0);
   const cleanupMin = Number((service as any).cleanup_min ?? 0);
-  const bookingSlotMode = normalizeBookingSlotMode((org as any)?.booking_slot_mode);
   const bookingSlotIntervalMin = normalizeBookingSlotInterval(
     (org as any)?.booking_slot_interval_min
   );
@@ -188,7 +186,7 @@ export async function POST(req: Request) {
     durationMin,
     bufferMin: cleanupMin,
     stepMin: getBookingSlotStepMinutes({
-      mode: bookingSlotMode,
+      mode: "flexible",
       durationMin,
       cleanupMin,
       intervalMin: bookingSlotIntervalMin,

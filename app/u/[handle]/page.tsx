@@ -1,10 +1,7 @@
 import PublicBookingPage from "@/features/booking/components/PublicBookingPage";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizeLinkTheme } from "@/features/booking/themes";
-import {
-  normalizeBookingSlotInterval,
-  normalizeBookingSlotMode,
-} from "@/features/booking/slotMode";
+import { normalizeBookingSlotInterval } from "@/features/booking/slotMode";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -27,7 +24,6 @@ export default async function UserBookingPage({ params }: Props) {
       handle={handle}
       organizationFound={Boolean(organization)}
       linkTheme={normalizeLinkTheme(organization?.link_theme)}
-      bookingSlotMode={normalizeBookingSlotMode(organization?.booking_slot_mode)}
       bookingSlotIntervalMin={normalizeBookingSlotInterval(
         organization?.booking_slot_interval_min
       )}

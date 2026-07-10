@@ -5,24 +5,19 @@ import AvailabilitySettingsClient from "./AvailabilitySettingsClient";
 import HolidaySettingsClient from "./HolidaySettingsClient";
 import {
   normalizeBookingSlotInterval,
-  normalizeBookingSlotMode,
   type BookingSlotIntervalMinutes,
-  type BookingSlotMode,
 } from "@/features/booking/slotMode";
 
 type Tab = "hours" | "holidays";
 
 export default function AvailabilityManagementClient({
   organizationId,
-  initialBookingSlotMode,
   initialBookingSlotIntervalMin,
 }: {
   organizationId: string;
-  initialBookingSlotMode?: unknown;
   initialBookingSlotIntervalMin?: unknown;
 }) {
   const [tab, setTab] = useState<Tab>("hours");
-  const bookingSlotMode: BookingSlotMode = normalizeBookingSlotMode(initialBookingSlotMode);
   const bookingSlotIntervalMin: BookingSlotIntervalMinutes =
     normalizeBookingSlotInterval(initialBookingSlotIntervalMin);
 
@@ -71,7 +66,6 @@ export default function AvailabilityManagementClient({
       >
           <AvailabilitySettingsClient
             organizationId={organizationId}
-            initialBookingSlotMode={bookingSlotMode}
             initialBookingSlotIntervalMin={bookingSlotIntervalMin}
           />
       </div>

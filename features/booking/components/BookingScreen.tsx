@@ -15,7 +15,6 @@ import { computeAvailableStartTimes } from "@/features/availability/computeAvail
 import {
   type BookingSlotIntervalMinutes,
   getBookingSlotStepMinutes,
-  type BookingSlotMode,
 } from "@/features/booking/slotMode";
 import {
   buildBookingTimeSelectionKey,
@@ -40,7 +39,6 @@ import { canSubmitCustomerReservation } from "@/features/legal/consent";
 
 type Props = {
   handle: string;
-  bookingSlotMode: BookingSlotMode;
   bookingSlotIntervalMin: BookingSlotIntervalMinutes;
   initialOrganizationId?: string | null;
   initialOrgName?: string;
@@ -137,7 +135,6 @@ function TimeLoadingSkeleton({ label }: { label: string }) {
 
 export default function BookingScreen({
   handle,
-  bookingSlotMode,
   bookingSlotIntervalMin,
   initialOrganizationId = null,
   initialOrgName = "",
@@ -200,14 +197,13 @@ export default function BookingScreen({
       organizationId,
       dateISO,
       serviceId,
-      bookingSlotMode,
+      bookingSlotMode: "flexible",
       bookingSlotIntervalMin,
       durationMin: service?.duration_min ?? null,
       cleanupMin: service?.cleanup_min ?? 0,
     });
   }, [
     bookingSlotIntervalMin,
-    bookingSlotMode,
     organizationId,
     dateISO,
     serviceId,
@@ -302,7 +298,7 @@ export default function BookingScreen({
       organizationId,
       dateISO: nextDateISO,
       serviceId: nextServiceId,
-      bookingSlotMode,
+      bookingSlotMode: "flexible",
       bookingSlotIntervalMin,
       durationMin: nextService.duration_min,
       cleanupMin,
@@ -352,7 +348,7 @@ export default function BookingScreen({
         durationMin: nextService.duration_min,
         bufferMin: cleanupMin,
         stepMin: getBookingSlotStepMinutes({
-          mode: bookingSlotMode,
+          mode: "flexible",
           durationMin: nextService.duration_min,
           cleanupMin,
           intervalMin: bookingSlotIntervalMin,

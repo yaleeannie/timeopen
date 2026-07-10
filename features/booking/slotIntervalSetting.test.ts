@@ -54,22 +54,40 @@ test("migration adds booking slot interval with 10-minute default and check cons
   assert.match(migrationSql, /o\.booking_slot_interval_min/);
 });
 
-test("public booking page passes organization interval into slot generation", () => {
+test("public booking page uses organization interval for visible slot generation", () => {
   assert.match(publicBookingPage, /normalizeBookingSlotInterval/);
   assert.match(publicBookingPage, /organization\?\.booking_slot_interval_min/);
+  assert.doesNotMatch(publicBookingPage, /normalizeBookingSlotMode/);
   assert.match(publicBookingShell, /bookingSlotIntervalMin/);
+  assert.doesNotMatch(publicBookingShell, /bookingSlotMode/);
   assert.match(bookingScreen, /bookingSlotIntervalMin/);
   assert.match(bookingScreen, /intervalMin: bookingSlotIntervalMin/);
+  assert.match(bookingScreen, /mode: "flexible"/);
 });
 
 test("owner availability settings expose and save Korean booking interval options", () => {
-  assert.match(availabilityPage, /booking_slot_mode, booking_slot_interval_min/);
+  assert.match(availabilityPage, /booking_slot_interval_min/);
+  assert.doesNotMatch(availabilityPage, /booking_slot_mode,/);
   assert.match(availabilitySettings, /예약 시간 단위/);
   assert.match(availabilitySettings, /고객에게 보여줄 예약 가능 시간 간격이에요\./);
   assert.match(availabilitySettings, /BOOKING_SLOT_INTERVAL_OPTIONS/);
   assert.match(availabilitySettings, /booking_slot_interval_min: nextInterval/);
   assert.match(availabilitySettings, /option === 30/);
   assert.match(availabilitySettings, /추천/);
+  assert.match(availabilitySettings, /setBookingSlotIntervalMin\(nextInterval\)/);
+  assert.match(availabilitySettings, /예약 시간 단위를 저장 중\.\.\./);
+  assert.match(
+    availabilitySettings,
+    /예약 시간 단위를 저장하지 못했어요\. 다시 시도해주세요\./
+  );
+});
+
+test("owner availability settings hide booking slot mode UI", () => {
+  assert.doesNotMatch(availabilitySettings, /예약 시간 표시 방식/);
+  assert.doesNotMatch(availabilitySettings, /촘촘하게 받기/);
+  assert.doesNotMatch(availabilitySettings, /딱 맞게 받기/);
+  assert.doesNotMatch(availabilitySettings, /예: 90분 시술 기준/);
+  assert.doesNotMatch(availabilitySettings, /saveBookingSlotMode/);
 });
 
 test("settings API validates and updates interval without requiring mode changes", () => {
@@ -79,7 +97,9 @@ test("settings API validates and updates interval without requiring mode changes
 });
 
 test("owner reservation edit slots use the same organization interval", () => {
-  assert.match(ownerSlotsRoute, /booking_slot_mode, booking_slot_interval_min/);
+  assert.match(ownerSlotsRoute, /booking_slot_interval_min/);
+  assert.doesNotMatch(ownerSlotsRoute, /booking_slot_mode,/);
   assert.match(ownerSlotsRoute, /normalizeBookingSlotInterval/);
   assert.match(ownerSlotsRoute, /intervalMin: bookingSlotIntervalMin/);
+  assert.match(ownerSlotsRoute, /mode: "flexible"/);
 });

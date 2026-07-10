@@ -11,16 +11,12 @@ import {
   PUBLIC_BOOKING_THEMES,
   type LinkTheme,
 } from "@/features/booking/themes";
-import type {
-  BookingSlotIntervalMinutes,
-  BookingSlotMode,
-} from "@/features/booking/slotMode";
+import type { BookingSlotIntervalMinutes } from "@/features/booking/slotMode";
 
 type Props = {
   handle: string;
   organizationFound: boolean;
   linkTheme: LinkTheme;
-  bookingSlotMode: BookingSlotMode;
   bookingSlotIntervalMin: BookingSlotIntervalMinutes;
   bookingEnabled: boolean;
   organizationId?: string;
@@ -35,7 +31,6 @@ function PublicBookingPageContent({
   handle,
   organizationFound,
   linkTheme,
-  bookingSlotMode,
   bookingSlotIntervalMin,
   bookingEnabled,
   organizationId = "",
@@ -85,7 +80,6 @@ function PublicBookingPageContent({
           ) : !disabled && bookingEnabled ? (
             <BookingScreen
               handle={handle}
-              bookingSlotMode={bookingSlotMode}
               bookingSlotIntervalMin={bookingSlotIntervalMin}
               initialOrganizationId={organizationId}
               initialOrgName={shopName}
