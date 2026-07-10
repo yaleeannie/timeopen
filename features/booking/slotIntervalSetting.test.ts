@@ -36,6 +36,10 @@ const settingsRoute = readFileSync(
   new URL("../../app/api/settings/booking-slot-mode/route.ts", import.meta.url),
   "utf8"
 );
+const fetchAvailabilityRoute = readFileSync(
+  new URL("../../app/api/fetchAvailability/route.ts", import.meta.url),
+  "utf8"
+);
 const ownerSlotsRoute = readFileSync(
   new URL("../../app/api/reservations/slots/route.ts", import.meta.url),
   "utf8"
@@ -61,8 +65,18 @@ test("public booking page uses organization interval for visible slot generation
   assert.match(publicBookingShell, /bookingSlotIntervalMin/);
   assert.doesNotMatch(publicBookingShell, /bookingSlotMode/);
   assert.match(bookingScreen, /bookingSlotIntervalMin/);
-  assert.match(bookingScreen, /intervalMin: bookingSlotIntervalMin/);
+  assert.match(bookingScreen, /activeBookingSlotIntervalMin/);
+  assert.match(bookingScreen, /normalizeBookingSlotInterval\(json\?\.booking_slot_interval_min\)/);
+  assert.match(bookingScreen, /intervalMin: activeBookingSlotIntervalMin/);
   assert.match(bookingScreen, /mode: "flexible"/);
+});
+
+test("public availability API returns organization booking interval", () => {
+  assert.match(fetchAvailabilityRoute, /get_public_organization_by_handle/);
+  assert.match(fetchAvailabilityRoute, /normalizeBookingSlotInterval/);
+  assert.match(fetchAvailabilityRoute, /organization\?\.booking_slot_interval_min/);
+  assert.match(fetchAvailabilityRoute, /booking_slot_interval_min: bookingSlotIntervalMin/);
+  assert.match(fetchAvailabilityRoute, /generatedSlotStep: bookingSlotIntervalMin/);
 });
 
 test("owner availability settings expose and save Korean booking interval options", () => {

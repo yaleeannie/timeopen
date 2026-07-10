@@ -15,6 +15,7 @@ import { computeAvailableStartTimes } from "@/features/availability/computeAvail
 import {
   type BookingSlotIntervalMinutes,
   getBookingSlotStepMinutes,
+  normalizeBookingSlotInterval,
 } from "@/features/booking/slotMode";
 import {
   buildBookingTimeSelectionKey,
@@ -149,6 +150,8 @@ export default function BookingScreen({
   );
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule | null>(null);
+  const [activeBookingSlotIntervalMin, setActiveBookingSlotIntervalMin] =
+    useState<BookingSlotIntervalMinutes>(bookingSlotIntervalMin);
   const [isInitialBookingLoading, setIsInitialBookingLoading] = useState(true);
 
   const [dateISO, setDateISO] = useState<string | null>(null);
@@ -198,12 +201,12 @@ export default function BookingScreen({
       dateISO,
       serviceId,
       bookingSlotMode: "flexible",
-      bookingSlotIntervalMin,
+      bookingSlotIntervalMin: activeBookingSlotIntervalMin,
       durationMin: service?.duration_min ?? null,
       cleanupMin: service?.cleanup_min ?? 0,
     });
   }, [
-    bookingSlotIntervalMin,
+    activeBookingSlotIntervalMin,
     organizationId,
     dateISO,
     serviceId,
@@ -218,6 +221,10 @@ export default function BookingScreen({
       times: availableTimes,
       selectedTime: time,
     });
+
+  useEffect(() => {
+    setActiveBookingSlotIntervalMin(bookingSlotIntervalMin);
+  }, [bookingSlotIntervalMin]);
 
   const ctaSelection = useMemo(() => {
     if (isTimesReadyForCurrent) {
@@ -282,6 +289,9 @@ export default function BookingScreen({
 
       const json = await res.json();
       setWeeklySchedule(convertRowsToWeeklySchedule(json.data));
+      setActiveBookingSlotIntervalMin(
+        normalizeBookingSlotInterval(json?.booking_slot_interval_min)
+      );
     })();
   }, [organizationId, handle]);
 
@@ -299,7 +309,7 @@ export default function BookingScreen({
       dateISO: nextDateISO,
       serviceId: nextServiceId,
       bookingSlotMode: "flexible",
-      bookingSlotIntervalMin,
+      bookingSlotIntervalMin: activeBookingSlotIntervalMin,
       durationMin: nextService.duration_min,
       cleanupMin,
     });
@@ -351,7 +361,7 @@ export default function BookingScreen({
           mode: "flexible",
           durationMin: nextService.duration_min,
           cleanupMin,
-          intervalMin: bookingSlotIntervalMin,
+          intervalMin: activeBookingSlotIntervalMin,
         }),
         notBefore,
       });
