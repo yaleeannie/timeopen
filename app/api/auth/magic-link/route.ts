@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { validateEmail } from "@/features/auth/email";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isMaintenanceMode } from "@/lib/maintenance";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -17,6 +18,7 @@ export async function POST(req: Request) {
     email: validation.value,
     options: {
       emailRedirectTo: `${url.origin}/auth/callback?next=/owner`,
+      shouldCreateUser: !isMaintenanceMode(),
     },
   });
 

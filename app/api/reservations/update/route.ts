@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { sendSms } from "@/lib/notify/sendSms";
+import { sendSms, SmsDeliverySuppressedError } from "@/lib/notify/sendSms";
 import {
   buildReservationEditRpcPayload,
   buildReservationUpdatedSms,
@@ -147,11 +147,14 @@ export async function POST(req: Request) {
       message: "예약이 수정됐고 고객에게 안내 문자를 보냈어요.",
     });
   } catch (error) {
-    console.error("[reservations/update] sms failed", error);
+    const skipped = error instanceof SmsDeliverySuppressedError;
+    if (!skipped) console.error("[reservations/update] sms failed", error);
     return NextResponse.json({
       ok: true,
-      smsStatus: "failed",
-      message: "예약은 수정됐지만 문자 발송에 실패했어요.",
+      smsStatus: skipped ? "skipped" : "failed",
+      message: skipped
+        ? "예약이 수정됐고 문자 발송은 비활성화되어 있어요."
+        : "예약은 수정됐지만 문자 발송에 실패했어요.",
     });
   }
 }

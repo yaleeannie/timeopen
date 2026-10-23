@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildSolapiSendManyPayload,
+  isSmsDeliverySuppressed,
   normalizeSmsBody,
   normalizeSmsSubject,
+  sendSms,
+  SmsDeliverySuppressedError,
 } from "./sendSms";
 
 const confirmationBody = [
@@ -49,4 +52,52 @@ test("sms body normalization removes leading and trailing whitespace only", () =
     normalizeSmsBody(`\n\n${confirmationBody}\n\n`),
     confirmationBody
   );
+});
+
+test("maintenance mode suppresses SMS before any provider request", async () => {
+  const previousMaintenance = process.env.TIMEOPEN_MAINTENANCE_MODE;
+  const previousSmsEnabled = process.env.TIMEOPEN_SMS_ENABLED;
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+
+  try {
+    process.env.TIMEOPEN_MAINTENANCE_MODE = "true";
+    process.env.TIMEOPEN_SMS_ENABLED = "true";
+    globalThis.fetch = (async () => {
+      calls += 1;
+      return new Response("{}", { status: 200 });
+    }) as typeof fetch;
+
+    assert.equal(isSmsDeliverySuppressed(), true);
+    await assert.rejects(
+      sendSms("+821012345678", "should never be sent"),
+      SmsDeliverySuppressedError
+    );
+    assert.equal(calls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousMaintenance === undefined) delete process.env.TIMEOPEN_MAINTENANCE_MODE;
+    else process.env.TIMEOPEN_MAINTENANCE_MODE = previousMaintenance;
+    if (previousSmsEnabled === undefined) delete process.env.TIMEOPEN_SMS_ENABLED;
+    else process.env.TIMEOPEN_SMS_ENABLED = previousSmsEnabled;
+  }
+});
+
+test("SMS remains off unless explicitly enabled", () => {
+  const previousSmsEnabled = process.env.TIMEOPEN_SMS_ENABLED;
+  const previousMaintenance = process.env.TIMEOPEN_MAINTENANCE_MODE;
+  try {
+    process.env.TIMEOPEN_MAINTENANCE_MODE = "false";
+    delete process.env.TIMEOPEN_SMS_ENABLED;
+    assert.equal(isSmsDeliverySuppressed(), true);
+    process.env.TIMEOPEN_SMS_ENABLED = "false";
+    assert.equal(isSmsDeliverySuppressed(), true);
+    process.env.TIMEOPEN_SMS_ENABLED = "true";
+    assert.equal(isSmsDeliverySuppressed(), false);
+  } finally {
+    if (previousSmsEnabled === undefined) delete process.env.TIMEOPEN_SMS_ENABLED;
+    else process.env.TIMEOPEN_SMS_ENABLED = previousSmsEnabled;
+    if (previousMaintenance === undefined) delete process.env.TIMEOPEN_MAINTENANCE_MODE;
+    else process.env.TIMEOPEN_MAINTENANCE_MODE = previousMaintenance;
+  }
 });

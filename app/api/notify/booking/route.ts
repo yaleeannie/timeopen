@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   sendSms,
   SmsSendError,
+  SmsDeliverySuppressedError,
   type SmsSendResult,
 } from "@/lib/notify/sendSms";
 import {
@@ -263,17 +264,20 @@ export async function POST(req: Request) {
         result,
       });
     } catch (e) {
-      console.error("[notify/booking] owner sms failed", e);
+      const skipped = e instanceof SmsDeliverySuppressedError;
+      if (!skipped) console.error("[notify/booking] owner sms failed", e);
       await saveSmsLog({
         supabase,
         handle,
         reservationId,
         recipientType: "owner",
         toPhone: ownerPhone,
-        status: "failed",
+        status: skipped ? "skipped" : "failed",
         messageLength: ownerMsg.length,
         result: e instanceof SmsSendError ? e.result : undefined,
-        errorMessage: e instanceof Error ? e.message : String(e),
+        errorMessage: skipped
+          ? "SMS delivery disabled by TimeOpen settings"
+          : e instanceof Error ? e.message : String(e),
       });
     }
   } else {
@@ -310,17 +314,20 @@ export async function POST(req: Request) {
         result,
       });
     } catch (e) {
-      console.error("[notify/booking] guest sms failed", e);
+      const skipped = e instanceof SmsDeliverySuppressedError;
+      if (!skipped) console.error("[notify/booking] guest sms failed", e);
       await saveSmsLog({
         supabase,
         handle,
         reservationId,
         recipientType: "customer",
         toPhone: customerPhone,
-        status: "failed",
+        status: skipped ? "skipped" : "failed",
         messageLength: guestMsg.length,
         result: e instanceof SmsSendError ? e.result : undefined,
-        errorMessage: e instanceof Error ? e.message : String(e),
+        errorMessage: skipped
+          ? "SMS delivery disabled by TimeOpen settings"
+          : e instanceof Error ? e.message : String(e),
       });
     }
   } else {

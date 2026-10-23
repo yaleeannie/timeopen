@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { isMaintenanceMode } from "@/lib/maintenance";
 
 const API_KEY = process.env.SOLAPI_API_KEY!;
 const API_SECRET = process.env.SOLAPI_API_SECRET!;
@@ -17,6 +18,20 @@ export class SmsSendError extends Error {
     this.name = "SmsSendError";
     this.result = result;
   }
+}
+
+export class SmsDeliverySuppressedError extends Error {
+  constructor() {
+    super("SMS delivery is disabled by TimeOpen settings");
+    this.name = "SmsDeliverySuppressedError";
+  }
+}
+
+export function isSmsDeliverySuppressed() {
+  return (
+    isMaintenanceMode() ||
+    process.env.TIMEOPEN_SMS_ENABLED?.trim().toLowerCase() !== "true"
+  );
 }
 
 export function normalizeSmsBody(text: string) {
@@ -78,6 +93,11 @@ export async function sendSms(
   text: string,
   options: { subject?: string | null } = {}
 ) {
+  // Fail closed before logging phone/message data or contacting Solapi.
+  if (isSmsDeliverySuppressed()) {
+    throw new SmsDeliverySuppressedError();
+  }
+
   const body = normalizeSmsBody(text);
 
   console.log("[sendSms] to =", to, "from =", SENDER);

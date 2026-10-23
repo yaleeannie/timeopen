@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getOwnerContext } from "@/lib/owner/getOwnerContext";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { validateServiceInput } from "@/features/validation/fieldLimits";
+import { isMaintenanceMode, maintenanceApiResponse } from "@/lib/maintenance";
 
 type ServiceRequest = {
   id?: unknown;
@@ -19,6 +20,12 @@ type ParsedService = {
 };
 
 export async function POST(req: Request) {
+  if (isMaintenanceMode()) {
+    return maintenanceApiResponse(
+      "TimeOpen 서비스를 일시 중지 중이라 신규 가입과 매장 설정을 진행할 수 없습니다."
+    );
+  }
+
   const { user, organizationId, error } = await getOwnerContext();
 
   if (!user) {

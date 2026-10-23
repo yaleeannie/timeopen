@@ -1,6 +1,26 @@
 // middleware.ts (project root)
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { isMaintenanceMode, maintenanceApiResponse } from "@/lib/maintenance";
+
+function isAllowedDuringMaintenance(pathname: string) {
+  return (
+    pathname === "/maintenance" ||
+    pathname === "/login" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname.startsWith("/auth/") ||
+    pathname === "/terms" ||
+    pathname === "/privacy" ||
+    pathname.startsWith("/r/") ||
+    pathname.startsWith("/u/") &&
+      (pathname.endsWith("/confirmed") || pathname.endsWith("/cancel")) ||
+    pathname === "/api/reservations/public-cancel" ||
+    pathname === "/api/reservations/confirm" ||
+    pathname === "/api/reservations/update" ||
+    pathname.startsWith("/api/auth/")
+  );
+}
 
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
@@ -35,7 +55,44 @@ export async function middleware(request: NextRequest) {
   );
 
   // ✅ 세션 감지/갱신 + 쿠키 반영 트리거
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const publicBookingPath =
+    url.pathname.startsWith("/u/") &&
+    !url.pathname.endsWith("/confirmed") &&
+    !url.pathname.endsWith("/cancel");
+  const publicSignupPath = ["/signup", "/create", "/onboarding"].includes(
+    url.pathname
+  );
+
+  if (isMaintenanceMode() && (publicBookingPath || publicSignupPath)) {
+    return NextResponse.rewrite(new URL("/maintenance", request.url));
+  }
+
+  const onboardingApiPath = ["/api/bootstrap", "/api/onboarding/service"].includes(
+    url.pathname
+  );
+
+  if (isMaintenanceMode() && onboardingApiPath) {
+    return maintenanceApiResponse(
+      "TimeOpen 서비스를 일시 중지 중이라 신규 가입과 매장 설정을 진행할 수 없습니다."
+    );
+  }
+
+  if (isMaintenanceMode() && !user && !isAllowedDuringMaintenance(url.pathname)) {
+    if (url.pathname.startsWith("/api/")) {
+      return maintenanceApiResponse();
+    }
+    return NextResponse.rewrite(new URL("/maintenance", request.url));
+  }
+
+  if (isMaintenanceMode() && url.pathname === "/api/reservations/create") {
+    return maintenanceApiResponse(
+      "TimeOpen 서비스를 일시 중지 중이라 새 예약을 추가할 수 없습니다."
+    );
+  }
 
   return response;
 }

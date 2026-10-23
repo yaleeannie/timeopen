@@ -5,9 +5,14 @@ import {
   formatReservationTimeDisplay,
 } from "@/features/booking/reservationDisplay";
 import { validateReservationCreateInput } from "@/features/reservations/createReservation";
-import { sendSms } from "@/lib/notify/sendSms";
+import { sendSms, SmsDeliverySuppressedError } from "@/lib/notify/sendSms";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/siteUrl";
+import {
+  isDatabaseMaintenanceError,
+  isMaintenanceMode,
+  maintenanceApiResponse,
+} from "@/lib/maintenance";
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -24,6 +29,12 @@ function mapCreateError(message: string | undefined) {
 }
 
 export async function POST(req: Request) {
+  if (isMaintenanceMode()) {
+    return maintenanceApiResponse(
+      "TimeOpen 서비스를 일시 중지 중이라 새 예약을 추가할 수 없습니다."
+    );
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -59,6 +70,11 @@ export async function POST(req: Request) {
   );
 
   if (createError || !reservationId) {
+    if (isDatabaseMaintenanceError(createError)) {
+      return maintenanceApiResponse(
+        "TimeOpen 서비스를 일시 중지 중이라 새 예약을 추가할 수 없습니다."
+      );
+    }
     console.error("[reservations/create] create failed", {
       code: createError?.code,
       message: createError?.message,
@@ -164,12 +180,15 @@ export async function POST(req: Request) {
       message: "예약이 추가됐고 고객에게 안내 문자를 보냈어요.",
     });
   } catch (error) {
-    console.error("[reservations/create] sms failed", error);
+    const skipped = error instanceof SmsDeliverySuppressedError;
+    if (!skipped) console.error("[reservations/create] sms failed", error);
     return NextResponse.json({
       ok: true,
       reservationId,
-      smsStatus: "failed",
-      message: "예약은 추가됐지만 문자 발송에 실패했어요.",
+      smsStatus: skipped ? "skipped" : "failed",
+      message: skipped
+        ? "예약은 추가됐고 문자 발송은 비활성화되어 있어요."
+        : "예약은 추가됐지만 문자 발송에 실패했어요.",
     });
   }
 }

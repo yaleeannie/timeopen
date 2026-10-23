@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { sendSms } from "@/lib/notify/sendSms";
+import { sendSms, SmsDeliverySuppressedError } from "@/lib/notify/sendSms";
 import { buildBookingCancelledCustomerSms } from "@/features/booking/bookingNotificationSms";
 import {
   formatReservationDateCompactKorean,
@@ -124,7 +124,9 @@ export async function POST(req: Request) {
       await sendSms(customerPhone, cancelMsg, { subject: orgName });
     }
   } catch (e) {
-    console.error("[cancel] sms failed", e);
+    if (!(e instanceof SmsDeliverySuppressedError)) {
+      console.error("[cancel] sms failed", e);
+    }
   }
 
   return NextResponse.redirect(new URL("/reservations", req.url));

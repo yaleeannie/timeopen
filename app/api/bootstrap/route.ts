@@ -2,8 +2,19 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { bootstrapOwner } from "@/lib/owner/bootstrapOwner";
+import {
+  isDatabaseMaintenanceError,
+  isMaintenanceMode,
+  maintenanceApiResponse,
+} from "@/lib/maintenance";
 
 export async function POST(request: Request) {
+  if (isMaintenanceMode()) {
+    return maintenanceApiResponse(
+      "TimeOpen 서비스를 일시 중지 중이라 신규 가입과 매장 설정을 진행할 수 없습니다."
+    );
+  }
+
   const supabase = await createSupabaseServerClient();
   const body = await request.json().catch(() => ({}));
   const source = body?.source === "onboarding-retry" ? "onboarding-retry" : "api/bootstrap";
@@ -32,6 +43,11 @@ export async function POST(request: Request) {
   const result = await bootstrapOwner(supabase, { id: user.id, email: user.email }, source);
 
   if (result.error || !result.organizationId) {
+    if (isDatabaseMaintenanceError(result.error)) {
+      return maintenanceApiResponse(
+        "TimeOpen 서비스를 일시 중지 중이라 신규 가입과 매장 생성을 진행할 수 없습니다."
+      );
+    }
     console.error("[bootstrap] result empty", {
       source,
       userId: user.id,

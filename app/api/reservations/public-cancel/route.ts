@@ -7,7 +7,7 @@ import {
   formatReservationDateCompactKorean,
   formatReservationTimeDisplay,
 } from "@/features/booking/reservationDisplay";
-import { sendSms } from "@/lib/notify/sendSms";
+import { sendSms, SmsDeliverySuppressedError } from "@/lib/notify/sendSms";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function clean(value: unknown) {
@@ -93,8 +93,9 @@ export async function POST(req: Request) {
       await sendSms(customerPhone, smsText, { subject: shopName });
       customerSmsStatus = "success";
     } catch (smsError) {
-      console.error("[public-cancel] customer sms failed", smsError);
-      customerSmsStatus = "failed";
+      const skipped = smsError instanceof SmsDeliverySuppressedError;
+      if (!skipped) console.error("[public-cancel] customer sms failed", smsError);
+      customerSmsStatus = skipped ? "skipped" : "failed";
     }
   }
 
@@ -110,8 +111,9 @@ export async function POST(req: Request) {
       await sendSms(ownerPhone, ownerSmsText, { subject: shopName });
       ownerSmsStatus = "success";
     } catch (smsError) {
-      console.error("[public-cancel] owner sms failed", smsError);
-      ownerSmsStatus = "failed";
+      const skipped = smsError instanceof SmsDeliverySuppressedError;
+      if (!skipped) console.error("[public-cancel] owner sms failed", smsError);
+      ownerSmsStatus = skipped ? "skipped" : "failed";
     }
   } else if (ownerSmsEnabled) {
     console.warn("[public-cancel] owner sms skipped: owner notification phone is empty");
